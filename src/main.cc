@@ -43,33 +43,33 @@ int MAXPAGES = 10*10;
 int IPPD = 1200;
 int ARRAYSIZE = (MAXPAGES * IPPD) + 10;
 
-char sdf_path[255], opened = 0, gpsav = 0, ss_name[16], dashes[80], *color_file = NULL;
+char G_sdf_path[255], opened = 0, G_gpsav = 0, ss_name[16], dashes[80], *color_file = NULL;
 
-double earthradius, max_range = 0.0, forced_erp, dpp, ppd, yppd,
-    fzone_clearance = 0.6, forced_freq, clutter, lat, lon, txh, tercon, terdic,
-    north, east, south, west, dBm, loss, field_strength,
-    min_north = 90, max_north = -90, min_west = 360, max_west = -1,
-    westoffset=180, eastoffset=-180, delta=0, rxGain=0, antenna_rotation,
-    antenna_downtilt,antenna_dt_direction, cropLat=-70, cropLon=0,cropLonNeg=0;
+double G_earthradius, G_max_range = 0.0, forced_erp, G_dpp, G_ppd, G_yppd,
+    G_fzone_clearance = 0.6, forced_freq, G_clutter, lat, lon, txh, tercon, terdic,
+    G_north, G_east, G_south, G_west, G_dBm, G_loss, G_field_strength,
+    G_min_north = 90, G_max_north = -90, G_min_west = 360, G_max_west = -1,
+    G_westoffset=180, G_eastoffset=-180, G_delta=0, rxGain=0, antenna_rotation,
+    antenna_downtilt,antenna_dt_direction, G_cropLat=-70, G_cropLon=0,cropLonNeg=0;
 
-int ippd, mpi, max_elevation = -32768, min_elevation = 32768, bzerror, gzerr,
-    contour_threshold, pred, pblue, pgreen, ter, multiplier = 256, debug = 0,
-    loops = 100, jgets = 0, MAXRAD, hottest = 0, height, width, resample = 0,
+int G_ippd, G_mpi, G_max_elevation = -32768, G_min_elevation = 32768, bzerror, gzerr,
+    G_contour_threshold, pred, pblue, pgreen, ter, multiplier = 256, G_debug = 0,
+    G_loops = 100, G_jgets = 0, G_MAXRAD, hottest = 0, G_height, G_width, resample = 0,
     bzbuf_empty = 1, gzbuf_empty = 1;
 
 long bzbuf_pointer = 0L, bzbytes_read, gzbuf_pointer = 0L, gzbytes_read;
 
-unsigned char got_elevation_pattern, got_azimuth_pattern, metric = 0, dbm = 0;
+unsigned char G_got_elevation_pattern, G_got_azimuth_pattern, G_metric = 0, G_dbm = 0;
 
 bool to_stdout = false, cropping = true;
 
-__thread double *elev;
-__thread struct path path;
+__thread double *G_elev;
+__thread struct path G_path;
 struct site tx_site[2];
-struct dem *dem;
+struct dem *G_dem;
 
-struct LR LR;
-struct region region;
+struct LR G_LR;
+struct region G_region;
 
 double arccos(double x, double y)
 {
@@ -170,18 +170,18 @@ int PutMask(double lat, double lon, int value)
 	char found;
 
 	for (indx = 0, found = 0; indx < MAXPAGES && found == 0;) {
-		x = (int)rint(ppd * (lat - dem[indx].min_north));
-		y = mpi - (int)rint(yppd * (LonDiff(dem[indx].max_west, lon)));
+		x = (int)rint(G_ppd * (lat - G_dem[indx].min_north));
+		y = G_mpi - (int)rint(G_yppd * (LonDiff(G_dem[indx].max_west, lon)));
 
-		if (x >= 0 && x <= mpi && y >= 0 && y <= mpi)
+		if (x >= 0 && x <= G_mpi && y >= 0 && y <= G_mpi)
 			found = 1;
 		else
 			indx++;
 	}
 
 	if (found) {
-		dem[indx].mask[x][y] = value;
-		return ((int)dem[indx].mask[x][y]);
+		G_dem[indx].mask[x][y] = value;
+		return ((int)G_dem[indx].mask[x][y]);
 	}
 
 	else
@@ -200,18 +200,18 @@ int OrMask(double lat, double lon, int value)
 	char found;
 
 	for (indx = 0, found = 0; indx < MAXPAGES && found == 0;) {
-		x = (int)rint(ppd * (lat - dem[indx].min_north));
-		y = mpi - (int)rint(yppd * (LonDiff(dem[indx].max_west, lon)));
+		x = (int)rint(G_ppd * (lat - G_dem[indx].min_north));
+		y = G_mpi - (int)rint(G_yppd * (LonDiff(G_dem[indx].max_west, lon)));
 
-		if (x >= 0 && x <= mpi && y >= 0 && y <= mpi)
+		if (x >= 0 && x <= G_mpi && y >= 0 && y <= G_mpi)
 			found = 1;
 		else
 			indx++;
 	}
 
 	if (found) {
-		dem[indx].mask[x][y] |= value;
-		return ((int)dem[indx].mask[x][y]);
+		G_dem[indx].mask[x][y] |= value;
+		return ((int)G_dem[indx].mask[x][y]);
 	}
 
 	else
@@ -243,17 +243,17 @@ void PutSignal(double lat, double lon, unsigned char signal)
 
 	//lookup x/y for this co-ord
 	for (indx = 0, found = 0; indx < MAXPAGES && found == 0;) {
-		x = (int)rint(ppd * (lat - dem[indx].min_north));
-		y = mpi - (int)rint(yppd * (LonDiff(dem[indx].max_west, lon)));
+		x = (int)rint(G_ppd * (lat - G_dem[indx].min_north));
+		y = G_mpi - (int)rint(G_yppd * (LonDiff(G_dem[indx].max_west, lon)));
 
-		if (x >= 0 && x <= mpi && y >= 0 && y <= mpi)
+		if (x >= 0 && x <= G_mpi && y >= 0 && y <= G_mpi)
 			found = 1;
 		else
 			indx++;
 	}
 
 	if (found) {		// Write values to file
-		dem[indx].signal[x][y] = signal;
+		G_dem[indx].signal[x][y] = signal;
 		// return (dem[indx].signal[x][y]);
 		return;
 	}
@@ -272,17 +272,17 @@ unsigned char GetSignal(double lat, double lon)
 	char found;
 
 	for (indx = 0, found = 0; indx < MAXPAGES && found == 0;) {
-		x = (int)rint(ppd * (lat - dem[indx].min_north));
-		y = mpi - (int)rint(yppd * (LonDiff(dem[indx].max_west, lon)));
+		x = (int)rint(G_ppd * (lat - G_dem[indx].min_north));
+		y = G_mpi - (int)rint(G_yppd * (LonDiff(G_dem[indx].max_west, lon)));
 
-		if (x >= 0 && x <= mpi && y >= 0 && y <= mpi)
+		if (x >= 0 && x <= G_mpi && y >= 0 && y <= G_mpi)
 			found = 1;
 		else
 			indx++;
 	}
 
 	if (found)
-		return (dem[indx].signal[x][y]);
+		return (G_dem[indx].signal[x][y]);
 	else
 		return 0;
 }
@@ -298,19 +298,19 @@ double GetElevation(struct site location)
 	double elevation;
 
 	for (indx = 0, found = 0; indx < MAXPAGES && found == 0;) {
-		x = (int)rint(ppd * (location.lat - dem[indx].min_north));
-		y = mpi -
-		    (int)rint(yppd *
-			      (LonDiff(dem[indx].max_west, location.lon)));
+		x = (int)rint(G_ppd * (location.lat - G_dem[indx].min_north));
+		y = G_mpi -
+		    (int)rint(G_yppd *
+			      (LonDiff(G_dem[indx].max_west, location.lon)));
 
-		if (x >= 0 && x <= mpi && y >= 0 && y <= mpi)
+		if (x >= 0 && x <= G_mpi && y >= 0 && y <= G_mpi)
 			found = 1;
 		else
 			indx++;
 	}
 
 	if (found)
-		elevation = 3.28084 * dem[indx].data[x][y];
+		elevation = 3.28084 * G_dem[indx].data[x][y];
 	else
 		elevation = -5000.0;
 
@@ -328,24 +328,24 @@ int AddElevation(double lat, double lon, double height, int size)
 	int i,j,x = 0, y = 0, indx;
 
 	for (indx = 0, found = 0; indx < MAXPAGES && found == 0;) {
-		x = (int)rint(ppd * (lat - dem[indx].min_north));
-		y = mpi - (int)rint(yppd * (LonDiff(dem[indx].max_west, lon)));
+		x = (int)rint(G_ppd * (lat - G_dem[indx].min_north));
+		y = G_mpi - (int)rint(G_yppd * (LonDiff(G_dem[indx].max_west, lon)));
 
-		if (x >= 0 && x <= mpi && y >= 0 && y <= mpi)
+		if (x >= 0 && x <= G_mpi && y >= 0 && y <= G_mpi)
 			found = 1;
 		else
 			indx++;
 	}
 
 	if (found && size<2)
-		dem[indx].data[x][y] += (short)rint(height);
+		G_dem[indx].data[x][y] += (short)rint(height);
 
 	// Make surrounding area bigger for wide area landcover. Should enhance 3x3 pixels including c.p
 	if (found && size>1){
 		for(i=size*-1; i <= size; i=i+1){
 			for(j=size*-1; j <= size; j=j+1){
 				if(x+j >= 0 && x+j <=IPPD && y+i >= 0 && y+i <=IPPD)
-					dem[indx].data[x+j][y+i] += (short)rint(height);
+					G_dem[indx].data[x+j][y+i] += (short)rint(height);
 			}
 
 		}
@@ -456,8 +456,8 @@ double ElevationAngle(struct site source, struct site destination)
 
 	register double a, b, dx;
 
-	a = GetElevation(destination) + destination.alt + earthradius;
-	b = GetElevation(source) + source.alt + earthradius;
+	a = GetElevation(destination) + destination.alt + G_earthradius;
+	b = GetElevation(source) + source.alt + G_earthradius;
 
 	dx = FEET_PER_MILE * Distance(source, destination);
 
@@ -486,12 +486,12 @@ void ReadPath(struct site source, struct site destination)
 	lon1 = source.lon * DEG2RAD;
 	lat2 = destination.lat * DEG2RAD;
 	lon2 = destination.lon * DEG2RAD;
-	samples_per_radian = ppd * 57.295833;
+	samples_per_radian = G_ppd * 57.295833;
 	azimuth = Azimuth(source, destination) * DEG2RAD;
 
 	total_distance = Distance(source, destination);
 
-	if (total_distance > (30.0 / ppd)) {
+	if (total_distance > (30.0 / G_ppd)) {
 		dx = samples_per_radian * acos(cos(lon1 - lon2));
 		dy = samples_per_radian * acos(cos(lat1 - lat2));
 		path_length = sqrt((dx * dx) + (dy * dy));
@@ -509,10 +509,10 @@ void ReadPath(struct site source, struct site destination)
 		lat1 = lat1 / DEG2RAD;
 		lon1 = lon1 / DEG2RAD;
 
-		path.lat[c] = lat1;
-		path.lon[c] = lon1;
-		path.elevation[c] = GetElevation(source);
-		path.distance[c] = 0.0;
+		G_path.lat[c] = lat1;
+		G_path.lon[c] = lon1;
+		G_path.elevation[c] = GetElevation(source);
+		G_path.distance[c] = 0.0;
 	}
 
 	for (distance = 0.0, c = 0;
@@ -550,31 +550,31 @@ void ReadPath(struct site source, struct site destination)
 		lat2 = lat2 / DEG2RAD;
 		lon2 = lon2 / DEG2RAD;
 
-		path.lat[c] = lat2;
-		path.lon[c] = lon2;
+		G_path.lat[c] = lat2;
+		G_path.lon[c] = lon2;
 		tempsite.lat = lat2;
 		tempsite.lon = lon2;
-		path.elevation[c] = GetElevation(tempsite);
+		G_path.elevation[c] = GetElevation(tempsite);
 		// fix for tile gaps in multi-tile LIDAR plots
-		if(path.elevation[c]==0 && path.elevation[c-1] > 10)
-			path.elevation[c]=path.elevation[c-1];
-		path.distance[c] = distance;
+		if(G_path.elevation[c]==0 && G_path.elevation[c-1] > 10)
+			G_path.elevation[c]=G_path.elevation[c-1];
+		G_path.distance[c] = distance;
 	}
 
 	/* Make sure exact destination point is recorded at path.length-1 */
 
 	if (c < ARRAYSIZE) {
-		path.lat[c] = destination.lat;
-		path.lon[c] = destination.lon;
-		path.elevation[c] = GetElevation(destination);
-		path.distance[c] = total_distance;
+		G_path.lat[c] = destination.lat;
+		G_path.lon[c] = destination.lon;
+		G_path.elevation[c] = GetElevation(destination);
+		G_path.distance[c] = total_distance;
 		c++;
 	}
 
 	if (c < ARRAYSIZE)
-		path.length = c;
+		G_path.length = c;
 	else
-		path.length = ARRAYSIZE - 1;
+		G_path.length = ARRAYSIZE - 1;
 }
 
 double ElevationAngle2(struct site source, struct site destination, double er)
@@ -592,7 +592,7 @@ double ElevationAngle2(struct site source, struct site destination, double er)
 	    source_alt2, first_obstruction_angle = 0.0;
 	struct path temp;
 
-	temp = path;
+	temp = G_path;
 
 	ReadPath(source, destination);
 
@@ -615,13 +615,13 @@ double ElevationAngle2(struct site source, struct site destination, double er)
 	   at the source since we're interested in identifying the FIRST
 	   obstruction along the path between source and destination. */
 
-	for (x = 2, block = 0; x < path.length && block == 0; x++) {
-		distance = FEET_PER_MILE * path.distance[x];
+	for (x = 2, block = 0; x < G_path.length && block == 0; x++) {
+		distance = FEET_PER_MILE * G_path.distance[x];
 
 		test_alt =
-		    earthradius + (path.elevation[x] ==
-				   0.0 ? path.elevation[x] : path.elevation[x] +
-				   clutter);
+		    G_earthradius + (G_path.elevation[x] ==
+				   0.0 ? G_path.elevation[x] : G_path.elevation[x] +
+				   G_clutter);
 
 		cos_test_angle =
 		    ((source_alt2) + (distance * distance) -
@@ -648,7 +648,7 @@ double ElevationAngle2(struct site source, struct site destination, double er)
 	else
 		elevation = ((acos(cos_xmtr_angle)) / DEG2RAD) - 90.0;
 
-	path = temp;
+	G_path = temp;
 
 	return elevation;
 }
@@ -729,11 +729,11 @@ void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f,
 	char string[255], string_fpt6[255], string_f1[255];
 
 	ReadPath(xmtr, rcvr);
-	h_r = GetElevation(rcvr) + rcvr.alt + earthradius;
+	h_r = GetElevation(rcvr) + rcvr.alt + G_earthradius;
 	h_r_f1 = h_r;
 	h_r_fpt6 = h_r;
 	h_r_orig = h_r;
-	h_t = GetElevation(xmtr) + xmtr.alt + earthradius;
+	h_t = GetElevation(xmtr) + xmtr.alt + G_earthradius;
 	d_tx = FEET_PER_MILE * Distance(rcvr, xmtr);
 	cos_tx_angle =
 	    ((h_r * h_r) + (d_tx * d_tx) - (h_t * h_t)) / (2.0 * h_r * d_tx);
@@ -743,14 +743,14 @@ void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f,
 	if (f)
 		lambda = 9.8425e8 / (f * 1e6);
 
-	if (clutter > 0.0) {
+	if (G_clutter > 0.0) {
 		fprintf(outfile, "Terrain has been raised by");
 
-		if (metric)
+		if (G_metric)
 			fprintf(outfile, " %.2f meters",
-				METERS_PER_FOOT * clutter);
+				METERS_PER_FOOT * G_clutter);
 		else
-			fprintf(outfile, " %.2f feet", clutter);
+			fprintf(outfile, " %.2f feet", G_clutter);
 
 		fprintf(outfile, " to account for ground clutter.\n\n");
 	}
@@ -769,12 +769,12 @@ void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f,
 	   acos().  However, note the inverted comparison: if
 	   acos(A) > acos(B), then B > A. */
 
-	for (x = path.length - 1; x > 0; x--) {
-		site_x.lat = path.lat[x];
-		site_x.lon = path.lon[x];
+	for (x = G_path.length - 1; x > 0; x--) {
+		site_x.lat = G_path.lat[x];
+		site_x.lon = G_path.lon[x];
 		site_x.alt = 0.0;
 
-		h_x = GetElevation(site_x) + earthradius + clutter;
+		h_x = GetElevation(site_x) + G_earthradius + G_clutter;
 		d_x = FEET_PER_MILE * Distance(rcvr, site_x);
 
 		/* Deal with the LOS path first. */
@@ -790,35 +790,35 @@ void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f,
 					rcvr.name, xmtr.name);
 
 			if (site_x.lat >= 0.0) {
-				if (metric)
+				if (G_metric)
 					fprintf(outfile,
 						"   %8.4f N,%9.4f W, %5.2f kilometers, %6.2f meters AMSL\n",
 						site_x.lat, site_x.lon,
 						KM_PER_MILE * (d_x / FEET_PER_MILE),
 						METERS_PER_FOOT * (h_x -
-								   earthradius));
+								   G_earthradius));
 				else
 					fprintf(outfile,
 						"   %8.4f N,%9.4f W, %5.2f miles, %6.2f feet AMSL\n",
 						site_x.lat, site_x.lon,
 						d_x / FEET_PER_MILE,
-						h_x - earthradius);
+						h_x - G_earthradius);
 			}
 
 			else {
-				if (metric)
+				if (G_metric)
 					fprintf(outfile,
 						"   %8.4f S,%9.4f W, %5.2f kilometers, %6.2f meters AMSL\n",
 						-site_x.lat, site_x.lon,
 						KM_PER_MILE * (d_x / FEET_PER_MILE),
 						METERS_PER_FOOT * (h_x -
-								   earthradius));
+								   G_earthradius));
 				else
 					fprintf(outfile,
 						"   %8.4f S,%9.4f W, %5.2f miles, %6.2f feet AMSL\n",
 						-site_x.lat, site_x.lon,
 						d_x / FEET_PER_MILE,
-						h_x - earthradius);
+						h_x - G_earthradius);
 			}
 		}
 
@@ -866,7 +866,7 @@ void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f,
 				 2 * h_r_fpt6 * d_x * cos_tx_angle_fpt6);
 			h_f =
 			    h_los -
-			    fzone_clearance * sqrt(lambda * d_x * (d_tx - d_x) /
+			    G_fzone_clearance * sqrt(lambda * d_x * (d_tx - d_x) /
 						   d_tx);
 
 			while (h_f < h_x) {
@@ -880,24 +880,24 @@ void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f,
 					 cos_tx_angle_fpt6);
 				h_f =
 				    h_los -
-				    fzone_clearance * sqrt(lambda * d_x *
+				    G_fzone_clearance * sqrt(lambda * d_x *
 							   (d_tx - d_x) / d_tx);
 			}
 		}
 	}
 
 	if (h_r > h_r_orig) {
-		if (metric)
+		if (G_metric)
 			snprintf(string, 150,
 				 "\nAntenna at %s must be raised to at least %.2f meters AGL\nto clear all obstructions detected.\n",
 				 rcvr.name,
 				 METERS_PER_FOOT * (h_r - GetElevation(rcvr) -
-						    earthradius));
+						    G_earthradius));
 		else
 			snprintf(string, 150,
 				 "\nAntenna at %s must be raised to at least %.2f feet AGL\nto clear all obstructions detected.\n",
 				 rcvr.name,
-				 h_r - GetElevation(rcvr) - earthradius);
+				 h_r - GetElevation(rcvr) - G_earthradius);
 	}
 
 	else
@@ -906,44 +906,44 @@ void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f,
 
 	if (f) {
 		if (h_r_fpt6 > h_r_orig) {
-			if (metric)
+			if (G_metric)
 				snprintf(string_fpt6, 150,
 					 "\nAntenna at %s must be raised to at least %.2f meters AGL\nto clear %.0f%c of the first Fresnel zone.\n",
 					 rcvr.name,
 					 METERS_PER_FOOT * (h_r_fpt6 -
 							    GetElevation(rcvr) -
-							    earthradius),
-					 fzone_clearance * 100.0, 37);
+							    G_earthradius),
+					 G_fzone_clearance * 100.0, 37);
 
 			else
 				snprintf(string_fpt6, 150,
 					 "\nAntenna at %s must be raised to at least %.2f feet AGL\nto clear %.0f%c of the first Fresnel zone.\n",
 					 rcvr.name,
 					 h_r_fpt6 - GetElevation(rcvr) -
-					 earthradius, fzone_clearance * 100.0,
+					 G_earthradius, G_fzone_clearance * 100.0,
 					 37);
 		}
 
 		else
 			snprintf(string_fpt6, 150,
 				 "\n%.0f%c of the first Fresnel zone is clear.\n",
-				 fzone_clearance * 100.0, 37);
+				 G_fzone_clearance * 100.0, 37);
 
 		if (h_r_f1 > h_r_orig) {
-			if (metric)
+			if (G_metric)
 				snprintf(string_f1, 150,
 					 "\nAntenna at %s must be raised to at least %.2f meters AGL\nto clear the first Fresnel zone.\n",
 					 rcvr.name,
 					 METERS_PER_FOOT * (h_r_f1 -
 							    GetElevation(rcvr) -
-							    earthradius));
+							    G_earthradius));
 
 			else
 				snprintf(string_f1, 150,
 					 "\nAntenna at %s must be raised to at least %.2f feet AGL\nto clear the first Fresnel zone.\n",
 					 rcvr.name,
 					 h_r_f1 - GetElevation(rcvr) -
-					 earthradius);
+					 G_earthradius);
 
 		}
 
@@ -968,32 +968,32 @@ void free_dem(void)
 
 	for (i = 0; i < MAXPAGES; i++) {
 		for (j = 0; j < IPPD; j++) {
-			delete [] dem[i].data[j];
-			delete [] dem[i].mask[j];
-			delete [] dem[i].signal[j];
+			delete [] G_dem[i].data[j];
+			delete [] G_dem[i].mask[j];
+			delete [] G_dem[i].signal[j];
 		}
-		delete [] dem[i].data;
-		delete [] dem[i].mask;
-		delete [] dem[i].signal;
+		delete [] G_dem[i].data;
+		delete [] G_dem[i].mask;
+		delete [] G_dem[i].signal;
 	}
-	delete [] dem;
+	delete [] G_dem;
 }
 
 void free_elev(void) {
-  delete [] elev;
+  delete [] G_elev;
 }
 
 void free_path(void)
 {
-	delete [] path.lat;
-	delete [] path.lon;
-	delete [] path.elevation;
-	delete [] path.distance;
+	delete [] G_path.lat;
+	delete [] G_path.lon;
+	delete [] G_path.elevation;
+	delete [] G_path.distance;
 }
 
 void alloc_elev(void)
 {
-  elev  = new double[ARRAYSIZE + 10];
+  G_elev  = new double[ARRAYSIZE + 10];
 }
 
 void alloc_dem(void)
@@ -1001,25 +1001,25 @@ void alloc_dem(void)
 	int i;
 	int j;
 
-	dem = new struct dem[MAXPAGES];
+	G_dem = new struct dem[MAXPAGES];
 	for (i = 0; i < MAXPAGES; i++) {
-		dem[i].data = new short *[IPPD];
-		dem[i].mask = new unsigned char *[IPPD];
-		dem[i].signal = new unsigned char *[IPPD];
+		G_dem[i].data = new short *[IPPD];
+		G_dem[i].mask = new unsigned char *[IPPD];
+		G_dem[i].signal = new unsigned char *[IPPD];
 		for (j = 0; j < IPPD; j++) {
-			dem[i].data[j] = new short[IPPD];
-			dem[i].mask[j] = new unsigned char[IPPD];
-			dem[i].signal[j] = new unsigned char[IPPD];
+			G_dem[i].data[j] = new short[IPPD];
+			G_dem[i].mask[j] = new unsigned char[IPPD];
+			G_dem[i].signal[j] = new unsigned char[IPPD];
 		}
 	}
 }
 
 void alloc_path(void)
 {
-	path.lat = new double[ARRAYSIZE];
-	path.lon = new double[ARRAYSIZE];
-	path.elevation = new double[ARRAYSIZE];
-	path.distance = new double[ARRAYSIZE];
+	G_path.lat = new double[ARRAYSIZE];
+	G_path.lon = new double[ARRAYSIZE];
+	G_path.elevation = new double[ARRAYSIZE];
+	G_path.distance = new double[ARRAYSIZE];
 }
 
 void do_allocs(void)
@@ -1031,12 +1031,12 @@ void do_allocs(void)
 	alloc_path();
 
 	for (i = 0; i < MAXPAGES; i++) {
-		dem[i].min_el = 32768;
-		dem[i].max_el = -32768;
-		dem[i].min_north = 90;
-		dem[i].max_north = -90;
-		dem[i].min_west = 360;
-		dem[i].max_west = -1;
+		G_dem[i].min_el = 32768;
+		G_dem[i].max_el = -32768;
+		G_dem[i].min_north = 90;
+		G_dem[i].max_north = -90;
+		G_dem[i].min_west = 360;
+		G_dem[i].max_west = -1;
 	}
 }
 
@@ -1149,26 +1149,26 @@ int main(int argc, char *argv[])
 	y = argc - 1;
 	kml = 0;
 	geo = 0;
-	dbm = 0;
-	gpsav = 0;
-	metric = 0;
+	G_dbm = 0;
+	G_gpsav = 0;
+	G_metric = 0;
 	mapfile[0] = 0;
 	clutter_file[0] = 0;
-	clutter = 0.0;
+	G_clutter = 0.0;
 	forced_erp = -1.0;
 	forced_freq = 0.0;
-	sdf_path[0] = 0;
+	G_sdf_path[0] = 0;
 	udt_file = NULL;
 	color_file = NULL;
-	path.length = 0;
+	G_path.length = 0;
 	max_txsites = 30;
-	fzone_clearance = 0.6;
-	contour_threshold = 0;
+	G_fzone_clearance = 0.6;
+	G_contour_threshold = 0;
 	resample = 0;
 
 	ano_filename[0] = 0;
-	earthradius = EARTHRADIUS;
-	max_range = 1.0;
+	G_earthradius = EARTHRADIUS;
+	G_max_range = 1.0;
 	propmodel = 1;		//ITM
 	lat = 0;
 	lon = 0;
@@ -1177,20 +1177,20 @@ int main(int argc, char *argv[])
 	kml = 1;
 	LRmap = 1;
 	area_mode = 1;
-	ippd = IPPD;		// default resolution
+	G_ippd = IPPD;		// default resolution
 
 	sscanf("0.1", "%lf", &altitudeLR);
 
 	// Defaults
-	LR.eps_dielect = 15.0;	// Farmland
-	LR.sgm_conductivity = 0.005;	// Farmland
-	LR.eno_ns_surfref = 301.0;
-	LR.frq_mhz = 19.0;	// Deliberately too low
-	LR.radio_climate = 5;	// continental
-	LR.pol = 1;		// vert
-	LR.conf = 0.50;
-	LR.rel = 0.50;
-	LR.erp = 0.0;		// will default to Path Loss
+	G_LR.eps_dielect = 15.0;	// Farmland
+	G_LR.sgm_conductivity = 0.005;	// Farmland
+	G_LR.eno_ns_surfref = 301.0;
+	G_LR.frq_mhz = 19.0;	// Deliberately too low
+	G_LR.radio_climate = 5;	// continental
+	G_LR.pol = 1;		// vert
+	G_LR.conf = 0.50;
+	G_LR.rel = 0.50;
+	G_LR.erp = 0.0;		// will default to Path Loss
 
 	antenna_rotation = -1;  // unique defaults to test usage
 	antenna_downtilt = 99.0; // don't mess with them!
@@ -1210,7 +1210,7 @@ int main(int argc, char *argv[])
 			z = x + 1;
 
 			if (z <= y && argv[z][0] && argv[z][0] != '-') {
-				sscanf(argv[z], "%lf", &max_range);
+				sscanf(argv[z], "%lf", &G_max_range);
 
 			}
 		}
@@ -1219,10 +1219,10 @@ int main(int argc, char *argv[])
 			z = x + 1;
 
 			if (z <= y && argv[z][0] && argv[z][0] != '-') {
-				sscanf(argv[z], "%lf", &clutter);
+				sscanf(argv[z], "%lf", &G_clutter);
 
-				if (clutter < 0.0)
-					clutter = 0.0;
+				if (G_clutter < 0.0)
+					G_clutter = 0.0;
 			}
 		}
 
@@ -1337,11 +1337,11 @@ int main(int argc, char *argv[])
 			z = x + 1;
 
 			if (z <= y && argv[z][0])	/* A minus argument is legal here */
-				sscanf(argv[z], "%d", &contour_threshold);
+				sscanf(argv[z], "%d", &G_contour_threshold);
 		}
 
 		if (strcmp(argv[x], "-m") == 0) {
-			metric = 1;
+			G_metric = 1;
 
 		}
 
@@ -1350,13 +1350,13 @@ int main(int argc, char *argv[])
 		}
 
 		if (strcmp(argv[x], "-dbm") == 0)
-			dbm = 1;
+			G_dbm = 1;
 
 		if (strcmp(argv[x], "-sdf") == 0) {
 			z = x + 1;
 
 			if (z <= y && argv[z][0] && argv[z][0] != '-')
-				strncpy(sdf_path, argv[z], 253);
+				strncpy(G_sdf_path, argv[z], 253);
 		}
 		
 		if (strcmp(argv[x], "-lid") == 0) {
@@ -1373,28 +1373,28 @@ int main(int argc, char *argv[])
 			    z <= y &&
 			    argv[z][0] &&
 			    argv[z][0] != '-') {
-				sscanf(argv[z], "%d", &ippd);
+				sscanf(argv[z], "%d", &G_ippd);
 
-				switch (ippd) {
+				switch (G_ippd) {
 				case 300:
-					MAXRAD = 500;
-					jgets = 3; // 3 dummy reads
+					G_MAXRAD = 500;
+					G_jgets = 3; // 3 dummy reads
 					break;
 				case 600:
-					MAXRAD = 500;
-					jgets = 1;
+					G_MAXRAD = 500;
+					G_jgets = 1;
 					break;
 				case 1200:
-					MAXRAD = 200;
-					ippd = 1200;
+					G_MAXRAD = 200;
+					G_ippd = 1200;
 					break;
 				case 3600:
-					MAXRAD = 100;
-					ippd = 3600;
+					G_MAXRAD = 100;
+					G_ippd = 3600;
 					break;
 				default:
-					MAXRAD = 200;
-					ippd = 1200;
+					G_MAXRAD = 200;
+					G_ippd = 1200;
 					break;
 				}
 			}
@@ -1478,7 +1478,7 @@ int main(int argc, char *argv[])
 			z = x + 1;
 
 			if (z <= y && argv[z][0] && argv[z][0] != '-') {
-				sscanf(argv[z], "%lf", &LR.frq_mhz);
+				sscanf(argv[z], "%lf", &G_LR.frq_mhz);
 			}
 		}
 
@@ -1486,7 +1486,7 @@ int main(int argc, char *argv[])
 			z = x + 1;
 
 			if (z <= y && argv[z][0] && argv[z][0] != '-') {
-				sscanf(argv[z], "%lf", &LR.erp);
+				sscanf(argv[z], "%lf", &G_LR.erp);
 			}
 		}
 
@@ -1495,7 +1495,7 @@ int main(int argc, char *argv[])
 
 			if (z <= y && argv[z][0] && argv[z][0] != '-') {
 
-				sscanf(argv[z], "%d", &LR.radio_climate);
+				sscanf(argv[z], "%d", &G_LR.radio_climate);
 
 			}
 		}
@@ -1535,8 +1535,8 @@ int main(int argc, char *argv[])
 					tercon = 0.001;
 					break;
 				}
-				LR.eps_dielect = terdic;
-				LR.sgm_conductivity = tercon;
+				G_LR.eps_dielect = terdic;
+				G_LR.sgm_conductivity = tercon;
 
 			}
 		}
@@ -1548,7 +1548,7 @@ int main(int argc, char *argv[])
 
 				sscanf(argv[z], "%lf", &terdic);
 
-				LR.eps_dielect = terdic;
+				G_LR.eps_dielect = terdic;
 
 			}
 		}
@@ -1560,18 +1560,18 @@ int main(int argc, char *argv[])
 
 				sscanf(argv[z], "%lf", &tercon);
 
-				LR.sgm_conductivity = tercon;
+				G_LR.sgm_conductivity = tercon;
 
 			}
 		}
 
 		if (strcmp(argv[x], "-hp") == 0) {
 			// Horizontal polarisation (0)
-			LR.pol = 0;
+			G_LR.pol = 0;
 		}
 
 		if (strcmp(argv[x], "-dbg") == 0) {
-			debug = 1;
+			G_debug = 1;
 		}
 
 	
@@ -1634,8 +1634,8 @@ int main(int argc, char *argv[])
 			z = x + 1;
 
 			if (z <= y && argv[z][0]) {
-				sscanf(argv[z], "%lf", &LR.rel);
-				LR.rel=LR.rel/100;
+				sscanf(argv[z], "%lf", &G_LR.rel);
+				G_LR.rel=G_LR.rel/100;
 			}
 		}
 		// Confidence % for ITM model
@@ -1643,8 +1643,8 @@ int main(int argc, char *argv[])
 			z = x + 1;
 
 			if (z <= y && argv[z][0]) {
-				sscanf(argv[z], "%lf", &LR.conf);
-				LR.conf=LR.conf/100;
+				sscanf(argv[z], "%lf", &G_LR.conf);
+				G_LR.conf=G_LR.conf/100;
 			}
 		}
 		// LossColors for the -scf, -dcf and -lcf, depending on mode
@@ -1673,22 +1673,22 @@ int main(int argc, char *argv[])
 		exit(EINVAL);
 
 	}
-	if (LR.frq_mhz < 20 || LR.frq_mhz > 100000) {
+	if (G_LR.frq_mhz < 20 || G_LR.frq_mhz > 100000) {
 		fprintf(stderr,
 			"ERROR: Either the Frequency was missing or out of range!");
 		exit(EINVAL);
 	}
-	if (LR.erp > 500000000) {
+	if (G_LR.erp > 500000000) {
 		fprintf(stderr, "ERROR: Power was out of range!");
 		exit(EINVAL);
 
 	}
-	if (LR.eps_dielect > 80 || LR.eps_dielect < 0.1) {
+	if (G_LR.eps_dielect > 80 || G_LR.eps_dielect < 0.1) {
 		fprintf(stderr, "ERROR: Ground Dielectric value out of range!");
 		exit(EINVAL);
 
 	}
-	if (LR.sgm_conductivity > 0.01 || LR.sgm_conductivity < 0.000001) {
+	if (G_LR.sgm_conductivity > 0.01 || G_LR.sgm_conductivity < 0.000001) {
 		fprintf(stderr, "ERROR: Ground conductivity out of range!");
 		exit(EINVAL);
 
@@ -1707,18 +1707,18 @@ int main(int argc, char *argv[])
 	}
 
 	if(!lidar){
-		if (ippd < 300 || ippd > 10000) {
+		if (G_ippd < 300 || G_ippd > 10000) {
 			fprintf(stderr, "ERROR: resolution out of range!");
 			exit(EINVAL);
 		}
 	}
 
-	if (contour_threshold < -200 || contour_threshold > 240) {
+	if (G_contour_threshold < -200 || G_contour_threshold > 240) {
 		fprintf(stderr,
 			"ERROR: Receiver threshold out of range (-200 / +240)");
 		exit(EINVAL);
 	}
-	if (propmodel > 2 && propmodel < 7 && LR.frq_mhz < 150) {
+	if (propmodel > 2 && propmodel < 7 && G_LR.frq_mhz < 150) {
 		fprintf(stderr,
 			"ERROR: Frequency too low for Propagation model");
 		exit(EINVAL);
@@ -1735,23 +1735,23 @@ int main(int argc, char *argv[])
 			"ERROR: Cannot resample higher than a factor of 10");
 		exit(EINVAL);	
 	}
-	if (metric) {
+	if (G_metric) {
 		altitudeLR /= METERS_PER_FOOT;	/* 10ft * 0.3 = 3.3m */
-		max_range /= KM_PER_MILE;	/* 10 / 1.6 = 7.5 */
+		G_max_range /= KM_PER_MILE;	/* 10 / 1.6 = 7.5 */
 		altitude /= METERS_PER_FOOT;
 		tx_site[0].alt /= METERS_PER_FOOT;	/* Feet to metres */
 		tx_site[1].alt /= METERS_PER_FOOT;	/* Feet to metres */
-		clutter /= METERS_PER_FOOT;	/* Feet to metres */
+		G_clutter /= METERS_PER_FOOT;	/* Feet to metres */
 	}
 
 	/* Ensure a trailing '/' is present in sdf_path */
 
-	if (sdf_path[0]) {
-		x = strlen(sdf_path);
+	if (G_sdf_path[0]) {
+		x = strlen(G_sdf_path);
 
-		if (sdf_path[x - 1] != '/' && x != 0) {
-			sdf_path[x] = '/';
-			sdf_path[x + 1] = 0;
+		if (G_sdf_path[x - 1] != '/' && x != 0) {
+			G_sdf_path[x] = '/';
+			G_sdf_path[x + 1] = 0;
 		}
 	}
 
@@ -1807,28 +1807,28 @@ int main(int argc, char *argv[])
 			exit(result);
 		}
 
-		ppd=((double)height / (max_north-min_north));
-		yppd=ppd;
+		G_ppd=((double)G_height / (G_max_north-G_min_north));
+		G_yppd=G_ppd;
 		
-		if (debug) {
-			fprintf(stderr,"ppd %lf, yppd %lf, %.4lf,%.4lf,%.4lf,%.4lf,%d x %d\n",ppd,yppd,max_north,min_west,min_north,max_west,width,height);
+		if (G_debug) {
+			fprintf(stderr,"ppd %lf, yppd %lf, %.4lf,%.4lf,%.4lf,%.4lf,%d x %d\n",G_ppd,G_yppd,G_max_north,G_min_west,G_min_north,G_max_west,G_width,G_height);
 			fflush(stderr);
 		}
 
-		if (yppd < ppd/4) {
+		if (G_yppd < G_ppd/4) {
 			fprintf(stderr,"yppd is bad! Check longitudes\n");
 			fflush(stderr);
 			exit(1);
 		}
 
-		if (delta > 0) {
-			tx_site[0].lon+=delta;
+		if (G_delta > 0) {
+			tx_site[0].lon+=G_delta;
 		}
 
 	} else {
 		// DEM first
-		if(debug){
-			fprintf(stderr,"%.4lf,%.4lf,%.4lf,%.4lf,%.4lf,%.4lf\n",max_north,min_west,min_north,max_west,max_lon,min_lon);
+		if(G_debug){
+			fprintf(stderr,"%.4lf,%.4lf,%.4lf,%.4lf,%.4lf,%.4lf\n",G_max_north,G_min_west,G_min_north,G_max_west,max_lon,min_lon);
 		}
 
 		//max_lon-=3;
@@ -1866,10 +1866,10 @@ int main(int argc, char *argv[])
 				   width of the analysis and the size of
 				   the map. */
 
-				if (max_range == 0.0)
-					max_range = tx_range + rx_range;
+				if (G_max_range == 0.0)
+					G_max_range = tx_range + rx_range;
 
-				deg_range = max_range / 57.0;
+				deg_range = G_max_range / 57.0;
 
 				// No more than 8 degs
 				deg_limit = 3.5;
@@ -1928,15 +1928,15 @@ int main(int argc, char *argv[])
 				return result;
 			}
 		}
-		ppd=(double)ippd;
-		yppd=ppd; 
+		G_ppd=(double)G_ippd;
+		G_yppd=G_ppd; 
 
-		width = (unsigned)(ippd * ReduceAngle(max_west - min_west));
-		height = (unsigned)(ippd * ReduceAngle(max_north - min_north));
+		G_width = (unsigned)(G_ippd * ReduceAngle(G_max_west - G_min_west));
+		G_height = (unsigned)(G_ippd * ReduceAngle(G_max_north - G_min_north));
 	}
 
-	dpp = 1 / ppd;
-	mpi = ippd-1; 
+	G_dpp = 1 / G_ppd;
+	G_mpi = G_ippd-1; 
 
 	// User defined clutter file
 	if( udt_file != NULL && (result = LoadUDT(udt_file)) != 0 ){
@@ -1950,7 +1950,7 @@ int main(int argc, char *argv[])
 		Clutter tiles cover 16 x 12 degs but we only need a fraction of that area.
 		Limit by max_range / miles per degree (at equator)
 		*/
-		if( (result = loadClutter(clutter_file,max_range/45,tx_site[0])) != 0 ){
+		if( (result = loadClutter(clutter_file,G_max_range/45,tx_site[0])) != 0 ){
 			fprintf(stderr, "Error, invalid or clutter file not found\n");
 			return result;
 		}
@@ -1965,7 +1965,7 @@ int main(int argc, char *argv[])
 			// 90% of effort here
 			PlotPropagation(tx_site[0], altitudeLR, ano_filename, propmodel, knifeedge, haf, pmenv, use_threads);
 
-                        if (debug) {
+                        if (G_debug) {
                         	fprintf(stderr,"Finished PlotPropagation()\n");
 				fflush(stderr);
 			}	
@@ -1974,33 +1974,32 @@ int main(int argc, char *argv[])
 			if (cropping) {
 				// CROPPING Factor determined in propPathLoss().
 				// cropLon is the circle radius in pixels at it's widest (east/west) 
-				cropLon*=dpp; // pixels to degrees
-				max_north=cropLat; // degrees
-				max_west=cropLon+tx_site[0].lon; // degrees west (positive)
-				cropLat-=tx_site[0].lat; // angle from tx to edge
+				G_cropLon*=G_dpp; // pixels to degrees
+				G_max_north=G_cropLat; // degrees
+				G_max_west=G_cropLon+tx_site[0].lon; // degrees west (positive)
+				G_cropLat-=tx_site[0].lat; // angle from tx to edge
 
-			
-				if (debug) {
-					fprintf(stderr,"Cropping 1: max_west: %.4f cropLat: %.4f cropLon: %.4f longitude: %.5f dpp %.7f\n",max_west,cropLat,cropLon,tx_site[0].lon,dpp);
+				if (G_debug) {
+					fprintf(stderr,"Cropping 1: max_west: %.4f cropLat: %.4f cropLon: %.4f longitude: %.5f dpp %.7f\n",G_max_west,G_cropLat,G_cropLon,tx_site[0].lon,G_dpp);
 					fflush (stderr);
 				}
-				width=(int)((cropLon*ppd)*2);
-				height=(int)((cropLat*ppd)*2);
+				G_width=(int)((G_cropLon*G_ppd)*2);
+				G_height=(int)((G_cropLat*G_ppd)*2);
 
-				if (debug) {
-				        fprintf(stderr,"Cropping 2: max_west: %.4f cropLat: %.4f cropLon: %.7f longitude: %.5f width %d\n",max_west,cropLat,cropLon,tx_site[0].lon,width);
+				if (G_debug) {
+				        fprintf(stderr,"Cropping 2: max_west: %.4f cropLat: %.4f cropLon: %.7f longitude: %.5f width %d\n",G_max_west,G_cropLat,G_cropLon,tx_site[0].lon,G_width);
 					fflush (stderr);
 				}
-				if (width > 3600 * 10 || cropLon < 0) {
-				  fprintf(stderr,"FATAL BOUNDS! max_west: %.4f cropLat: %.4f cropLon: %.7f longitude: %.5f\n",max_west,cropLat,cropLon,tx_site[0].lon);
+				if (G_width > 3600 * 10 || G_cropLon < 0) {
+				  fprintf(stderr,"FATAL BOUNDS! max_west: %.4f cropLat: %.4f cropLon: %.7f longitude: %.5f\n",G_max_west,G_cropLat,G_cropLon,tx_site[0].lon);
 				  return 0;
 				}
 			}
 
 			// Write bitmap
-			if (LR.erp == 0.0)
+			if (G_LR.erp == 0.0)
 				DoPathLoss(mapfile, geo, kml, ngs, tx_site, txsites);
-			else if (dbm)
+			else if (G_dbm)
 				DoRxdPwr((to_stdout == true ? NULL : mapfile), geo, kml, ngs, tx_site, txsites);
 			else
 			        if ((result = DoSigStr(mapfile, geo, kml, ngs, tx_site, txsites)) != 0)
@@ -2018,15 +2017,15 @@ int main(int argc, char *argv[])
 			tx_site[0].lon += 360;
 
 		if (cropping) {
-			fprintf(stderr, "|%.6f", tx_site[0].lat+cropLat);
-			fprintf(stderr, "|%.6f", tx_site[0].lon+cropLon);
-			fprintf(stderr, "|%.6f", tx_site[0].lat-cropLat);
-			fprintf(stderr, "|%.6f|",tx_site[0].lon-cropLon);
+			fprintf(stderr, "|%.6f", tx_site[0].lat+G_cropLat);
+			fprintf(stderr, "|%.6f", tx_site[0].lon+G_cropLon);
+			fprintf(stderr, "|%.6f", tx_site[0].lat-G_cropLat);
+			fprintf(stderr, "|%.6f|",tx_site[0].lon-G_cropLon);
 		} else {
-			fprintf(stderr, "|%.6f", max_north);
-			fprintf(stderr, "|%.6f", east);
-			fprintf(stderr, "|%.6f", min_north);
-			fprintf(stderr, "|%.6f|",west);
+			fprintf(stderr, "|%.6f", G_max_north);
+			fprintf(stderr, "|%.6f", G_east);
+			fprintf(stderr, "|%.6f", G_min_north);
+			fprintf(stderr, "|%.6f|",G_west);
 		}
 		fprintf(stderr, "\n");
 

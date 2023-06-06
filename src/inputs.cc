@@ -60,14 +60,14 @@ int loadClutter(char *filename, double radius, struct site tx)
 		cellsize=0.004167;
 		cellsize2 = cellsize * 3;
 	} else {
-		if (debug) {
+		if (G_debug) {
 			fprintf(stderr, "\nError Loading clutter file, unsupported resolution %d x %d.\n", w,h);
 			fflush(stderr);
 		}
 		return 0; // can't work with this yet
 	}
 
-	if (debug) {
+	if (G_debug) {
 	        fprintf(stderr, "\nLoading clutter file \"%s\" %d x %d...\n", filename, w,h);
 		fflush(stderr);
 	}
@@ -81,7 +81,7 @@ int loadClutter(char *filename, double radius, struct site tx)
 		sscanf(pch, "%lf", &yll);
 	}
 
-	if (debug) {
+	if (G_debug) {
 		fprintf(stderr, "\nxll %.2f yll %.2f\n", xll, yll);
 		fflush(stderr);
 	}
@@ -152,20 +152,20 @@ int loadClutter(char *filename, double radius, struct site tx)
 int averageHeight(int height, int width, int x, int y){
 	int total = 0;
 	int c=0;
-	if(dem[0].data[y-1][x-1]>0){
-		total+=dem[0].data[y-1][x-1];
+	if(G_dem[0].data[y-1][x-1]>0){
+		total+=G_dem[0].data[y-1][x-1];
 		c++;
 	}
-	if(dem[0].data[y+1][x+1]>0){
-		total+=dem[0].data[y+1][x+1];
+	if(G_dem[0].data[y+1][x+1]>0){
+		total+=G_dem[0].data[y+1][x+1];
 		c++;
 	}
-	if(dem[0].data[y-1][x+1]>0){
-		total+=dem[0].data[y-1][x+1];
+	if(G_dem[0].data[y-1][x+1]>0){
+		total+=G_dem[0].data[y-1][x+1];
 		c++;
 	}
-	if(dem[0].data[y+1][x-1]>0){
-		total+=dem[0].data[y+1][x-1];
+	if(G_dem[0].data[y+1][x-1]>0){
+		total+=G_dem[0].data[y+1][x-1];
 		c++;
 	}
 
@@ -185,8 +185,8 @@ int loadLIDAR(char *filenames, int resample)
 	tile_t *tiles;
 
 	// Initialize global variables before processing files
-	min_west = 361; // any value will be lower than this
-	max_west = 0;   // any value will be higher than this
+	G_min_west = 361; // any value will be lower than this
+	G_max_west = 0;   // any value will be higher than this
 
 	// test for multiple files
 	filename = strtok(filenames, " ,");
@@ -198,7 +198,7 @@ int loadLIDAR(char *filenames, int resample)
 
 	/* Allocate the tile array */
 	if( (tiles = (tile_t*) calloc(fc+1, sizeof(tile_t))) == NULL ) {
-		if (debug)
+		if (G_debug)
 			fprintf(stderr,"Could not allocate %d\n tiles",fc+1);
 		return ENOMEM;
 	}
@@ -214,7 +214,7 @@ int loadLIDAR(char *filenames, int resample)
 			return success;
 		}
 
-		if (debug) {
+		if (G_debug) {
 			fprintf(stderr, "Loading \"%s\" into page %d with width %d...\n", files[indx], indx, tiles[indx].width);
 			fflush(stderr);
 		}
@@ -227,34 +227,34 @@ int loadLIDAR(char *filenames, int resample)
 		}
 
 		// Update a bunch of globals
-		if (tiles[indx].max_el > max_elevation)
-			max_elevation = tiles[indx].max_el; 
-		if (tiles[indx].min_el < min_elevation)
-			min_elevation = tiles[indx].min_el;
+		if (tiles[indx].max_el > G_max_elevation)
+			G_max_elevation = tiles[indx].max_el; 
+		if (tiles[indx].min_el < G_min_elevation)
+			G_min_elevation = tiles[indx].min_el;
 
-		if (max_north == -90 || tiles[indx].max_north > max_north)
-			max_north = tiles[indx].max_north;
+		if (G_max_north == -90 || tiles[indx].max_north > G_max_north)
+			G_max_north = tiles[indx].max_north;
 
-		if (min_north == 90 || tiles[indx].min_north < min_north)
-			min_north = tiles[indx].min_north;
+		if (G_min_north == 90 || tiles[indx].min_north < G_min_north)
+			G_min_north = tiles[indx].min_north;
 
 		//Meridian switch. max_west=0
-		if (abs(tiles[indx].max_west - max_west) < 180 || tiles[indx].max_west < 360) {
-		        if (tiles[indx].max_west > max_west)
-			        max_west = tiles[indx].max_west; // update highest value
+		if (abs(tiles[indx].max_west - G_max_west) < 180 || tiles[indx].max_west < 360) {
+		        if (tiles[indx].max_west > G_max_west)
+			        G_max_west = tiles[indx].max_west; // update highest value
 		} else {
-		        if (tiles[indx].max_west < max_west)
-			        max_west = tiles[indx].max_west;
+		        if (tiles[indx].max_west < G_max_west)
+			        G_max_west = tiles[indx].max_west;
 		}
-		if (fabs(tiles[indx].min_west - min_west) < 180.0 || tiles[indx].min_west <= 360) {
-			if (tiles[indx].min_west < min_west)
-				min_west = tiles[indx].min_west;
+		if (fabs(tiles[indx].min_west - G_min_west) < 180.0 || tiles[indx].min_west <= 360) {
+			if (tiles[indx].min_west < G_min_west)
+				G_min_west = tiles[indx].min_west;
 		} else {
-			if (tiles[indx].min_west > min_west)
-				min_west = tiles[indx].min_west;
+			if (tiles[indx].min_west > G_min_west)
+				G_min_west = tiles[indx].min_west;
 		}
 		// Handle tile with 360 XUR
-		if(min_west>359) min_west=0.0;
+		if(G_min_west>359) G_min_west=0.0;
 	}
 
 	/* Iterate through all of the tiles to find the smallest resolution. We will
@@ -279,7 +279,7 @@ int loadLIDAR(char *filenames, int resample)
 
 	  for (size_t i = 0; i < (unsigned)fc; i++) {
 			float rescale = tiles[i].resolution / (float)desired_resolution;
-			if(debug) {
+			if(G_debug) {
 				fprintf(stderr,"res %.5f desired_res %.5f\n",tiles[i].resolution,(float)desired_resolution);
 				fflush(stderr);
 			}
@@ -295,24 +295,24 @@ int loadLIDAR(char *filenames, int resample)
 	}
 
 	/* Now we work out the size of the giant lidar tile. */
-	if(debug){
-		fprintf(stderr,"mw:%lf Mnw:%lf\n", max_west, min_west);
+	if(G_debug){
+		fprintf(stderr,"mw:%lf Mnw:%lf\n", G_max_west, G_min_west);
 	}
-	double total_width = max_west - min_west >= 0 ? max_west - min_west : max_west + (360 - min_west);
-	double total_height = max_north - min_north;
-	if (debug) {
-		fprintf(stderr,"totalh: %.7f - %.7f = %.7f totalw: %.7f - %.7f = %.7f fc: %d\n", max_north, min_north, total_height, max_west, min_west, total_width,fc);
+	double total_width = G_max_west - G_min_west >= 0 ? G_max_west - G_min_west : G_max_west + (360 - G_min_west);
+	double total_height = G_max_north - G_min_north;
+	if (G_debug) {
+		fprintf(stderr,"totalh: %.7f - %.7f = %.7f totalw: %.7f - %.7f = %.7f fc: %d\n", G_max_north, G_min_north, total_height, G_max_west, G_min_west, total_width,fc);
 	}
 
 	//detect problematic layouts eg. vertical rectangles
 	// 1x2
 	if(fc >= 2 && desired_resolution < 28 && total_height > total_width*1.5){
-		tiles[fc].max_north=max_north;
-		tiles[fc].min_north=min_north;
-		westoffset=westoffset-(total_height-total_width); // WGS84 for stdout only
-		max_west=max_west+(total_height-total_width); // Positive westing
-		tiles[fc].max_west=max_west; // Positive westing
-		tiles[fc].min_west=max_west;
+		tiles[fc].max_north=G_max_north;
+		tiles[fc].min_north=G_min_north;
+		G_westoffset=G_westoffset-(total_height-total_width); // WGS84 for stdout only
+		G_max_west=G_max_west+(total_height-total_width); // Positive westing
+		tiles[fc].max_west=G_max_west; // Positive westing
+		tiles[fc].min_west=G_max_west;
 		tiles[fc].ppdy=tiles[fc-1].ppdy;
 		tiles[fc].ppdy=tiles[fc-1].ppdx;
 		tiles[fc].width=(total_height-total_width);
@@ -322,18 +322,18 @@ int loadLIDAR(char *filenames, int resample)
 
 		//calculate deficit
 
-		if (debug) {
+		if (G_debug) {
 		        fprintf(stderr,"deficit: %.4f cellsize: %.9f tiles needed to square: %.1f, desired_resolution %f\n", total_width-total_height, avgCellsize, (total_width-total_height)/avgCellsize, (float)desired_resolution);
 			fflush (stderr);
 		}
 	}
 	// 2x1
 	if (fc >= 2 && desired_resolution < 28 && total_width > total_height*1.5) {
-		tiles[fc].max_north=max_north+(total_width-total_height);
-		tiles[fc].min_north=max_north;
-		tiles[fc].max_west=max_west; // Positive westing
-		max_north=max_north+(total_width-total_height); // Positive westing
-		tiles[fc].min_west=min_west;
+		tiles[fc].max_north=G_max_north+(total_width-total_height);
+		tiles[fc].min_north=G_max_north;
+		tiles[fc].max_west=G_max_west; // Positive westing
+		G_max_north=G_max_north+(total_width-total_height); // Positive westing
+		tiles[fc].min_west=G_min_west;
 		tiles[fc].ppdy=tiles[fc-1].ppdy;
 		tiles[fc].ppdy=tiles[fc-1].ppdx;
 		tiles[fc].width=total_width; 
@@ -343,7 +343,7 @@ int loadLIDAR(char *filenames, int resample)
 
 		//calculate deficit
 
-		if (debug) {
+		if (G_debug) {
 			fprintf(stderr,"deficit: %.4f cellsize: %.9f tiles needed to square: %.1f\n", total_width-total_height,avgCellsize,(total_width-total_height)/avgCellsize);
 			fflush(stdout);
 		}
@@ -351,8 +351,8 @@ int loadLIDAR(char *filenames, int resample)
 	size_t new_height = 0;
 	size_t new_width = 0;
 	for ( size_t i = 0; i < (unsigned)fc; i++ ) {
-		double north_offset = max_north - tiles[i].max_north;
-		double west_offset = max_west - tiles[i].max_west >= 0 ? max_west - tiles[i].max_west : max_west + (360 - tiles[i].max_west);
+		double north_offset = G_max_north - tiles[i].max_north;
+		double west_offset = G_max_west - tiles[i].max_west >= 0 ? G_max_west - tiles[i].max_west : G_max_west + (360 - tiles[i].max_west);
 		size_t north_pixel_offset = north_offset * tiles[i].ppdy;
 		size_t west_pixel_offset = west_offset * tiles[i].ppdx;
 
@@ -360,7 +360,7 @@ int loadLIDAR(char *filenames, int resample)
 			new_width = west_pixel_offset + tiles[i].width;
 		if ( north_pixel_offset + tiles[i].height > new_height )
 			new_height = north_pixel_offset + tiles[i].height;
-		if (debug)
+		if (G_debug)
 			fprintf(stderr,"north_pixel_offset %zu west_pixel_offset %zu, %zu x %zu\n", north_pixel_offset, west_pixel_offset,new_height,new_width);
 
       		//sanity check!
@@ -374,14 +374,14 @@ int loadLIDAR(char *filenames, int resample)
 	short * new_tile = (short*) calloc( new_tile_alloc, sizeof(short) );
 
 	if ( new_tile == NULL ) {
-	        if (debug) {
+	        if (G_debug) {
 			fprintf(stderr,"Could not allocate %zu bytes\n", new_tile_alloc);
 			fflush(stderr);
 		}
 		free(tiles);
 		return ENOMEM;
 	}
-	if (debug) {
+	if (G_debug) {
 		fprintf(stderr,"Lidar tile dimensions w:%lf(%zu) h:%lf(%zu)\n", total_width, new_width, total_height, new_height);
 		fflush(stderr);
 	}
@@ -391,13 +391,13 @@ int loadLIDAR(char *filenames, int resample)
 
 	/* Fill out the array one tile at a time */
 	for (size_t i = 0; i < (unsigned)fc; i++) {
-		double north_offset = max_north - tiles[i].max_north;
-		double west_offset = max_west - tiles[i].max_west >= 0 ? max_west - tiles[i].max_west : max_west + (360 - tiles[i].max_west);
+		double north_offset = G_max_north - tiles[i].max_north;
+		double west_offset = G_max_west - tiles[i].max_west >= 0 ? G_max_west - tiles[i].max_west : G_max_west + (360 - tiles[i].max_west);
 		size_t north_pixel_offset = north_offset * tiles[i].ppdy;
 		size_t west_pixel_offset = west_offset * tiles[i].ppdx; 
 
-		if (debug) {
-			fprintf(stderr,"mn: %lf mw:%lf globals: %lf %lf\n", tiles[i].max_north, tiles[i].max_west, max_north, max_west);
+		if (G_debug) {
+			fprintf(stderr,"mn: %lf mw:%lf globals: %lf %lf\n", tiles[i].max_north, tiles[i].max_west, G_max_north, G_max_west);
 			fprintf(stderr,"Offset n:%zu(%lf) w:%zu(%lf)\n", north_pixel_offset, north_offset, west_pixel_offset, west_offset);
 			fprintf(stderr,"Height: %d\n", tiles[i].height);
 			fflush(stderr);
@@ -409,7 +409,7 @@ int loadLIDAR(char *filenames, int resample)
 			register short *src_addr = &tiles[i].data[h*tiles[i].width];
 			// Check if we might overflow
 			if ( dest_addr + tiles[i].width > new_tile + new_tile_alloc || dest_addr < new_tile ){
-			        if (debug) {
+			        if (G_debug) {
 					fprintf(stderr, "Overflow %zu\n",i);
 					fflush(stderr);
 				}
@@ -422,26 +422,26 @@ int loadLIDAR(char *filenames, int resample)
 	// SUPER tile
 	MAXPAGES = 1;
 	IPPD = MAX(new_width,new_height);
-	ippd=IPPD;
+	G_ippd=IPPD;
 
 	ARRAYSIZE = (MAXPAGES * IPPD) + 10;
 	do_allocs();
 
-	height = new_height;
-	width = new_width;
+	G_height = new_height;
+	G_width = new_width;
 
-	if (debug) {
-		fprintf(stderr,"Setting IPPD to %d height %d width %d\n",IPPD,height,width);
+	if (G_debug) {
+		fprintf(stderr,"Setting IPPD to %d height %d width %d\n",IPPD,G_height,G_width);
 		fflush(stderr);
 	}
 
 	/* Load the data into the global dem array */
-	dem[0].max_north = max_north;
-	dem[0].min_west = min_west;
-	dem[0].min_north = min_north;
-	dem[0].max_west = max_west;
-	dem[0].max_el = max_elevation;
-	dem[0].min_el = min_elevation;
+	G_dem[0].max_north = G_max_north;
+	G_dem[0].min_west = G_min_west;
+	G_dem[0].min_north = G_min_north;
+	G_dem[0].max_west = G_max_west;
+	G_dem[0].max_el = G_max_elevation;
+	G_dem[0].min_el = G_min_elevation;
 
 	/*
 	 * Copy the lidar tile data into the dem array. The dem array is then rotated
@@ -451,9 +451,9 @@ int loadLIDAR(char *filenames, int resample)
 	for (size_t h = 0; h < new_height; h++, y--) {
 		int x = new_width-1;
 		for (size_t w = 0; w < new_width; w++, x--) {
-			dem[0].data[y][x] = new_tile[h*new_width + w];
-			dem[0].signal[y][x] = 0;
-			dem[0].mask[y][x] = 0;
+			G_dem[0].data[y][x] = new_tile[h*new_width + w];
+			G_dem[0].signal[y][x] = 0;
+			G_dem[0].mask[y][x] = 0;
 		}
 	}
 
@@ -463,20 +463,20 @@ int loadLIDAR(char *filenames, int resample)
 		int x = new_width-2;
 		for (size_t w = 0; w < new_width-2; w++, x--) {
 
-			if(dem[0].data[y][x]<=0){
-				dem[0].data[y][x] = averageHeight(new_height,new_width,x,y);
+			if(G_dem[0].data[y][x]<=0){
+				G_dem[0].data[y][x] = averageHeight(new_height,new_width,x,y);
 			}
 		}
 	}
-	if (width > 3600 * 8) {
-		fprintf(stdout,"DEM fault. Contact system administrator: %d\n",width);
+	if (G_width > 3600 * 8) {
+		fprintf(stdout,"DEM fault. Contact system administrator: %d\n",G_width);
 		fflush(stderr);
 		exit(1);
 	}
 
-	if (debug) {
-		fprintf(stderr, "LIDAR LOADED %d x %d\n", width, height);
-		fprintf(stderr, "fc %d WIDTH %d HEIGHT %d ippd %d minN %.5f maxN %.5f minW %.5f maxW %.5f avgCellsize %.5f\n", fc, width, height, ippd,min_north,max_north,min_west,max_west,avgCellsize);
+	if (G_debug) {
+		fprintf(stderr, "LIDAR LOADED %d x %d\n", G_width, G_height);
+		fprintf(stderr, "fc %d WIDTH %d HEIGHT %d ippd %d minN %.5f maxN %.5f minW %.5f maxW %.5f avgCellsize %.5f\n", fc, G_width, G_height, G_ippd,G_min_north,G_max_north,G_min_west,G_max_west,avgCellsize);
 		fflush(stderr);
 	}
 
@@ -522,10 +522,10 @@ int LoadSDF_SDF(char *name)
 	/* Is it already in memory? */
 
 	for (indx = 0, found = 0; indx < MAXPAGES && found == 0; indx++) {
-		if (minlat == dem[indx].min_north
-		    && minlon == dem[indx].min_west
-		    && maxlat == dem[indx].max_north
-		    && maxlon == dem[indx].max_west)
+		if (minlat == G_dem[indx].min_north
+		    && minlon == G_dem[indx].min_west
+		    && maxlat == G_dem[indx].max_north
+		    && maxlon == G_dem[indx].max_west)
 			found = 1;
 	}
 
@@ -534,7 +534,7 @@ int LoadSDF_SDF(char *name)
 	if (found == 0) {
 		for (indx = 0, free_page = 0; indx < MAXPAGES && free_page == 0;
 		     indx++)
-			if (dem[indx].max_north == -90)
+			if (G_dem[indx].max_north == -90)
 				free_page = 1;
 	}
 
@@ -549,14 +549,14 @@ int LoadSDF_SDF(char *name)
 			/* Next, try loading SDF file from path specified
 			   in $HOME/.ss_path file or by -d argument */
 
-			strncpy(path_plus_name, sdf_path, sizeof(path_plus_name)-1);
+			strncpy(path_plus_name, G_sdf_path, sizeof(path_plus_name)-1);
 			strncat(path_plus_name, sdf_file, sizeof(path_plus_name)-1);
 			if( (fd = fopen(path_plus_name, "rb")) == NULL ){
 				return -errno;
 			}
 		}
 
-		if (debug == 1) {
+		if (G_debug == 1) {
 			fprintf(stderr,
 				"Loading \"%s\" into page %d...\n",
 				path_plus_name, indx + 1);
@@ -564,22 +564,22 @@ int LoadSDF_SDF(char *name)
 		}
 
 		if (fgets(line, 19, fd) != NULL) {
-			if( sscanf(line, "%f", &dem[indx].max_west) == EOF )
+			if( sscanf(line, "%f", &G_dem[indx].max_west) == EOF )
 				return -errno;
 		}
 
 		if (fgets(line, 19, fd) != NULL) {
-			if( sscanf(line, "%f", &dem[indx].min_north) == EOF )
+			if( sscanf(line, "%f", &G_dem[indx].min_north) == EOF )
 				return -errno;
 		}
 
 		if (fgets(line, 19, fd) != NULL) {
-			if( sscanf(line, "%f", &dem[indx].min_west) == EOF )
+			if( sscanf(line, "%f", &G_dem[indx].min_west) == EOF )
 				return -errno;
 		}
 
 		if (fgets(line, 19, fd) != NULL) {
-			if( sscanf(line, "%f", &dem[indx].max_north) == EOF )
+			if( sscanf(line, "%f", &G_dem[indx].max_north) == EOF )
 				return -errno;
 		}
 
@@ -588,10 +588,10 @@ int LoadSDF_SDF(char *name)
 		   Each .sdf tile contains 1200x1200 = 1.44M 'points'
 		   Each point is sampled for 1200 resolution!
 		 */
-		for (x = 0; x < ippd; x++) {
-			for (y = 0; y < ippd; y++) {
+		for (x = 0; x < G_ippd; x++) {
+			for (y = 0; y < G_ippd; y++) {
 
-				for (j = 0; j < jgets; j++) {
+				for (j = 0; j < G_jgets; j++) {
 					if( fgets(jline, sizeof(jline), fd) == NULL )
 						return -EIO;
 				}
@@ -600,25 +600,25 @@ int LoadSDF_SDF(char *name)
 					data = atoi(line);
 				}
 
-				dem[indx].data[x][y] = data;
-				dem[indx].signal[x][y] = 0;
-				dem[indx].mask[x][y] = 0;
+				G_dem[indx].data[x][y] = data;
+				G_dem[indx].signal[x][y] = 0;
+				G_dem[indx].mask[x][y] = 0;
 
-				if (data > dem[indx].max_el)
-					dem[indx].max_el = data;
+				if (data > G_dem[indx].max_el)
+					G_dem[indx].max_el = data;
 
-				if (data < dem[indx].min_el)
-					dem[indx].min_el = data;
+				if (data < G_dem[indx].min_el)
+					G_dem[indx].min_el = data;
 
 			}
 
-			if (ippd == 600) {
+			if (G_ippd == 600) {
 				for (j = 0; j < IPPD; j++) {
 					if( fgets(jline, sizeof(jline), fd) == NULL )
 						return -EIO;
 				}
 			}
-			if (ippd == 300) {
+			if (G_ippd == 300) {
 				for (j = 0; j < IPPD; j++) {
 					if( fgets(jline, sizeof(jline), fd) == NULL )
 						return -EIO;
@@ -632,51 +632,51 @@ int LoadSDF_SDF(char *name)
 
 		fclose(fd);
 
-		if (dem[indx].min_el < min_elevation)
-			min_elevation = dem[indx].min_el;
+		if (G_dem[indx].min_el < G_min_elevation)
+			G_min_elevation = G_dem[indx].min_el;
 
-		if (dem[indx].max_el > max_elevation)
-			max_elevation = dem[indx].max_el;
+		if (G_dem[indx].max_el > G_max_elevation)
+			G_max_elevation = G_dem[indx].max_el;
 
-		if (max_north == -90)
-			max_north = dem[indx].max_north;
+		if (G_max_north == -90)
+			G_max_north = G_dem[indx].max_north;
 
-		else if (dem[indx].max_north > max_north)
-			max_north = dem[indx].max_north;
+		else if (G_dem[indx].max_north > G_max_north)
+			G_max_north = G_dem[indx].max_north;
 
-		if (min_north == 90)
-			min_north = dem[indx].min_north;
+		if (G_min_north == 90)
+			G_min_north = G_dem[indx].min_north;
 
-		else if (dem[indx].min_north < min_north)
-			min_north = dem[indx].min_north;
+		else if (G_dem[indx].min_north < G_min_north)
+			G_min_north = G_dem[indx].min_north;
 
-		if (max_west == -1)
-			max_west = dem[indx].max_west;
+		if (G_max_west == -1)
+			G_max_west = G_dem[indx].max_west;
 
 		else {
-			if (abs(dem[indx].max_west - max_west) < 180) {
-				if (dem[indx].max_west > max_west)
-					max_west = dem[indx].max_west;
+			if (abs(G_dem[indx].max_west - G_max_west) < 180) {
+				if (G_dem[indx].max_west > G_max_west)
+					G_max_west = G_dem[indx].max_west;
 			}
 
 			else {
-				if (dem[indx].max_west < max_west)
-					max_west = dem[indx].max_west;
+				if (G_dem[indx].max_west < G_max_west)
+					G_max_west = G_dem[indx].max_west;
 			}
 		}
 
-		if (min_west == 360)
-			min_west = dem[indx].min_west;
+		if (G_min_west == 360)
+			G_min_west = G_dem[indx].min_west;
 
 		else {
-			if (fabs(dem[indx].min_west - min_west) < 180.0) {
-				if (dem[indx].min_west < min_west)
-					min_west = dem[indx].min_west;
+			if (fabs(G_dem[indx].min_west - G_min_west) < 180.0) {
+				if (G_dem[indx].min_west < G_min_west)
+					G_min_west = G_dem[indx].min_west;
 			}
 
 			else {
-				if (dem[indx].min_west > min_west)
-					min_west = dem[indx].min_west;
+				if (G_dem[indx].min_west > G_min_west)
+					G_min_west = G_dem[indx].min_west;
 			}
 		}
 
@@ -769,10 +769,10 @@ int LoadSDF_BZ(char *name)
 	/* Is it already in memory? */
 
 	for (indx = 0, found = 0; indx < MAXPAGES && found == 0; indx++) {
-		if (minlat == dem[indx].min_north
-		    && minlon == dem[indx].min_west
-		    && maxlat == dem[indx].max_north
-		    && maxlon == dem[indx].max_west)
+		if (minlat == G_dem[indx].min_north
+		    && minlon == G_dem[indx].min_west
+		    && maxlat == G_dem[indx].max_north
+		    && maxlon == G_dem[indx].max_west)
 			found = 1;
 	}
 
@@ -781,7 +781,7 @@ int LoadSDF_BZ(char *name)
 	if (found == 0) {
 		for (indx = 0, free_page = 0; indx < MAXPAGES && free_page == 0;
 		     indx++)
-			if (dem[indx].max_north == -90)
+			if (G_dem[indx].max_north == -90)
 				free_page = 1;
 	}
 
@@ -803,7 +803,7 @@ int LoadSDF_BZ(char *name)
 		  /* Next, try loading SDF file from path specified
 		     in $HOME/.ss_path file or by -d argument */
 
-		        strncpy(path_plus_name, sdf_path, sizeof(path_plus_name)-1);
+		        strncpy(path_plus_name, G_sdf_path, sizeof(path_plus_name)-1);
 			strncat(path_plus_name, sdf_file, sizeof(path_plus_name)-1);
 			fd = fopen(path_plus_name, "rb");
 			bzfd=BZ2_bzReadOpen(&bzerror,fd,0,0,NULL,0);
@@ -813,7 +813,7 @@ int LoadSDF_BZ(char *name)
 		if (!success)
 		        return -errno;
 
-		if (debug == 1) {
+		if (G_debug == 1) {
 			fprintf(stderr,
 				"Decompressing \"%s\" into page %d...\n",
 				path_plus_name, indx + 1);
@@ -825,19 +825,19 @@ int LoadSDF_BZ(char *name)
 		bzbuf_pointer = bzbytes_read = 0L;
 
 
-		pos = sscanf(BZfgets(bzline, bzfd, 19), "%f", &dem[indx].max_west);
+		pos = sscanf(BZfgets(bzline, bzfd, 19), "%f", &G_dem[indx].max_west);
 		if (bzerror != BZ_OK || pos == EOF)
 		        return -errno;
 
-		pos = sscanf(BZfgets(bzline, bzfd, 19), "%f", &dem[indx].min_north);
+		pos = sscanf(BZfgets(bzline, bzfd, 19), "%f", &G_dem[indx].min_north);
 		if (bzerror != BZ_OK || pos == EOF)
 		        return -errno;
 
-		pos = sscanf(BZfgets(bzline, bzfd, 19), "%f", &dem[indx].min_west);
+		pos = sscanf(BZfgets(bzline, bzfd, 19), "%f", &G_dem[indx].min_west);
 		if (bzerror != BZ_OK || pos == EOF)
 		        return -errno;
 
-		pos = sscanf(BZfgets(bzline, bzfd, 19), "%f", &dem[indx].max_north);
+		pos = sscanf(BZfgets(bzline, bzfd, 19), "%f", &G_dem[indx].max_north);
 		if (bzerror != BZ_OK || pos == EOF)
 		        return -errno;
 
@@ -847,10 +847,10 @@ int LoadSDF_BZ(char *name)
 		   Each point is sampled for 1200 resolution!
 		 */
 		posn = NULL;
-		for (x = 0; x < ippd; x++) {
-			for (y = 0; y < ippd; y++) {
+		for (x = 0; x < G_ippd; x++) {
+			for (y = 0; y < G_ippd; y++) {
 
-				for (j = 0; j < jgets; j++) {
+				for (j = 0; j < G_jgets; j++) {
 				        posn = BZfgets(jline, bzfd, 19);
 					if ((bzerror != BZ_STREAM_END && bzerror != BZ_OK) || posn == NULL)
 					        return -EIO;
@@ -861,26 +861,26 @@ int LoadSDF_BZ(char *name)
 				       return -EIO;
 				data = atoi(line);
 
-				dem[indx].data[x][y] = data;
-				dem[indx].signal[x][y] = 0;
-				dem[indx].mask[x][y] = 0;
+				G_dem[indx].data[x][y] = data;
+				G_dem[indx].signal[x][y] = 0;
+				G_dem[indx].mask[x][y] = 0;
 
-				if (data > dem[indx].max_el)
-					dem[indx].max_el = data;
+				if (data > G_dem[indx].max_el)
+					G_dem[indx].max_el = data;
 
-				if (data < dem[indx].min_el)
-					dem[indx].min_el = data;
+				if (data < G_dem[indx].min_el)
+					G_dem[indx].min_el = data;
 
 			}
 
-			if (ippd == 600) {
+			if (G_ippd == 600) {
 				for (j = 0; j < IPPD; j++) {
 				        posn = BZfgets(jline, bzfd, 19);
 					if ((bzerror != BZ_STREAM_END && bzerror != BZ_OK) || posn == NULL)
 					        return -EIO;
 				}
 			}
-			if (ippd == 300) {
+			if (G_ippd == 300) {
 				for (j = 0; j < IPPD; j++) {
 				        posn = BZfgets(jline, bzfd, 19);
 					if ((bzerror != BZ_STREAM_END && bzerror != BZ_OK) || posn == NULL)
@@ -898,51 +898,51 @@ int LoadSDF_BZ(char *name)
 		BZ2_bzReadClose(&bzerror,bzfd);
 		fclose(fd);
 
-		if (dem[indx].min_el < min_elevation)
-			min_elevation = dem[indx].min_el;
+		if (G_dem[indx].min_el < G_min_elevation)
+			G_min_elevation = G_dem[indx].min_el;
 
-		if (dem[indx].max_el > max_elevation)
-			max_elevation = dem[indx].max_el;
+		if (G_dem[indx].max_el > G_max_elevation)
+			G_max_elevation = G_dem[indx].max_el;
 
-		if (max_north == -90)
-			max_north = dem[indx].max_north;
+		if (G_max_north == -90)
+			G_max_north = G_dem[indx].max_north;
 
-		else if (dem[indx].max_north > max_north)
-			max_north = dem[indx].max_north;
+		else if (G_dem[indx].max_north > G_max_north)
+			G_max_north = G_dem[indx].max_north;
 
-		if (min_north == 90)
-			min_north = dem[indx].min_north;
+		if (G_min_north == 90)
+			G_min_north = G_dem[indx].min_north;
 
-		else if (dem[indx].min_north < min_north)
-			min_north = dem[indx].min_north;
+		else if (G_dem[indx].min_north < G_min_north)
+			G_min_north = G_dem[indx].min_north;
 
-		if (max_west == -1)
-			max_west = dem[indx].max_west;
+		if (G_max_west == -1)
+			G_max_west = G_dem[indx].max_west;
 
 		else {
-			if (abs(dem[indx].max_west - max_west) < 180) {
-				if (dem[indx].max_west > max_west)
-					max_west = dem[indx].max_west;
+			if (abs(G_dem[indx].max_west - G_max_west) < 180) {
+				if (G_dem[indx].max_west > G_max_west)
+					G_max_west = G_dem[indx].max_west;
 			}
 
 			else {
-				if (dem[indx].max_west < max_west)
-					max_west = dem[indx].max_west;
+				if (G_dem[indx].max_west < G_max_west)
+					G_max_west = G_dem[indx].max_west;
 			}
 		}
 
-		if (min_west == 360)
-			min_west = dem[indx].min_west;
+		if (G_min_west == 360)
+			G_min_west = G_dem[indx].min_west;
 
 		else {
-			if (fabs(dem[indx].min_west - min_west) < 180.0) {
-				if (dem[indx].min_west < min_west)
-					min_west = dem[indx].min_west;
+			if (fabs(G_dem[indx].min_west - G_min_west) < 180.0) {
+				if (G_dem[indx].min_west < G_min_west)
+					G_min_west = G_dem[indx].min_west;
 			}
 
 			else {
-				if (dem[indx].min_west > min_west)
-					min_west = dem[indx].min_west;
+				if (G_dem[indx].min_west > G_min_west)
+					G_min_west = G_dem[indx].min_west;
 			}
 		}
 
@@ -1002,7 +1002,7 @@ char *GZfgets(char *output, gzFile gzfd, unsigned length)
 		}
 
 	}
-	if (debug && (errmsg != NULL) && (gzerr != Z_OK && gzerr != Z_STREAM_END)) {
+	if (G_debug && (errmsg != NULL) && (gzerr != Z_OK && gzerr != Z_STREAM_END)) {
 	        fprintf(stderr, "GZfgets: gzerr = %d, errmsg = [%s]\n", gzerr, errmsg);
 		fflush(stderr);
 	}
@@ -1050,10 +1050,10 @@ int LoadSDF_GZ(char *name)
 	/* Is it already in memory? */
 
 	for (indx = 0, found = 0; indx < MAXPAGES && found == 0; indx++) {
-		if (minlat == dem[indx].min_north
-		    && minlon == dem[indx].min_west
-		    && maxlat == dem[indx].max_north
-		    && maxlon == dem[indx].max_west)
+		if (minlat == G_dem[indx].min_north
+		    && minlon == G_dem[indx].min_west
+		    && maxlat == G_dem[indx].max_north
+		    && maxlon == G_dem[indx].max_west)
 			found = 1;
 	}
 
@@ -1062,7 +1062,7 @@ int LoadSDF_GZ(char *name)
 	if (found == 0) {
 		for (indx = 0, free_page = 0; indx < MAXPAGES && free_page == 0;
 		     indx++)
-			if (dem[indx].max_north == -90)
+			if (G_dem[indx].max_north == -90)
 				free_page = 1;
 	}
 
@@ -1083,7 +1083,7 @@ int LoadSDF_GZ(char *name)
 		  /* Next, try loading SDF file from path specified
 		     in $HOME/.ss_path file or by -d argument */
 
-		        strncpy(path_plus_name, sdf_path, sizeof(path_plus_name)-1);
+		        strncpy(path_plus_name, G_sdf_path, sizeof(path_plus_name)-1);
 			strncat(path_plus_name, sdf_file, sizeof(path_plus_name)-1);
 			gzfd = gzopen(path_plus_name, "rb");
 
@@ -1096,7 +1096,7 @@ int LoadSDF_GZ(char *name)
 		if (gzbuffer(gzfd, GZBUFFER))  // Allocate 32K buffer
 		        return -EIO;
 
-		if (debug == 1) {
+		if (G_debug == 1) {
 			fprintf(stderr,
 				"Decompressing \"%s\" into page %d...\n",
 				path_plus_name, indx + 1);
@@ -1107,27 +1107,27 @@ int LoadSDF_GZ(char *name)
 		gzbuf_empty = 1;
 		gzbuf_pointer = gzbytes_read = 0L;
 
-		pos = sscanf(GZfgets(gzline, gzfd, 19), "%f", &dem[indx].max_west);
+		pos = sscanf(GZfgets(gzline, gzfd, 19), "%f", &G_dem[indx].max_west);
 		errmsg = gzerror(gzfd, &gzerr);
 		if (gzerr != Z_OK || pos == EOF)
 		        return -errno;
 
-		pos = sscanf(GZfgets(gzline, gzfd, 19), "%f", &dem[indx].min_north);
+		pos = sscanf(GZfgets(gzline, gzfd, 19), "%f", &G_dem[indx].min_north);
 		errmsg = gzerror(gzfd, &gzerr);
 		if (gzerr != Z_OK || pos == EOF)
 		        return -errno;
 
-		pos = sscanf(GZfgets(gzline, gzfd, 19), "%f", &dem[indx].min_west);
+		pos = sscanf(GZfgets(gzline, gzfd, 19), "%f", &G_dem[indx].min_west);
 		errmsg = gzerror(gzfd, &gzerr);
 		if (gzerr != Z_OK || pos == EOF)
 		        return -errno;
 
-		pos = sscanf(GZfgets(gzline, gzfd, 19), "%f", &dem[indx].max_north);
+		pos = sscanf(GZfgets(gzline, gzfd, 19), "%f", &G_dem[indx].max_north);
 		errmsg = gzerror(gzfd, &gzerr);
 		if (gzerr != Z_OK || pos == EOF)
 		        return -errno;
 
-		if (debug && (errmsg != NULL) && (gzerr != Z_OK && gzerr != Z_STREAM_END)) {
+		if (G_debug && (errmsg != NULL) && (gzerr != Z_OK && gzerr != Z_STREAM_END)) {
 		        fprintf(stderr, "LoadSDF_GZ: gzerr = %d, errmsg = [%s]\n", gzerr, errmsg);
 			fflush(stderr);
 		}
@@ -1138,10 +1138,10 @@ int LoadSDF_GZ(char *name)
 		   Each point is sampled for 1200 resolution!
 		 */
 		posn = NULL;
-		for (x = 0; x < ippd; x++) {
-			for (y = 0; y < ippd; y++) {
+		for (x = 0; x < G_ippd; x++) {
+			for (y = 0; y < G_ippd; y++) {
 
-				for (j = 0; j < jgets; j++) {
+				for (j = 0; j < G_jgets; j++) {
 				        posn = GZfgets(jline, gzfd, 19);
 					errmsg = gzerror(gzfd, &gzerr);
 					if ((gzerr != Z_STREAM_END && gzerr != Z_OK) || posn == NULL)
@@ -1155,19 +1155,19 @@ int LoadSDF_GZ(char *name)
 
 				data = atoi(line);
 
-				dem[indx].data[x][y] = data;
-				dem[indx].signal[x][y] = 0;
-				dem[indx].mask[x][y] = 0;
+				G_dem[indx].data[x][y] = data;
+				G_dem[indx].signal[x][y] = 0;
+				G_dem[indx].mask[x][y] = 0;
 
-				if (data > dem[indx].max_el)
-					dem[indx].max_el = data;
+				if (data > G_dem[indx].max_el)
+					G_dem[indx].max_el = data;
 
-				if (data < dem[indx].min_el)
-					dem[indx].min_el = data;
+				if (data < G_dem[indx].min_el)
+					G_dem[indx].min_el = data;
 
 			}
 
-			if (ippd == 600) {
+			if (G_ippd == 600) {
 				for (j = 0; j < IPPD; j++) {
 				        posn = GZfgets(jline, gzfd, 19);
 					errmsg = gzerror(gzfd, &gzerr);
@@ -1175,7 +1175,7 @@ int LoadSDF_GZ(char *name)
 					        return -EIO;
 				}
 			}
-			if (ippd == 300) {
+			if (G_ippd == 300) {
 				for (j = 0; j < IPPD; j++) {
 				        posn = GZfgets(jline, gzfd, 19);
 					errmsg = gzerror(gzfd, &gzerr);
@@ -1195,51 +1195,51 @@ int LoadSDF_GZ(char *name)
 
 		gzclose_r(gzfd);  // close for reading (avoids write code)
 
-		if (dem[indx].min_el < min_elevation)
-			min_elevation = dem[indx].min_el;
+		if (G_dem[indx].min_el < G_min_elevation)
+			G_min_elevation = G_dem[indx].min_el;
 
-		if (dem[indx].max_el > max_elevation)
-			max_elevation = dem[indx].max_el;
+		if (G_dem[indx].max_el > G_max_elevation)
+			G_max_elevation = G_dem[indx].max_el;
 
-		if (max_north == -90)
-			max_north = dem[indx].max_north;
+		if (G_max_north == -90)
+			G_max_north = G_dem[indx].max_north;
 
-		else if (dem[indx].max_north > max_north)
-			max_north = dem[indx].max_north;
+		else if (G_dem[indx].max_north > G_max_north)
+			G_max_north = G_dem[indx].max_north;
 
-		if (min_north == 90)
-			min_north = dem[indx].min_north;
+		if (G_min_north == 90)
+			G_min_north = G_dem[indx].min_north;
 
-		else if (dem[indx].min_north < min_north)
-			min_north = dem[indx].min_north;
+		else if (G_dem[indx].min_north < G_min_north)
+			G_min_north = G_dem[indx].min_north;
 
-		if (max_west == -1)
-			max_west = dem[indx].max_west;
+		if (G_max_west == -1)
+			G_max_west = G_dem[indx].max_west;
 
 		else {
-			if (abs(dem[indx].max_west - max_west) < 180) {
-				if (dem[indx].max_west > max_west)
-					max_west = dem[indx].max_west;
+			if (abs(G_dem[indx].max_west - G_max_west) < 180) {
+				if (G_dem[indx].max_west > G_max_west)
+					G_max_west = G_dem[indx].max_west;
 			}
 
 			else {
-				if (dem[indx].max_west < max_west)
-					max_west = dem[indx].max_west;
+				if (G_dem[indx].max_west < G_max_west)
+					G_max_west = G_dem[indx].max_west;
 			}
 		}
 
-		if (min_west == 360)
-			min_west = dem[indx].min_west;
+		if (G_min_west == 360)
+			G_min_west = G_dem[indx].min_west;
 
 		else {
-			if (fabs(dem[indx].min_west - min_west) < 180.0) {
-				if (dem[indx].min_west < min_west)
-					min_west = dem[indx].min_west;
+			if (fabs(G_dem[indx].min_west - G_min_west) < 180.0) {
+				if (G_dem[indx].min_west < G_min_west)
+					G_min_west = G_dem[indx].min_west;
 			}
 
 			else {
-				if (dem[indx].min_west > min_west)
-					min_west = dem[indx].min_west;
+				if (G_dem[indx].min_west > G_min_west)
+					G_min_west = G_dem[indx].min_west;
 			}
 		}
 
@@ -1292,10 +1292,10 @@ int LoadSDF(char *name)
 		/* Is it already in memory? */
 
 		for (indx = 0, found = 0; indx < MAXPAGES && found == 0; indx++) {
-			if (minlat == dem[indx].min_north
-			    && minlon == dem[indx].min_west
-			    && maxlat == dem[indx].max_north
-			    && maxlon == dem[indx].max_west)
+			if (minlat == G_dem[indx].min_north
+			    && minlon == G_dem[indx].min_west
+			    && maxlat == G_dem[indx].max_north
+			    && maxlon == G_dem[indx].max_west)
 				found = 1;
 		}
 
@@ -1304,82 +1304,82 @@ int LoadSDF(char *name)
 		if (found == 0) {
 			for (indx = 0, free_page = 0;
 			     indx < MAXPAGES && free_page == 0; indx++)
-				if (dem[indx].max_north == -90)
+				if (G_dem[indx].max_north == -90)
 					free_page = 1;
 		}
 
 		indx--;
 
 		if (free_page && found == 0 && indx >= 0 && indx < MAXPAGES) {
-			if (debug == 1) {
+			if (G_debug == 1) {
 				fprintf(stderr,
 					"Region  \"%s\" assumed as sea-level into page %d...\n",
 					name, indx + 1);
 				fflush(stderr);
 			}
 
-			dem[indx].max_west = maxlon;
-			dem[indx].min_north = minlat;
-			dem[indx].min_west = minlon;
-			dem[indx].max_north = maxlat;
+			G_dem[indx].max_west = maxlon;
+			G_dem[indx].min_north = minlat;
+			G_dem[indx].min_west = minlon;
+			G_dem[indx].max_north = maxlat;
 
 			/* Fill DEM with sea-level topography */
 
-			for (x = 0; x < ippd; x++)
-				for (y = 0; y < ippd; y++) {
-					dem[indx].data[x][y] = 0;
-					dem[indx].signal[x][y] = 0;
-					dem[indx].mask[x][y] = 0;
+			for (x = 0; x < G_ippd; x++)
+				for (y = 0; y < G_ippd; y++) {
+					G_dem[indx].data[x][y] = 0;
+					G_dem[indx].signal[x][y] = 0;
+					G_dem[indx].mask[x][y] = 0;
 
-					if (dem[indx].min_el > 0)
-						dem[indx].min_el = 0;
+					if (G_dem[indx].min_el > 0)
+						G_dem[indx].min_el = 0;
 				}
 
-			if (dem[indx].min_el < min_elevation)
-				min_elevation = dem[indx].min_el;
+			if (G_dem[indx].min_el < G_min_elevation)
+				G_min_elevation = G_dem[indx].min_el;
 
-			if (dem[indx].max_el > max_elevation)
-				max_elevation = dem[indx].max_el;
+			if (G_dem[indx].max_el > G_max_elevation)
+				G_max_elevation = G_dem[indx].max_el;
 
-			if (max_north == -90)
-				max_north = dem[indx].max_north;
+			if (G_max_north == -90)
+				G_max_north = G_dem[indx].max_north;
 
-			else if (dem[indx].max_north > max_north)
-				max_north = dem[indx].max_north;
+			else if (G_dem[indx].max_north > G_max_north)
+				G_max_north = G_dem[indx].max_north;
 
-			if (min_north == 90)
-				min_north = dem[indx].min_north;
+			if (G_min_north == 90)
+				G_min_north = G_dem[indx].min_north;
 
-			else if (dem[indx].min_north < min_north)
-				min_north = dem[indx].min_north;
+			else if (G_dem[indx].min_north < G_min_north)
+				G_min_north = G_dem[indx].min_north;
 
-			if (max_west == -1)
-				max_west = dem[indx].max_west;
+			if (G_max_west == -1)
+				G_max_west = G_dem[indx].max_west;
 
 			else {
-				if (abs(dem[indx].max_west - max_west) < 180) {
-					if (dem[indx].max_west > max_west)
-						max_west = dem[indx].max_west;
+				if (abs(G_dem[indx].max_west - G_max_west) < 180) {
+					if (G_dem[indx].max_west > G_max_west)
+						G_max_west = G_dem[indx].max_west;
 				}
 
 				else {
-					if (dem[indx].max_west < max_west)
-						max_west = dem[indx].max_west;
+					if (G_dem[indx].max_west < G_max_west)
+						G_max_west = G_dem[indx].max_west;
 				}
 			}
 
-			if (min_west == 360)
-				min_west = dem[indx].min_west;
+			if (G_min_west == 360)
+				G_min_west = G_dem[indx].min_west;
 
 			else {
-				if (abs(dem[indx].min_west - min_west) < 180) {
-					if (dem[indx].min_west < min_west)
-						min_west = dem[indx].min_west;
+				if (abs(G_dem[indx].min_west - G_min_west) < 180) {
+					if (G_dem[indx].min_west < G_min_west)
+						G_min_west = G_dem[indx].min_west;
 				}
 
 				else {
-					if (dem[indx].min_west > min_west)
-						min_west = dem[indx].min_west;
+					if (G_dem[indx].min_west > G_min_west)
+						G_min_west = G_dem[indx].min_west;
 				}
 			}
 
@@ -1407,8 +1407,8 @@ int LoadPAT(char *az_filename, char *el_filename)
 
 	rotation = 0.0;
 
-	got_azimuth_pattern = 0;
-	got_elevation_pattern = 0;
+	G_got_azimuth_pattern = 0;
+	G_got_elevation_pattern = 0;
 
 	/* Load .az antenna pattern file */
 
@@ -1417,7 +1417,7 @@ int LoadPAT(char *az_filename, char *el_filename)
 		return errno;
 
 	if( fd != NULL ){
-	        if (debug) {
+	        if (G_debug) {
 
 		        fprintf(stderr, "\nAntenna Pattern Azimuth File = [%s]\n", az_filename);
 			fflush(stderr);
@@ -1447,7 +1447,7 @@ int LoadPAT(char *az_filename, char *el_filename)
 		else
 		        sscanf(string, "%f", &rotation);
 		
-	        if (debug) {
+	        if (G_debug) {
 		        fprintf(stderr, "Antenna Pattern Rotation = %f\n", rotation);
 			fflush(stderr);
 		}
@@ -1554,7 +1554,7 @@ int LoadPAT(char *az_filename, char *el_filename)
 
 		azimuth_pattern[360] = azimuth_pattern[0];
 
-		got_azimuth_pattern = 255;
+		G_got_azimuth_pattern = 255;
 	}
 
 	/* Read and process .el file */
@@ -1564,7 +1564,7 @@ int LoadPAT(char *az_filename, char *el_filename)
 		return errno;
 
 	if( fd != NULL ){
-	        if (debug) {
+	        if (G_debug) {
 		        fprintf(stderr, "Antenna Pattern Elevation File = [%s]\n", el_filename);
 			fflush(stderr);
 		}
@@ -1600,7 +1600,7 @@ int LoadPAT(char *az_filename, char *el_filename)
 		if (antenna_dt_direction != -1) // If Cmdline override
 		        tilt_azimuth = (float)antenna_dt_direction;
 		
-	        if (debug) {
+	        if (G_debug) {
 		        fprintf(stderr, "Antenna Pattern Mechamical Downtilt = %f\n", mechanical_tilt);
 		        fprintf(stderr, "Antenna Pattern Mechanical Downtilt Direction = %f\n\n", tilt_azimuth);
 			fflush(stderr);
@@ -1747,21 +1747,21 @@ int LoadPAT(char *az_filename, char *el_filename)
 			}
 		}
 
-		got_elevation_pattern = 255;
+		G_got_elevation_pattern = 255;
 
 		for (x = 0; x <= 360; x++) {
 			for (y = 0; y <= 1000; y++) {
-				if (got_elevation_pattern)
+				if (G_got_elevation_pattern)
 					elevation = elevation_pattern[x][y];
 				else
 					elevation = 1.0;
 
-				if (got_azimuth_pattern)
+				if (G_got_azimuth_pattern)
 					az = azimuth_pattern[x];
 				else
 					az = 1.0;
 
-				LR.antenna_pattern[x][y] = az * elevation;
+				G_LR.antenna_pattern[x][y] = az * elevation;
 			}
 		}
 	}
@@ -1789,72 +1789,72 @@ int LoadSignalColors(struct site xmtr)
 
 	/* Default values */
 
-	region.level[0] = 128;
-	region.color[0][0] = 255;
-	region.color[0][1] = 0;
-	region.color[0][2] = 0;
+	G_region.level[0] = 128;
+	G_region.color[0][0] = 255;
+	G_region.color[0][1] = 0;
+	G_region.color[0][2] = 0;
 
-	region.level[1] = 118;
-	region.color[1][0] = 255;
-	region.color[1][1] = 165;
-	region.color[1][2] = 0;
+	G_region.level[1] = 118;
+	G_region.color[1][0] = 255;
+	G_region.color[1][1] = 165;
+	G_region.color[1][2] = 0;
 
-	region.level[2] = 108;
-	region.color[2][0] = 255;
-	region.color[2][1] = 206;
-	region.color[2][2] = 0;
+	G_region.level[2] = 108;
+	G_region.color[2][0] = 255;
+	G_region.color[2][1] = 206;
+	G_region.color[2][2] = 0;
 
-	region.level[3] = 98;
-	region.color[3][0] = 255;
-	region.color[3][1] = 255;
-	region.color[3][2] = 0;
+	G_region.level[3] = 98;
+	G_region.color[3][0] = 255;
+	G_region.color[3][1] = 255;
+	G_region.color[3][2] = 0;
 
-	region.level[4] = 88;
-	region.color[4][0] = 184;
-	region.color[4][1] = 255;
-	region.color[4][2] = 0;
+	G_region.level[4] = 88;
+	G_region.color[4][0] = 184;
+	G_region.color[4][1] = 255;
+	G_region.color[4][2] = 0;
 
-	region.level[5] = 78;
-	region.color[5][0] = 0;
-	region.color[5][1] = 255;
-	region.color[5][2] = 0;
+	G_region.level[5] = 78;
+	G_region.color[5][0] = 0;
+	G_region.color[5][1] = 255;
+	G_region.color[5][2] = 0;
 
-	region.level[6] = 68;
-	region.color[6][0] = 0;
-	region.color[6][1] = 208;
-	region.color[6][2] = 0;
+	G_region.level[6] = 68;
+	G_region.color[6][0] = 0;
+	G_region.color[6][1] = 208;
+	G_region.color[6][2] = 0;
 
-	region.level[7] = 58;
-	region.color[7][0] = 0;
-	region.color[7][1] = 196;
-	region.color[7][2] = 196;
+	G_region.level[7] = 58;
+	G_region.color[7][0] = 0;
+	G_region.color[7][1] = 196;
+	G_region.color[7][2] = 196;
 
-	region.level[8] = 48;
-	region.color[8][0] = 0;
-	region.color[8][1] = 148;
-	region.color[8][2] = 255;
+	G_region.level[8] = 48;
+	G_region.color[8][0] = 0;
+	G_region.color[8][1] = 148;
+	G_region.color[8][2] = 255;
 
-	region.level[9] = 38;
-	region.color[9][0] = 80;
-	region.color[9][1] = 80;
-	region.color[9][2] = 255;
+	G_region.level[9] = 38;
+	G_region.color[9][0] = 80;
+	G_region.color[9][1] = 80;
+	G_region.color[9][2] = 255;
 
-	region.level[10] = 28;
-	region.color[10][0] = 0;
-	region.color[10][1] = 38;
-	region.color[10][2] = 255;
+	G_region.level[10] = 28;
+	G_region.color[10][0] = 0;
+	G_region.color[10][1] = 38;
+	G_region.color[10][2] = 255;
 
-	region.level[11] = 18;
-	region.color[11][0] = 142;
-	region.color[11][1] = 63;
-	region.color[11][2] = 255;
+	G_region.level[11] = 18;
+	G_region.color[11][0] = 142;
+	G_region.color[11][1] = 63;
+	G_region.color[11][2] = 255;
 
-	region.level[12] = 8;
-	region.color[12][0] = 140;
-	region.color[12][1] = 0;
-	region.color[12][2] = 128;
+	G_region.level[12] = 8;
+	G_region.color[12][0] = 140;
+	G_region.color[12][1] = 0;
+	G_region.color[12][2] = 128;
 
-	region.levels = 13;
+	G_region.levels = 13;
 
 	/* Don't save if we don't have an output file */
 	if ( (fd = fopen(filename, "r")) == NULL && xmtr.filename[0] == '\0' )
@@ -1864,10 +1864,10 @@ int LoadSignalColors(struct site xmtr)
 		if( (fd = fopen(filename, "w")) == NULL )
 			return errno;
 
-		for (x = 0; x < region.levels; x++)
-			fprintf(fd, "%3d: %3d, %3d, %3d\n", region.level[x],
-				region.color[x][0], region.color[x][1],
-				region.color[x][2]);
+		for (x = 0; x < G_region.levels; x++)
+			fprintf(fd, "%3d: %3d, %3d, %3d\n", G_region.level[x],
+				G_region.color[x][0], G_region.color[x][1],
+				G_region.color[x][2]);
 
 		fclose(fd);
 	}
@@ -1889,7 +1889,7 @@ int LoadSignalColors(struct site xmtr)
 				    &val[2], &val[3]);
 
 			if (ok == 4) {
-			        if (debug) {
+			        if (G_debug) {
 				        fprintf(stderr, "\nLoadSignalColors() %d: %d, %d, %d\n", val[0],val[1],val[2],val[3]);
 					fflush(stderr);
 				}
@@ -1902,10 +1902,10 @@ int LoadSignalColors(struct site xmtr)
 						val[y] = 0;
 				}
 
-				region.level[x] = val[0];
-				region.color[x][0] = val[1];
-				region.color[x][1] = val[2];
-				region.color[x][2] = val[3];
+				G_region.level[x] = val[0];
+				G_region.color[x][0] = val[1];
+				G_region.color[x][1] = val[2];
+				G_region.color[x][2] = val[3];
 				x++;
 			}
 
@@ -1913,7 +1913,7 @@ int LoadSignalColors(struct site xmtr)
 		}
 
 		fclose(fd);
-		region.levels = x;
+		G_region.levels = x;
 	}
 	return 0;
 }
@@ -1939,87 +1939,87 @@ int LoadLossColors(struct site xmtr)
 
 	/* Default values */
 
-	region.level[0] = 80;
-	region.color[0][0] = 255;
-	region.color[0][1] = 0;
-	region.color[0][2] = 0;
+	G_region.level[0] = 80;
+	G_region.color[0][0] = 255;
+	G_region.color[0][1] = 0;
+	G_region.color[0][2] = 0;
 
-	region.level[1] = 90;
-	region.color[1][0] = 255;
-	region.color[1][1] = 128;
-	region.color[1][2] = 0;
+	G_region.level[1] = 90;
+	G_region.color[1][0] = 255;
+	G_region.color[1][1] = 128;
+	G_region.color[1][2] = 0;
 
-	region.level[2] = 100;
-	region.color[2][0] = 255;
-	region.color[2][1] = 165;
-	region.color[2][2] = 0;
+	G_region.level[2] = 100;
+	G_region.color[2][0] = 255;
+	G_region.color[2][1] = 165;
+	G_region.color[2][2] = 0;
 
-	region.level[3] = 110;
-	region.color[3][0] = 255;
-	region.color[3][1] = 206;
-	region.color[3][2] = 0;
+	G_region.level[3] = 110;
+	G_region.color[3][0] = 255;
+	G_region.color[3][1] = 206;
+	G_region.color[3][2] = 0;
 
-	region.level[4] = 120;
-	region.color[4][0] = 255;
-	region.color[4][1] = 255;
-	region.color[4][2] = 0;
+	G_region.level[4] = 120;
+	G_region.color[4][0] = 255;
+	G_region.color[4][1] = 255;
+	G_region.color[4][2] = 0;
 
-	region.level[5] = 130;
-	region.color[5][0] = 184;
-	region.color[5][1] = 255;
-	region.color[5][2] = 0;
+	G_region.level[5] = 130;
+	G_region.color[5][0] = 184;
+	G_region.color[5][1] = 255;
+	G_region.color[5][2] = 0;
 
-	region.level[6] = 140;
-	region.color[6][0] = 0;
-	region.color[6][1] = 255;
-	region.color[6][2] = 0;
+	G_region.level[6] = 140;
+	G_region.color[6][0] = 0;
+	G_region.color[6][1] = 255;
+	G_region.color[6][2] = 0;
 
-	region.level[7] = 150;
-	region.color[7][0] = 0;
-	region.color[7][1] = 208;
-	region.color[7][2] = 0;
+	G_region.level[7] = 150;
+	G_region.color[7][0] = 0;
+	G_region.color[7][1] = 208;
+	G_region.color[7][2] = 0;
 
-	region.level[8] = 160;
-	region.color[8][0] = 0;
-	region.color[8][1] = 196;
-	region.color[8][2] = 196;
+	G_region.level[8] = 160;
+	G_region.color[8][0] = 0;
+	G_region.color[8][1] = 196;
+	G_region.color[8][2] = 196;
 
-	region.level[9] = 170;
-	region.color[9][0] = 0;
-	region.color[9][1] = 148;
-	region.color[9][2] = 255;
+	G_region.level[9] = 170;
+	G_region.color[9][0] = 0;
+	G_region.color[9][1] = 148;
+	G_region.color[9][2] = 255;
 
-	region.level[10] = 180;
-	region.color[10][0] = 80;
-	region.color[10][1] = 80;
-	region.color[10][2] = 255;
+	G_region.level[10] = 180;
+	G_region.color[10][0] = 80;
+	G_region.color[10][1] = 80;
+	G_region.color[10][2] = 255;
 
-	region.level[11] = 190;
-	region.color[11][0] = 0;
-	region.color[11][1] = 38;
-	region.color[11][2] = 255;
+	G_region.level[11] = 190;
+	G_region.color[11][0] = 0;
+	G_region.color[11][1] = 38;
+	G_region.color[11][2] = 255;
 
-	region.level[12] = 200;
-	region.color[12][0] = 142;
-	region.color[12][1] = 63;
-	region.color[12][2] = 255;
+	G_region.level[12] = 200;
+	G_region.color[12][0] = 142;
+	G_region.color[12][1] = 63;
+	G_region.color[12][2] = 255;
 
-	region.level[13] = 210;
-	region.color[13][0] = 196;
-	region.color[13][1] = 54;
-	region.color[13][2] = 255;
+	G_region.level[13] = 210;
+	G_region.color[13][0] = 196;
+	G_region.color[13][1] = 54;
+	G_region.color[13][2] = 255;
 
-	region.level[14] = 220;
-	region.color[14][0] = 255;
-	region.color[14][1] = 0;
-	region.color[14][2] = 255;
+	G_region.level[14] = 220;
+	G_region.color[14][0] = 255;
+	G_region.color[14][1] = 0;
+	G_region.color[14][2] = 255;
 
-	region.level[15] = 230;
-	region.color[15][0] = 255;
-	region.color[15][1] = 194;
-	region.color[15][2] = 204;
+	G_region.level[15] = 230;
+	G_region.color[15][0] = 255;
+	G_region.color[15][1] = 194;
+	G_region.color[15][2] = 204;
 
-	region.levels = 16;
+	G_region.levels = 16;
 /*	region.levels = 120; // 240dB max PL */
 
 /*	for(int i=0; i<region.levels;i++){
@@ -2037,14 +2037,14 @@ int LoadLossColors(struct site xmtr)
 		if( (fd = fopen(filename, "w")) == NULL )
 			return errno;
 
-		for (x = 0; x < region.levels; x++)
-			fprintf(fd, "%3d: %3d, %3d, %3d\n", region.level[x],
-				region.color[x][0], region.color[x][1],
-				region.color[x][2]);
+		for (x = 0; x < G_region.levels; x++)
+			fprintf(fd, "%3d: %3d, %3d, %3d\n", G_region.level[x],
+				G_region.color[x][0], G_region.color[x][1],
+				G_region.color[x][2]);
 
 		fclose(fd);
 
-                if (debug) {
+                if (G_debug) {
                 fprintf(stderr, "loadLossColors: fopen fail: %s\n", filename);
                 fflush(stderr);
                 }
@@ -2068,7 +2068,7 @@ int LoadLossColors(struct site xmtr)
 				    &val[2], &val[3]);
 
 			if (ok == 4) {
-                                 if (debug) {
+                                 if (G_debug) {
                                 fprintf(stderr, "\nLoadLossColors() %d: %d, %d, %d\n", val[0],val[1],val[2],val[3]);
                                 fflush(stderr);
                                  }
@@ -2081,10 +2081,10 @@ int LoadLossColors(struct site xmtr)
 						val[y] = 0;
 				}
 
-				region.level[x] = val[0];
-				region.color[x][0] = val[1];
-				region.color[x][1] = val[2];
-				region.color[x][2] = val[3];
+				G_region.level[x] = val[0];
+				G_region.color[x][0] = val[1];
+				G_region.color[x][1] = val[2];
+				G_region.color[x][2] = val[3];
 				x++;
 			}
 
@@ -2092,7 +2092,7 @@ int LoadLossColors(struct site xmtr)
 		}
 
 		fclose(fd);
-		region.levels = x;
+		G_region.levels = x;
 	}
 	return 0;
 }
@@ -2118,87 +2118,87 @@ int LoadDBMColors(struct site xmtr)
 
 	/* Default values */
 
-	region.level[0] = 0;
-	region.color[0][0] = 255;
-	region.color[0][1] = 0;
-	region.color[0][2] = 0;
+	G_region.level[0] = 0;
+	G_region.color[0][0] = 255;
+	G_region.color[0][1] = 0;
+	G_region.color[0][2] = 0;
 
-	region.level[1] = -10;
-	region.color[1][0] = 255;
-	region.color[1][1] = 128;
-	region.color[1][2] = 0;
+	G_region.level[1] = -10;
+	G_region.color[1][0] = 255;
+	G_region.color[1][1] = 128;
+	G_region.color[1][2] = 0;
 
-	region.level[2] = -20;
-	region.color[2][0] = 255;
-	region.color[2][1] = 165;
-	region.color[2][2] = 0;
+	G_region.level[2] = -20;
+	G_region.color[2][0] = 255;
+	G_region.color[2][1] = 165;
+	G_region.color[2][2] = 0;
 
-	region.level[3] = -30;
-	region.color[3][0] = 255;
-	region.color[3][1] = 206;
-	region.color[3][2] = 0;
+	G_region.level[3] = -30;
+	G_region.color[3][0] = 255;
+	G_region.color[3][1] = 206;
+	G_region.color[3][2] = 0;
 
-	region.level[4] = -40;
-	region.color[4][0] = 255;
-	region.color[4][1] = 255;
-	region.color[4][2] = 0;
+	G_region.level[4] = -40;
+	G_region.color[4][0] = 255;
+	G_region.color[4][1] = 255;
+	G_region.color[4][2] = 0;
 
-	region.level[5] = -50;
-	region.color[5][0] = 184;
-	region.color[5][1] = 255;
-	region.color[5][2] = 0;
+	G_region.level[5] = -50;
+	G_region.color[5][0] = 184;
+	G_region.color[5][1] = 255;
+	G_region.color[5][2] = 0;
 
-	region.level[6] = -60;
-	region.color[6][0] = 0;
-	region.color[6][1] = 255;
-	region.color[6][2] = 0;
+	G_region.level[6] = -60;
+	G_region.color[6][0] = 0;
+	G_region.color[6][1] = 255;
+	G_region.color[6][2] = 0;
 
-	region.level[7] = -70;
-	region.color[7][0] = 0;
-	region.color[7][1] = 208;
-	region.color[7][2] = 0;
+	G_region.level[7] = -70;
+	G_region.color[7][0] = 0;
+	G_region.color[7][1] = 208;
+	G_region.color[7][2] = 0;
 
-	region.level[8] = -80;
-	region.color[8][0] = 0;
-	region.color[8][1] = 196;
-	region.color[8][2] = 196;
+	G_region.level[8] = -80;
+	G_region.color[8][0] = 0;
+	G_region.color[8][1] = 196;
+	G_region.color[8][2] = 196;
 
-	region.level[9] = -90;
-	region.color[9][0] = 0;
-	region.color[9][1] = 148;
-	region.color[9][2] = 255;
+	G_region.level[9] = -90;
+	G_region.color[9][0] = 0;
+	G_region.color[9][1] = 148;
+	G_region.color[9][2] = 255;
 
-	region.level[10] = -100;
-	region.color[10][0] = 80;
-	region.color[10][1] = 80;
-	region.color[10][2] = 255;
+	G_region.level[10] = -100;
+	G_region.color[10][0] = 80;
+	G_region.color[10][1] = 80;
+	G_region.color[10][2] = 255;
 
-	region.level[11] = -110;
-	region.color[11][0] = 0;
-	region.color[11][1] = 38;
-	region.color[11][2] = 255;
+	G_region.level[11] = -110;
+	G_region.color[11][0] = 0;
+	G_region.color[11][1] = 38;
+	G_region.color[11][2] = 255;
 
-	region.level[12] = -120;
-	region.color[12][0] = 142;
-	region.color[12][1] = 63;
-	region.color[12][2] = 255;
+	G_region.level[12] = -120;
+	G_region.color[12][0] = 142;
+	G_region.color[12][1] = 63;
+	G_region.color[12][2] = 255;
 
-	region.level[13] = -130;
-	region.color[13][0] = 196;
-	region.color[13][1] = 54;
-	region.color[13][2] = 255;
+	G_region.level[13] = -130;
+	G_region.color[13][0] = 196;
+	G_region.color[13][1] = 54;
+	G_region.color[13][2] = 255;
 
-	region.level[14] = -140;
-	region.color[14][0] = 255;
-	region.color[14][1] = 0;
-	region.color[14][2] = 255;
+	G_region.level[14] = -140;
+	G_region.color[14][0] = 255;
+	G_region.color[14][1] = 0;
+	G_region.color[14][2] = 255;
 
-	region.level[15] = -150;
-	region.color[15][0] = 255;
-	region.color[15][1] = 194;
-	region.color[15][2] = 204;
+	G_region.level[15] = -150;
+	G_region.color[15][0] = 255;
+	G_region.color[15][1] = 194;
+	G_region.color[15][2] = 204;
 
-	region.levels = 16;
+	G_region.levels = 16;
 
 	/* Don't save if we don't have an output file */
 	if ( (fd = fopen(filename, "r")) == NULL && xmtr.filename[0] == '\0' )
@@ -2208,10 +2208,10 @@ int LoadDBMColors(struct site xmtr)
 		if( (fd = fopen(filename, "w")) == NULL )
 			return errno;
 
-		for (x = 0; x < region.levels; x++)
-			fprintf(fd, "%+4d: %3d, %3d, %3d\n", region.level[x],
-				region.color[x][0], region.color[x][1],
-				region.color[x][2]);
+		for (x = 0; x < G_region.levels; x++)
+			fprintf(fd, "%+4d: %3d, %3d, %3d\n", G_region.level[x],
+				G_region.color[x][0], G_region.color[x][1],
+				G_region.color[x][2]);
 
 		fclose(fd);
 	}
@@ -2233,7 +2233,7 @@ int LoadDBMColors(struct site xmtr)
 				    &val[2], &val[3]);
 
 			if (ok == 4) {
-                                 if (debug) {
+                                 if (G_debug) {
                                 fprintf(stderr, "\nLoadDBMColors() %d: %d, %d, %d\n", val[0],val[1],val[2],val[3]);
                                 fflush(stderr);
                                  }
@@ -2244,7 +2244,7 @@ int LoadDBMColors(struct site xmtr)
 				if (val[0] > +40)
 					val[0] = +40;
 
-				region.level[x] = val[0];
+				G_region.level[x] = val[0];
 
 				for (y = 1; y < 4; y++) {
 					if (val[y] > 255)
@@ -2254,9 +2254,9 @@ int LoadDBMColors(struct site xmtr)
 						val[y] = 0;
 				}
 
-				region.color[x][0] = val[1];
-				region.color[x][1] = val[2];
-				region.color[x][2] = val[3];
+				G_region.color[x][0] = val[1];
+				G_region.color[x][1] = val[2];
+				G_region.color[x][2] = val[3];
 				x++;
 			}
 
@@ -2264,7 +2264,7 @@ int LoadDBMColors(struct site xmtr)
 		}
 
 		fclose(fd);
-		region.levels = x;
+		G_region.levels = x;
 	}
 	return 0;
 }
@@ -2303,7 +2303,7 @@ int LoadTopoData(double max_lon, double min_lon, double max_lat, double min_lat)
 				strcpy(string, basename);
 
 
-				if (ippd == 3600)
+				if (G_ippd == 3600)
 				        strcat(string, "-hd");
 
 				if( (success = LoadSDF(string)) < 0 )
@@ -2331,7 +2331,7 @@ int LoadTopoData(double max_lon, double min_lon, double max_lat, double min_lat)
 				snprintf(string, 255, "%d:%d:%d:%d", x, x + 1, ymin, ymax);
 				strcpy(string, basename);
 
-				if (ippd == 3600)
+				if (G_ippd == 3600)
 				        strcat(string, "-hd");
 
 				if( (success = LoadSDF(string)) < 0 )
@@ -2435,8 +2435,8 @@ int LoadUDT(char *filename)
 
 		if (height > 0.0)
 			fprintf(fd2, "%d, %d, %f\n",
-				(int)rint(latitude / dpp),
-				(int)rint(longitude / dpp), height);
+				(int)rint(latitude / G_dpp),
+				(int)rint(longitude / G_dpp), height);
 
 		s = fgets(input, 78, fd1);
 
@@ -2491,11 +2491,11 @@ int LoadUDT(char *filename)
 
 		if (z == 0) {
 			// No duplicate found
-		        if (debug) {
+		        if (G_debug) {
 			        fprintf(stderr,"Adding UDT Point: %lf, %lf, %lf\n", old_latitude, old_longitude,height);
 				fflush(stderr);
 			}
-			AddElevation((double)xpix * dpp, (double)ypix * dpp, height, 1);
+			AddElevation((double)xpix * G_dpp, (double)ypix * G_dpp, height, 1);
 		}
 
 		fflush(stderr);
