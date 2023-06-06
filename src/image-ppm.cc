@@ -26,7 +26,7 @@ int ppm_init(image_ctx_t *ctx){
 }
 
 int ppm_add_pixel(image_ctx_t *ctx,const uint8_t r,const uint8_t g,const uint8_t b,const uint8_t a){
-	register uint8_t* next;
+	uint8_t* next;
 
 	next = ctx->next_pixel;
 
@@ -54,6 +54,6 @@ int ppm_write(image_ctx_t *ctx, FILE* fd){
 	written = fwrite(ctx->canvas,sizeof(uint8_t),count,fd);
 	if(written < count)
 		return EPIPE;
-	
+
 	return 0;
 }

@@ -405,8 +405,8 @@ int loadLIDAR(char *filenames, int resample)
 
 		/* Copy it row-by-row from the tile */
 		for (size_t h = 0; h < (unsigned)tiles[i].height; h++) {
-			register short *dest_addr = &new_tile[ (north_pixel_offset+h)*new_width + west_pixel_offset];
-			register short *src_addr = &tiles[i].data[h*tiles[i].width];
+			short *dest_addr = &new_tile[ (north_pixel_offset+h)*new_width + west_pixel_offset];
+			short *src_addr = &tiles[i].data[h*tiles[i].width];
 			// Check if we might overflow
 			if ( dest_addr + tiles[i].width > new_tile + new_tile_alloc || dest_addr < new_tile ){
 			        if (G_debug) {
