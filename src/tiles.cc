@@ -44,7 +44,7 @@ int tile_load_lidar(tile_t *tile, char *filename){
 
 	tile->datastart = ftell(fd);
 
-	if(debug){
+	if(G_debug){
 		fprintf(stderr,"w:%d h:%d s:%lf\n", tile->width, tile->height, tile->cellsize);
 		fflush(stderr);
 	}
@@ -56,12 +56,12 @@ int tile_load_lidar(tile_t *tile, char *filename){
 	tile->xur = tile->xll+(tile->cellsize*tile->width);
 	tile->yur = tile->yll+(tile->cellsize*tile->height);
 
-	if (tile->xur > eastoffset)
-		eastoffset = tile->xur;
-	if (tile->xll < westoffset)
-		westoffset = tile->xll;
+	if (tile->xur > G_eastoffset)
+		G_eastoffset = tile->xur;
+	if (tile->xll < G_westoffset)
+		G_westoffset = tile->xll;
 
-	 if (debug)
+	 if (G_debug)
 	 	fprintf(stderr,"%d, %d, %.7f, %.7f, %.7f, %.7f, %.7f\n",tile->width,tile->height,tile->xll,tile->yll,tile->cellsize,tile->yur,tile->xur);
 
 	// Greenwich straddling hack
@@ -81,8 +81,8 @@ int tile_load_lidar(tile_t *tile, char *filename){
 			tile->xur = tile->xur * -1;
 	// }
 
-	if (debug)
-		fprintf(stderr, "POST yll %.7f yur %.7f xur %.7f xll %.7f delta %.6f\n", tile->yll, tile->yur, tile->xur, tile->xll, delta);
+	if (G_debug)
+		fprintf(stderr, "POST yll %.7f yur %.7f xur %.7f xll %.7f delta %.6f\n", tile->yll, tile->yur, tile->xur, tile->xll, G_delta);
 
 	/* Read the actual tile data */
 	/* Allocate the array for the lidar data */
@@ -127,7 +127,7 @@ int tile_load_lidar(tile_t *tile, char *filename){
 	tile->ppdx = tile->width / tile->width_deg;
 	tile->ppdy = tile->height / tile->height_deg;
 
-	if (debug)
+	if (G_debug)
 		fprintf(stderr,"Pixels loaded: %zu/%d (PPD %dx%d, Res %f (%.2f))\n", loaded, tile->width*tile->height, tile->ppdx, tile->ppdy, tile->precise_resolution, tile->resolution);
 
 	/* All done, close the LIDAR file */
@@ -172,7 +172,7 @@ int tile_rescale(tile_t *tile, float scale){
 		copy_count = (size_t) scale;
 	}
 
-	if (debug) {
+	if (G_debug) {
 		fprintf(stderr,"Resampling tile %s [%.1f]:\n\tOld %dx%d. New %zux%zu\n\tScale %f Skip %zu Copy %zu\n", tile->filename, tile->resolution, tile->width, tile->height, new_width, new_height, scale, skip_count, copy_count);
 		fflush(stderr);
 	}
@@ -214,7 +214,7 @@ int tile_rescale(tile_t *tile, float scale){
 	tile->ppdy = tile->height / tile->height_deg;
 	// tile->width_deg *= scale;
 	// tile->height_deg *= scale;
-	if (debug)
+	if (G_debug)
 		fprintf(stderr, "Resampling complete. New resolution: %.1f\n", tile->resolution);
 
 	return 0;
@@ -230,7 +230,7 @@ int tile_resize(tile_t* tile, int resolution){
 	double current_res_km = haversine_formula(tile->max_north, tile->max_west, tile->max_north, tile->min_west);
 	int current_res = (int) ceil((current_res_km/IPPD)*1000);
 	float scaling_factor = resolution / current_res;
-	if (debug)
+	if (G_debug)
 		fprintf(stderr, "Resampling: Current %dm Desired %dm Scale %.1f\n", current_res, resolution, scaling_factor);
 	return tile_rescale(tile, scaling_factor);
 }

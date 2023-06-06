@@ -2140,7 +2140,7 @@ double d1thx(double pfl[], const double &x1, const double &x2)
 	n = 10 * ka - 5;
 	kb = n - ka + 1;
 	sn = n - 1;
-	assert((s = new double[n + 2])!=0);
+	s = new double[n + 2];
 	s[0] = sn;
 	s[1] = 1.0;
 	xb = (xb - xa) / sn;
@@ -2471,7 +2471,7 @@ Note that point_to_point has become point_to_point_ITM for use as the old ITM
 	prop.mdp = -1;
 	zc = qerfi(conf);
 	zr = qerfi(rel);
-	np = (long)elev[0];
+	np = (long)G_elev[0];
 	/* dkm=(elev[1]*elev[0])/1000.0; */
 	/* xkm=elev[1]/1000.0; */
 	eno = eno_ns_surfref;
@@ -2479,11 +2479,11 @@ Note that point_to_point has become point_to_point_ITM for use as the old ITM
 	q = enso;
 
 	if (q <= 0.0) {
-		ja = (long)(3.0 + 0.1 * elev[0]);	/* added (long) to correct */
+		ja = (long)(3.0 + 0.1 * G_elev[0]);	/* added (long) to correct */
 		jb = np - ja + 6;
 
 		for (i = ja - 1; i < jb; ++i)
-			zsys += elev[i];
+			zsys += G_elev[i];
 
 		zsys /= (jb - ja + 1);
 		q = eno;
@@ -2491,7 +2491,7 @@ Note that point_to_point has become point_to_point_ITM for use as the old ITM
 
 	propv.mdvar = 12;
 	qlrps(frq_mhz, zsys, q, pol, eps_dielect, sgm_conductivity, prop);
-	qlrpfl(elev, propv.klim, propv.mdvar, prop, propa, propv);
+	qlrpfl(G_elev, propv.klim, propv.mdvar, prop, propa, propv);
 	fs = 32.45 + 20.0 * log10(frq_mhz) + 20.0 * log10(prop.dist / 1000.0);
 	q = prop.dist - propa.dla;
 
@@ -2596,7 +2596,7 @@ void point_to_point(double tht_m, double rht_m, double eps_dielect,
 	prop.thenr = 0.0;
 	zc = qerfi(conf);
 	zr = qerfi(rel);
-	np = (long)elev[0];
+	np = (long)G_elev[0];
 	/* dkm=(elev[1]*elev[0])/1000.0; */
 	/* xkm=elev[1]/1000.0; */
 	eno = eno_ns_surfref;
@@ -2614,11 +2614,11 @@ void point_to_point(double tht_m, double rht_m, double eps_dielect,
 	prop.dhd = 0.0;		/* delta_h_diff preset */
 
 	if (q <= 0.0) {
-		ja = (long)(3.0 + 0.1 * elev[0]);
+		ja = (long)(3.0 + 0.1 * G_elev[0]);
 		jb = np - ja + 6;
 
 		for (i = ja - 1; i < jb; ++i)
-			zsys += elev[i];
+			zsys += G_elev[i];
 
 		zsys /= (jb - ja + 1);
 		q = eno;
@@ -2626,7 +2626,7 @@ void point_to_point(double tht_m, double rht_m, double eps_dielect,
 
 	propv.mdvar = mode_var;
 	qlrps(frq_mhz, zsys, q, pol, eps_dielect, sgm_conductivity, prop);
-	qlrpfl2(elev, propv.klim, propv.mdvar, prop, propa, propv);
+	qlrpfl2(G_elev, propv.klim, propv.mdvar, prop, propa, propv);
 	tpd =
 	    sqrt((prop.he[0] - prop.he[1]) * (prop.he[0] - prop.he[1]) +
 		 (prop.dist) * (prop.dist));
@@ -2719,7 +2719,7 @@ void point_to_pointMDH_two(double tht_m, double rht_m, double eps_dielect,
 	ztime = qerfi(timepct);
 	zloc = qerfi(locpct);
 	zconf = qerfi(confpct);
-	np = (long)elev[0];
+	np = (long)G_elev[0];
 	/* dkm = (elev[1] * elev[0]) / 1000.0; */
 	/* xkm = elev[1] / 1000.0; */
 	eno = eno_ns_surfref;
@@ -2734,16 +2734,16 @@ void point_to_pointMDH_two(double tht_m, double rht_m, double eps_dielect,
 	mode_var = 1;		/* int mode_var set for FCC ILLR */
 
 	if (q <= 0.0) {
-		ja = (long)(3.0 + 0.1 * elev[0]);	/* to match addition of (long) */
+		ja = (long)(3.0 + 0.1 * G_elev[0]);	/* to match addition of (long) */
 		jb = np - ja + 6;
 		for (i = ja - 1; i < jb; ++i)
-			zsys += elev[i];
+			zsys += G_elev[i];
 		zsys /= (jb - ja + 1);
 		q = eno;
 	}
 	propv.mdvar = 12;
 	qlrps(frq_mhz, zsys, q, pol, eps_dielect, sgm_conductivity, prop);
-	qlrpfl2(elev, propv.klim, propv.mdvar, prop, propa, propv);
+	qlrpfl2(G_elev, propv.klim, propv.mdvar, prop, propa, propv);
 	fs = 32.45 + 20.0 * log10(frq_mhz) + 20.0 * log10(prop.dist / 1000.0);
 
 	deltaH = prop.dh;
@@ -2815,7 +2815,7 @@ void point_to_pointDH(double tht_m, double rht_m, double eps_dielect,
 	prop.thenr = 0.0;
 	zc = qerfi(conf);
 	zr = qerfi(rel);
-	np = (long)elev[0];
+	np = (long)G_elev[0];
 	/* dkm = (elev[1] * elev[0]) / 1000.0; */
 	/* xkm = elev[1] / 1000.0; */
 	eno = eno_ns_surfref;
@@ -2829,16 +2829,16 @@ void point_to_pointDH(double tht_m, double rht_m, double eps_dielect,
 	prop.cd = 1.00;		/* double clutter_density */
 
 	if (q <= 0.0) {
-		ja = (long)(3.0 + 0.1 * elev[0]);	/* to match KD2BD addition of (long)  */
+		ja = (long)(3.0 + 0.1 * G_elev[0]);	/* to match KD2BD addition of (long)  */
 		jb = np - ja + 6;
 		for (i = ja - 1; i < jb; ++i)
-			zsys += elev[i];
+			zsys += G_elev[i];
 		zsys /= (jb - ja + 1);
 		q = eno;
 	}
 	propv.mdvar = 12;
 	qlrps(frq_mhz, zsys, q, pol, eps_dielect, sgm_conductivity, prop);
-	qlrpfl2(elev, propv.klim, propv.mdvar, prop, propa, propv);
+	qlrpfl2(G_elev, propv.klim, propv.mdvar, prop, propa, propv);
 	fs = 32.45 + 20.0 * log10(frq_mhz) + 20.0 * log10(prop.dist / 1000.0);
 	deltaH = prop.dh;
 	q = prop.dist - propa.dla;
