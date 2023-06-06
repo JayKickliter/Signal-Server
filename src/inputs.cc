@@ -684,7 +684,7 @@ int LoadSDF_SDF(char *name)
 	}
 
 	else
-		return 0;
+		return found;
 }
 
 char *BZfgets(char *output, BZFILE *bzfd, unsigned length)

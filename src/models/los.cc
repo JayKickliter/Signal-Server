@@ -797,8 +797,11 @@ void PlotLOSMap(struct site source, double altitude, char *plo_filename,
 
 		if(use_threads)
 			beginThread(range);
-		else
+		else {
+        if(!has_init_processed)
+            init_processed();
 			rangePropagation(range);
+    }
 
 	}
 
@@ -904,9 +907,11 @@ void PlotPropagation(struct site source, double altitude, char *plo_filename,
 
 		if(use_threads)
 			beginThread(range);
-		else
+		else {
+        if(!has_init_processed)
+            init_processed();
 			rangePropagation(range);
-
+    }
 	}
 
 	if(use_threads)
