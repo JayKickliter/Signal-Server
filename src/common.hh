@@ -34,8 +34,8 @@ struct dem {
 	float min_west;
 	float max_west;
 	long min_x, max_x, min_y, max_y;
-	int max_el;
-	int min_el;
+	short max_el;
+	short min_el;
 	short *data;
 	unsigned char *mask;
 	unsigned char *signal;
