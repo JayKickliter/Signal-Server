@@ -180,8 +180,8 @@ int PutMask(double lat, double lon, int value)
 	}
 
 	if (found) {
-		G_dem[indx].mask[x][y] = value;
-		return ((int)G_dem[indx].mask[x][y]);
+		G_dem[indx].mask[DEM_INDEX(G_dem[indx], x, y)] = value;
+		return ((int)G_dem[indx].mask[DEM_INDEX(G_dem[indx], x, y)]);
 	}
 
 	else
@@ -210,8 +210,8 @@ int OrMask(double lat, double lon, int value)
 	}
 
 	if (found) {
-		G_dem[indx].mask[x][y] |= value;
-		return ((int)G_dem[indx].mask[x][y]);
+		G_dem[indx].mask[DEM_INDEX(G_dem[indx], x, y)] |= value;
+		return ((int)G_dem[indx].mask[DEM_INDEX(G_dem[indx], x, y)]);
 	}
 
 	else
@@ -253,7 +253,7 @@ void PutSignal(double lat, double lon, unsigned char signal)
 	}
 
 	if (found) {		// Write values to file
-		G_dem[indx].signal[x][y] = signal;
+		G_dem[indx].signal[DEM_INDEX(G_dem[indx], x, y)] = signal;
 		// return (dem[indx].signal[x][y]);
 		return;
 	}
@@ -282,7 +282,7 @@ unsigned char GetSignal(double lat, double lon)
 	}
 
 	if (found)
-		return (G_dem[indx].signal[x][y]);
+		return (G_dem[indx].signal[DEM_INDEX(G_dem[indx], x, y)]);
 	else
 		return 0;
 }
@@ -310,7 +310,7 @@ double GetElevation(struct site location)
 	}
 
 	if (found)
-		elevation = 3.28084 * G_dem[indx].data[x][y];
+		elevation = 3.28084 * G_dem[indx].data[DEM_INDEX(G_dem[indx], x, y)];
 	else
 		elevation = -5000.0;
 
@@ -338,14 +338,15 @@ int AddElevation(double lat, double lon, double height, int size)
 	}
 
 	if (found && size<2)
-		G_dem[indx].data[x][y] += (short)rint(height);
+		G_dem[indx].data[DEM_INDEX(G_dem[indx], x, y)] += (short)rint(height);
 
 	// Make surrounding area bigger for wide area landcover. Should enhance 3x3 pixels including c.p
 	if (found && size>1){
 		for(i=size*-1; i <= size; i=i+1){
 			for(j=size*-1; j <= size; j=j+1){
 				if(x+j >= 0 && x+j <=IPPD && y+i >= 0 && y+i <=IPPD)
-					G_dem[indx].data[x+j][y+i] += (short)rint(height);
+            // coordinates are swapped for some reason?
+					G_dem[indx].data[DEM_INDEX(G_dem[indx], y+i, x+j)] += (short)rint(height);
 			}
 
 		}
@@ -967,11 +968,6 @@ void free_dem(void)
 	int j;
 
 	for (i = 0; i < MAXPAGES; i++) {
-		for (j = 0; j < IPPD; j++) {
-			delete [] G_dem[i].data[j];
-			delete [] G_dem[i].mask[j];
-			delete [] G_dem[i].signal[j];
-		}
 		delete [] G_dem[i].data;
 		delete [] G_dem[i].mask;
 		delete [] G_dem[i].signal;
@@ -1003,14 +999,10 @@ void alloc_dem(void)
 
 	G_dem = new struct dem[MAXPAGES];
 	for (i = 0; i < MAXPAGES; i++) {
-		G_dem[i].data = new short *[IPPD];
-		G_dem[i].mask = new unsigned char *[IPPD];
-		G_dem[i].signal = new unsigned char *[IPPD];
-		for (j = 0; j < IPPD; j++) {
-			G_dem[i].data[j] = new short[IPPD];
-			G_dem[i].mask[j] = new unsigned char[IPPD];
-			G_dem[i].signal[j] = new unsigned char[IPPD];
-		}
+    G_dem[i].ippd=IPPD;
+		G_dem[i].data = new short[IPPD*IPPD];
+		G_dem[i].mask = new unsigned char[IPPD*IPPD];
+		G_dem[i].signal = new unsigned char[IPPD*IPPD];
 	}
 }
 
@@ -2033,7 +2025,7 @@ int main(int argc, char *argv[])
 		strncpy(tx_site[0].name, "Tx", 3);
 		strncpy(tx_site[1].name, "Rx", 3);
 		PlotPath(tx_site[0], tx_site[1], 1);
-		PathReport(tx_site[0], tx_site[1], tx_site[0].filename, 0, propmodel, pmenv, rxGain);
+		//PathReport(tx_site[0], tx_site[1], tx_site[0].filename, 0, propmodel, pmenv, rxGain);
 		// Order flipped for benefit of graph. Makes no difference to data.
 		SeriesData(tx_site[1], tx_site[0], tx_site[0].filename, 1, normalise);
 	}

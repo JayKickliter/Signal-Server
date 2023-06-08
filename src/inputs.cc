@@ -149,26 +149,25 @@ int loadClutter(char *filename, double radius, struct site tx)
 	return 0;
 }
 
-int averageHeight(int height, int width, int x, int y){
+int averageHeight(int x, int y){
 	int total = 0;
 	int c=0;
-	if(G_dem[0].data[y-1][x-1]>0){
-		total+=G_dem[0].data[y-1][x-1];
+	if(DEM_INDEX(G_dem[0], x-1, y-1)>0){
+		total+=DEM_INDEX(G_dem[0], x-1, y-1);
 		c++;
 	}
-	if(G_dem[0].data[y+1][x+1]>0){
-		total+=G_dem[0].data[y+1][x+1];
+	if(DEM_INDEX(G_dem[0], x+1, y+1)>0){
+		total+=DEM_INDEX(G_dem[0], x+1, y+1);
 		c++;
 	}
-	if(G_dem[0].data[y-1][x+1]>0){
-		total+=G_dem[0].data[y-1][x+1];
+	if(DEM_INDEX(G_dem[0], x+1, y-1)>0){
+		total+=DEM_INDEX(G_dem[0], x+1, y-1);
 		c++;
 	}
-	if(G_dem[0].data[y+1][x-1]>0){
-		total+=G_dem[0].data[y+1][x-1];
+	if(DEM_INDEX(G_dem[0], x-1, y+1)>0){
+		total+=DEM_INDEX(G_dem[0], x-1, y+1);
 		c++;
 	}
-
 	if(c>0){
 		return (int)(total/c);
 	}else{
@@ -451,9 +450,9 @@ int loadLIDAR(char *filenames, int resample)
 	for (size_t h = 0; h < new_height; h++, y--) {
 		int x = new_width-1;
 		for (size_t w = 0; w < new_width; w++, x--) {
-			G_dem[0].data[y][x] = new_tile[h*new_width + w];
-			G_dem[0].signal[y][x] = 0;
-			G_dem[0].mask[y][x] = 0;
+			G_dem[0].data[DEM_INDEX(G_dem[0], x, y)] = new_tile[h*new_width + w];
+			G_dem[0].signal[DEM_INDEX(G_dem[0], x, y)] = 0;
+			G_dem[0].mask[DEM_INDEX(G_dem[0], x, y)] = 0;
 		}
 	}
 
@@ -463,8 +462,8 @@ int loadLIDAR(char *filenames, int resample)
 		int x = new_width-2;
 		for (size_t w = 0; w < new_width-2; w++, x--) {
 
-			if(G_dem[0].data[y][x]<=0){
-				G_dem[0].data[y][x] = averageHeight(new_height,new_width,x,y);
+			if(G_dem[0].data[DEM_INDEX(G_dem[0], x, y)]<=0){
+				G_dem[0].data[DEM_INDEX(G_dem[0], x, y)] = averageHeight(x,y);
 			}
 		}
 	}
@@ -600,9 +599,9 @@ int LoadSDF_SDF(char *name)
 					data = atoi(line);
 				}
 
-				G_dem[indx].data[x][y] = data;
-				G_dem[indx].signal[x][y] = 0;
-				G_dem[indx].mask[x][y] = 0;
+				G_dem[indx].data[DEM_INDEX(G_dem[indx], x, y)] = data;
+				G_dem[indx].signal[DEM_INDEX(G_dem[indx], x, y)] = 0;
+				G_dem[indx].mask[DEM_INDEX(G_dem[indx], x, y)] = 0;
 
 				if (data > G_dem[indx].max_el)
 					G_dem[indx].max_el = data;
@@ -861,9 +860,9 @@ int LoadSDF_BZ(char *name)
 				       return -EIO;
 				data = atoi(line);
 
-				G_dem[indx].data[x][y] = data;
-				G_dem[indx].signal[x][y] = 0;
-				G_dem[indx].mask[x][y] = 0;
+				G_dem[indx].data[DEM_INDEX(G_dem[indx], x, y)] = data;
+				G_dem[indx].signal[DEM_INDEX(G_dem[indx], x, y)] = 0;
+				G_dem[indx].mask[DEM_INDEX(G_dem[indx], x, y)] = 0;
 
 				if (data > G_dem[indx].max_el)
 					G_dem[indx].max_el = data;
@@ -1155,9 +1154,9 @@ int LoadSDF_GZ(char *name)
 
 				data = atoi(line);
 
-				G_dem[indx].data[x][y] = data;
-				G_dem[indx].signal[x][y] = 0;
-				G_dem[indx].mask[x][y] = 0;
+				G_dem[indx].data[DEM_INDEX(G_dem[indx], x, y)] = data;
+				G_dem[indx].signal[DEM_INDEX(G_dem[indx], x, y)] = 0;
+				G_dem[indx].mask[DEM_INDEX(G_dem[indx], x, y)] = 0;
 
 				if (data > G_dem[indx].max_el)
 					G_dem[indx].max_el = data;
@@ -1327,9 +1326,9 @@ int LoadSDF(char *name)
 
 			for (x = 0; x < G_ippd; x++)
 				for (y = 0; y < G_ippd; y++) {
-					G_dem[indx].data[x][y] = 0;
-					G_dem[indx].signal[x][y] = 0;
-					G_dem[indx].mask[x][y] = 0;
+					G_dem[indx].data[DEM_INDEX(G_dem[indx], x, y)] = 0;
+					G_dem[indx].signal[DEM_INDEX(G_dem[indx], x, y)] = 0;
+					G_dem[indx].mask[DEM_INDEX(G_dem[indx], x, y)] = 0;
 
 					if (G_dem[indx].min_el > 0)
 						G_dem[indx].min_el = 0;

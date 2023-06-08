@@ -25,7 +25,10 @@
 
 #define MAX(x,y)((x)>(y)?(x):(y))
 
+#define DEM_INDEX(dem, x, y)(((y)*dem.ippd)+x)
+
 struct dem {
+  int ippd;
 	float min_north;
 	float max_north;
 	float min_west;
@@ -33,9 +36,9 @@ struct dem {
 	long min_x, max_x, min_y, max_y;
 	int max_el;
 	int min_el;
-	short **data;
-	unsigned char **mask;
-	unsigned char **signal;
+	short *data;
+	unsigned char *mask;
+	unsigned char *signal;
 };
 
 struct site {

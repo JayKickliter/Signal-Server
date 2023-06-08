@@ -126,8 +126,8 @@ void DoPathLoss(char *filename, unsigned char geo, unsigned char kml,
 			}
 
 			if (found) {
-				mask = G_dem[indx].mask[x0][y0];
-				loss = (G_dem[indx].signal[x0][y0]);
+				mask = G_dem[indx].mask[DEM_INDEX(G_dem[indx], x0, y0)];
+				loss = (G_dem[indx].signal[DEM_INDEX(G_dem[indx], x0, y0)]);
 				cityorcounty = 0;
 
 				match = 255;
@@ -189,7 +189,7 @@ void DoPathLoss(char *filename, unsigned char geo, unsigned char kml,
 							/* Display land or sea elevation */
 
 							if (G_dem[indx].
-							    data[x0][y0] == 0)
+							    data[DEM_INDEX(G_dem[indx], x0, y0)] == 0)
 								ADD_PIXEL(&ctx, 
 									0, 0,
 									170);
@@ -197,7 +197,7 @@ void DoPathLoss(char *filename, unsigned char geo, unsigned char kml,
 								terrain =
 								    (unsigned)
 								    (0.5 +
-								     pow((double)(G_dem[indx].data[x0][y0] - G_min_elevation), one_over_gamma) * conversion);
+								     pow((double)(G_dem[indx].data[DEM_INDEX(G_dem[indx], x0, y0)] - G_min_elevation), one_over_gamma) * conversion);
 								ADD_PIXEL(&ctx, 
 									terrain,
 									terrain,
@@ -218,7 +218,7 @@ void DoPathLoss(char *filename, unsigned char geo, unsigned char kml,
 						else {	/* terrain / sea-level */
 
 							if (G_dem[indx].
-							    data[x0][y0] == 0)
+							    data[DEM_INDEX(G_dem[indx], x0, y0)] == 0)
 								ADD_PIXEL(&ctx, 
 									0, 0,
 									170);
@@ -227,7 +227,7 @@ void DoPathLoss(char *filename, unsigned char geo, unsigned char kml,
 								terrain =
 								    (unsigned)
 								    (0.5 +
-								     pow((double)(G_dem[indx].data[x0][y0] - G_min_elevation), one_over_gamma) * conversion);
+								     pow((double)(G_dem[indx].data[DEM_INDEX(G_dem[indx], x0, y0)] - G_min_elevation), one_over_gamma) * conversion);
 								ADD_PIXEL(&ctx, 
 									terrain,
 									terrain,
@@ -367,8 +367,8 @@ int DoSigStr(char *filename, unsigned char geo, unsigned char kml,
 			}
 
 			if (found) {
-				mask = G_dem[indx].mask[x0][y0];
-				signal = (G_dem[indx].signal[x0][y0]) - 100;
+				mask = G_dem[indx].mask[DEM_INDEX(G_dem[indx], x0, y0)];
+				signal = (G_dem[indx].signal[DEM_INDEX(G_dem[indx], x0, y0)]) - 100;
 				cityorcounty = 0;
 				match = 255;
 
@@ -428,7 +428,7 @@ int DoSigStr(char *filename, unsigned char geo, unsigned char kml,
 							/* Display land or sea elevation */
 
 							if (G_dem[indx].
-							    data[x0][y0] == 0)
+							    data[DEM_INDEX(G_dem[indx], x0, y0)] == 0)
 								ADD_PIXEL(&ctx, 
 									0, 0,
 									170);
@@ -436,7 +436,7 @@ int DoSigStr(char *filename, unsigned char geo, unsigned char kml,
 								terrain =
 								    (unsigned)
 								    (0.5 +
-								     pow((double)(G_dem[indx].data[x0][y0] - G_min_elevation), one_over_gamma) * conversion);
+								     pow((double)(G_dem[indx].data[DEM_INDEX(G_dem[indx], x0, y0)] - G_min_elevation), one_over_gamma) * conversion);
 								ADD_PIXEL(&ctx, 
 									terrain,
 									terrain,
@@ -463,7 +463,7 @@ int DoSigStr(char *filename, unsigned char geo, unsigned char kml,
 									255);
 							else {
 								if (G_dem[indx].
-								    data[x0][y0]
+								    data[DEM_INDEX(G_dem[indx], x0, y0)]
 								    == 0)
 									ADD_PIXEL(&ctx, 
 									     0,
@@ -477,7 +477,7 @@ int DoSigStr(char *filename, unsigned char geo, unsigned char kml,
 									    (0.5
 									     +
 									     pow
-									     ((double)(G_dem[indx].data[x0][y0] - G_min_elevation), one_over_gamma) * conversion);
+									     ((double)(G_dem[indx].data[DEM_INDEX(G_dem[indx], x0, y0)] - G_min_elevation), one_over_gamma) * conversion);
 									ADD_PIXEL(&ctx, 
 									     terrain,
 									     terrain,
@@ -614,8 +614,8 @@ void DoRxdPwr(char *filename, unsigned char geo, unsigned char kml,
 			}
 
 			if (found) {
-				mask = G_dem[indx].mask[x0][y0];
-				dBm = (G_dem[indx].signal[x0][y0]) - 200;
+				mask = G_dem[indx].mask[DEM_INDEX(G_dem[indx], x0, y0)];
+				dBm = (G_dem[indx].signal[DEM_INDEX(G_dem[indx], x0, y0)]) - 200;
 				cityorcounty = 0;
 				match = 255;
 
@@ -672,7 +672,7 @@ void DoRxdPwr(char *filename, unsigned char geo, unsigned char kml,
 							/* Display land or sea elevation */
 
 							if (G_dem[indx].
-							    data[x0][y0] == 0)
+							    data[DEM_INDEX(G_dem[indx], x0, y0)] == 0)
 								ADD_PIXEL(&ctx,
 									0, 0,
 									170);
@@ -680,7 +680,7 @@ void DoRxdPwr(char *filename, unsigned char geo, unsigned char kml,
 								terrain =
 								    (unsigned)
 								    (0.5 +
-								     pow((double)(G_dem[indx].data[x0][y0] - G_min_elevation), one_over_gamma) * conversion);
+								     pow((double)(G_dem[indx].data[DEM_INDEX(G_dem[indx], x0, y0)] - G_min_elevation), one_over_gamma) * conversion);
 								ADD_PIXEL(&ctx,
 									terrain,
 									terrain,
@@ -707,7 +707,7 @@ void DoRxdPwr(char *filename, unsigned char geo, unsigned char kml,
 									255); // WHITE
 							else {
 								if (G_dem[indx].
-								    data[x0][y0]
+								    data[DEM_INDEX(G_dem[indx], x0, y0)]
 								    == 0)
 									ADD_PIXEL(&ctx, 
 									     0,
@@ -721,7 +721,7 @@ void DoRxdPwr(char *filename, unsigned char geo, unsigned char kml,
 									    (0.5
 									     +
 									     pow
-									     ((double)(G_dem[indx].data[x0][y0] - G_min_elevation), one_over_gamma) * conversion);
+									     ((double)(G_dem[indx].data[DEM_INDEX(G_dem[indx], x0, y0)] - G_min_elevation), one_over_gamma) * conversion);
 									ADD_PIXEL(&ctx, 
 									     terrain,
 									     terrain,
@@ -851,7 +851,7 @@ void DoLOS(char *filename, unsigned char geo, unsigned char kml,
 			}
 
 			if (found) {
-				mask = G_dem[indx].mask[x0][y0];
+				mask = G_dem[indx].mask[DEM_INDEX(G_dem[indx], x0, y0)];
 
 				if (mask & 2)
 					/* Text Labels: Red */
@@ -960,7 +960,7 @@ void DoLOS(char *filename, unsigned char geo, unsigned char kml,
 						else {
 							/* Sea-level: Medium Blue */
 							if (G_dem[indx].
-							    data[x0][y0] == 0)
+							    data[DEM_INDEX(G_dem[indx], x0, y0)] == 0)
 								ADD_PIXEL(&ctx, 
 									0, 0,
 									170);
@@ -969,7 +969,7 @@ void DoLOS(char *filename, unsigned char geo, unsigned char kml,
 								terrain =
 								    (unsigned)
 								    (0.5 +
-								     pow((double)(G_dem[indx].data[x0][y0] - G_min_elevation), one_over_gamma) * conversion);
+								     pow((double)(G_dem[indx].data[DEM_INDEX(G_dem[indx], x0, y0)] - G_min_elevation), one_over_gamma) * conversion);
 								ADD_PIXEL(&ctx, 
 									terrain,
 									terrain,
@@ -1799,6 +1799,7 @@ void SeriesData(struct site source, struct site destination, char *name,
 	strcpy(fresnel60name, name);
 	strcat(fresnel60name, "_fresnel60\0");
 
+  
 	fd = fopen(profilename, "wb");
 	if (G_clutter > 0.0)
 		fd1 = fopen(cluttername, "wb");
