@@ -573,28 +573,12 @@ int LoadSDF_BSDF(char *name)
     G_dem[indx].max_north = maxlat;
     G_dem[indx].max_west = maxlon;
 
-		/*
-		   Here X lines of DEM will be read until IPPD is reached.
-		   Each .sdf tile contains 1200x1200 = 1.44M 'points'
-		   Each point is sampled for 1200 resolution!
-		 */
-		for (x = 0; x < G_ippd; x++) {
-			for (y = 0; y < G_ippd; y++) {
+    lseek(fd, 1200*1200*2, SEEK_SET);
 
-        data = G_dem[indx].signal[DEM_INDEX(G_dem[indx], x, y)];
+    read(fd, &G_dem[indx].min_el, 2);
+    read(fd, &G_dem[indx].max_el, 2);
 
-				G_dem[indx].signal[DEM_INDEX(G_dem[indx], x, y)] = 0;
-				G_dem[indx].mask[DEM_INDEX(G_dem[indx], x, y)] = 0;
-
-				if (data > G_dem[indx].max_el)
-					G_dem[indx].max_el = data;
-
-				if (data < G_dem[indx].min_el)
-					G_dem[indx].min_el = data;
-
-			}
-
-		}
+    fprintf(stderr, "min elevation %d, max elevation %d\n", G_dem[indx].min_el, G_dem[indx].max_el);
 
 		close(fd);
 

@@ -1002,7 +1002,9 @@ void alloc_dem(void)
     G_dem[i].ippd=IPPD;
 		G_dem[i].data = new short[IPPD*IPPD];
 		G_dem[i].mask = new unsigned char[IPPD*IPPD];
+    bzero(G_dem[i].mask, IPPD*IPPD);
 		G_dem[i].signal = new unsigned char[IPPD*IPPD];
+    bzero(G_dem[i].signal, IPPD*IPPD);
 	}
 }
 
