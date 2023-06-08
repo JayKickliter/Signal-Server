@@ -10,6 +10,8 @@
 #include "tiles.hh"
 #include <bzlib.h>
 #include <zlib.h>
+#include <sys/mman.h>
+#include <fcntl.h>
 
 #define BZBUFFER 65536
 #define GZBUFFER 32768
@@ -486,6 +488,171 @@ int loadLIDAR(char *filenames, int resample)
 
 	return 0;
 }
+
+int LoadSDF_BSDF(char *name)
+{
+	/* This function reads uncompressed ss Data Files (.sdf)
+	   containing digital elevation model data into memory.
+	   Elevation data, maximum and minimum elevations, and
+	   quadrangle limits are stored in the first available
+	   dem[] structure. 
+	   NOTE: On error, this function returns a negative errno */
+
+	int x, y, data = 0, indx, minlat, minlon, maxlat, maxlon, j;
+	char found, free_page = 0, line[20], jline[20], sdf_file[255],
+	    path_plus_name[PATH_MAX];
+
+	int fd;
+
+	for (x = 0; name[x] != '.' && name[x] != 0 && x < 250; x++)
+		sdf_file[x] = name[x];
+
+	sdf_file[x] = 0;
+
+	/* Parse filename for minimum latitude and longitude values */
+
+	if( sscanf(sdf_file, "%d:%d:%d:%d", &minlat, &maxlat, &minlon, &maxlon) != 4 )
+		return -EINVAL;
+
+	sdf_file[x] = '.';
+	sdf_file[x + 1] = 'b';
+	sdf_file[x + 2] = 's';
+	sdf_file[x + 3] = 'd';
+	sdf_file[x + 4] = 'f';
+	sdf_file[x + 5] = 0;
+
+	/* Is it already in memory? */
+
+	for (indx = 0, found = 0; indx < MAXPAGES && found == 0; indx++) {
+		if (minlat == G_dem[indx].min_north
+		    && minlon == G_dem[indx].min_west
+		    && maxlat == G_dem[indx].max_north
+		    && maxlon == G_dem[indx].max_west)
+			found = 1;
+	}
+
+	/* Is room available to load it? */
+
+	if (found == 0) {
+		for (indx = 0, free_page = 0; indx < MAXPAGES && free_page == 0;
+		     indx++)
+			if (G_dem[indx].max_north == -90)
+				free_page = 1;
+	}
+
+	indx--;
+
+	if (free_page && found == 0 && indx >= 0 && indx < MAXPAGES) {
+		/* Search for SDF file in current working directory first */
+
+		strncpy(path_plus_name, sdf_file, sizeof(path_plus_name)-1);
+
+		if( (fd = open(path_plus_name, O_RDONLY)) == -1 ){
+			/* Next, try loading SDF file from path specified
+			   in $HOME/.ss_path file or by -d argument */
+
+			strncpy(path_plus_name, G_sdf_path, sizeof(path_plus_name)-1);
+			strncat(path_plus_name, sdf_file, sizeof(path_plus_name)-1);
+			if( (fd = open(path_plus_name, O_RDONLY)) == -1 ){
+				return -errno;
+			}
+		}
+
+		if (G_debug == 1) {
+			fprintf(stderr,
+				"Loading \"%s\" into page %d...\n",
+				path_plus_name, indx + 1);
+			fflush(stderr);
+		}
+
+    delete G_dem[indx].data;
+    G_dem[indx].data = (short*)mmap(NULL, 1200*1200*2, PROT_READ, MAP_PRIVATE, fd, 0);
+
+    G_dem[indx].min_north = minlat;
+    G_dem[indx].min_west = minlon;
+    G_dem[indx].max_north = maxlat;
+    G_dem[indx].max_west = maxlon;
+
+		/*
+		   Here X lines of DEM will be read until IPPD is reached.
+		   Each .sdf tile contains 1200x1200 = 1.44M 'points'
+		   Each point is sampled for 1200 resolution!
+		 */
+		for (x = 0; x < G_ippd; x++) {
+			for (y = 0; y < G_ippd; y++) {
+
+        data = G_dem[indx].signal[DEM_INDEX(G_dem[indx], x, y)];
+
+				G_dem[indx].signal[DEM_INDEX(G_dem[indx], x, y)] = 0;
+				G_dem[indx].mask[DEM_INDEX(G_dem[indx], x, y)] = 0;
+
+				if (data > G_dem[indx].max_el)
+					G_dem[indx].max_el = data;
+
+				if (data < G_dem[indx].min_el)
+					G_dem[indx].min_el = data;
+
+			}
+
+		}
+
+		close(fd);
+
+		if (G_dem[indx].min_el < G_min_elevation)
+			G_min_elevation = G_dem[indx].min_el;
+
+		if (G_dem[indx].max_el > G_max_elevation)
+			G_max_elevation = G_dem[indx].max_el;
+
+		if (G_max_north == -90)
+			G_max_north = G_dem[indx].max_north;
+
+		else if (G_dem[indx].max_north > G_max_north)
+			G_max_north = G_dem[indx].max_north;
+
+		if (G_min_north == 90)
+			G_min_north = G_dem[indx].min_north;
+
+		else if (G_dem[indx].min_north < G_min_north)
+			G_min_north = G_dem[indx].min_north;
+
+		if (G_max_west == -1)
+			G_max_west = G_dem[indx].max_west;
+
+		else {
+			if (abs(G_dem[indx].max_west - G_max_west) < 180) {
+				if (G_dem[indx].max_west > G_max_west)
+					G_max_west = G_dem[indx].max_west;
+			}
+
+			else {
+				if (G_dem[indx].max_west < G_max_west)
+					G_max_west = G_dem[indx].max_west;
+			}
+		}
+
+		if (G_min_west == 360)
+			G_min_west = G_dem[indx].min_west;
+
+		else {
+			if (fabs(G_dem[indx].min_west - G_min_west) < 180.0) {
+				if (G_dem[indx].min_west < G_min_west)
+					G_min_west = G_dem[indx].min_west;
+			}
+
+			else {
+				if (G_dem[indx].min_west > G_min_west)
+					G_min_west = G_dem[indx].min_west;
+			}
+		}
+
+		return 1;
+	}
+
+	else
+		return found;
+}
+
 
 int LoadSDF_SDF(char *name)
 {
@@ -1266,6 +1433,9 @@ int LoadSDF(char *name)
 	int x, y, indx, minlat, minlon, maxlat, maxlon;
 	char found, free_page = 0;
 	int return_value = -1;
+
+
+	return_value = LoadSDF_BSDF(name);
 
 	/* Try to load an uncompressed SDF first. */
 
