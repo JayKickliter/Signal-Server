@@ -557,6 +557,8 @@ int LoadSDF_BSDF(char *name)
 
     struct dem dem;
 
+    dem.ippd = 1200;
+
     dem.data = (short*)mmap(NULL, 1200*1200*2, PROT_READ, MAP_PRIVATE, fd, 0);
 
     dem.min_north = minlat;
@@ -568,8 +570,6 @@ int LoadSDF_BSDF(char *name)
 
     read(fd, &dem.min_el, 2);
     read(fd, &dem.max_el, 2);
-
-    fprintf(stderr, "min elevation %d, max elevation %d\n", dem.min_el, dem.max_el);
 
 		close(fd);
 
@@ -1453,6 +1453,7 @@ int LoadSDF(char *name)
 			}
 
       struct dem dem;
+      dem.ippd = 1200;
 			dem.max_west = maxlon;
 			dem.min_north = minlat;
 			dem.min_west = minlon;
