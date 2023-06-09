@@ -22,7 +22,7 @@ namespace {
 	unsigned int thread_count = 0;
 	pthread_mutex_t maskMutex;
 	bool ***processed;
-	bool has_init_processed = false;
+	bool has_init_processed = true; // XXX hacked for now because we don't use threads
 
 	struct propagationRange {
 		double min_west, max_west, min_north, max_north;
@@ -83,7 +83,8 @@ namespace {
 
 	void init_processed()
 	{
-		int i;
+      // XXX hacked for now
+		/*int i;
 		int x;
 		int y;
 
@@ -99,7 +100,7 @@ namespace {
 				for (y = 0; y < G_ippd; y++)
 					processed[i][x][y] = false;
 			}
-		}
+		}*/
 
 		has_init_processed = true;
 	}
@@ -115,6 +116,8 @@ namespace {
 		int x, y, indx;
 		char found;
 		bool rtn = false;
+
+    return true; // XXX hacked for now because we don't use threads
 
 		for (indx = 0, found = 0; indx < MAXPAGES && found == 0;) {
 			x = (int)rint(G_ppd * (lat - G_dem[indx].min_north));

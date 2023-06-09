@@ -1,6 +1,8 @@
 #ifndef _COMMON_HH_
 #define _COMMON_HH_
 
+#include <vector>
+
 #define GAMMA 		2.5
 
 #ifndef PI
@@ -25,7 +27,7 @@
 
 #define MAX(x,y)((x)>(y)?(x):(y))
 
-#define DEM_INDEX(dem, x, y)(((y)*dem.ippd)+x)
+#define DEM_INDEX(ippd, x, y)(((y)*ippd)+x)
 
 struct dem {
   int ippd;
@@ -40,7 +42,7 @@ struct dem {
 };
 
 struct dem_output {
-    int indx; // position of corresponding dem in global array
+  struct dem *dem;
 	float min_north;
 	float max_north;
 	float min_west;
@@ -133,7 +135,7 @@ extern unsigned char G_got_azimuth_pattern;
 extern unsigned char G_metric;
 extern unsigned char G_dbm;
 
-extern struct dem *G_dem;
+extern std::vector<struct dem> G_dem;
 extern __thread struct path G_path;
 extern struct LR G_LR;
 extern struct region G_region;

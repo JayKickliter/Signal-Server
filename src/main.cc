@@ -67,7 +67,8 @@ bool to_stdout = false, cropping = true;
 __thread double *G_elev;
 __thread struct path G_path;
 struct site tx_site[2];
-struct dem *G_dem;
+
+std::vector<struct dem> G_dem;
 
 struct LR G_LR;
 struct region G_region;
@@ -184,29 +185,31 @@ int PutMask(std::vector<dem_output> *v, double lat, double lon, int value)
 
   // if we couldn't find it in the output vector, find the right DEM
   // and create a corresponding output vector entry
-	for (indx = 0; indx < MAXPAGES && found == 0; indx++) {
-		x = (int)rint(G_ppd * (lat - G_dem[indx].min_north));
-		y = G_mpi - (int)rint(G_yppd * (LonDiff(G_dem[indx].max_west, lon)));
+  if (!found) {
+      for(auto & dem : G_dem) {
+          x = (int)rint(G_ppd * (lat - dem.min_north));
+          y = G_mpi - (int)rint(G_yppd * (LonDiff(dem.max_west, lon)));
 
-		if (x >= 0 && x <= G_mpi && y >= 0 && y <= G_mpi) {
-        struct dem_output tmp;
-        tmp.min_north = G_dem[indx].min_north;
-        tmp.max_north = G_dem[indx].max_north;
-        tmp.min_west = G_dem[indx].min_west;
-        tmp.max_west = G_dem[indx].max_west;
-        tmp.indx = indx;
-        tmp.mask = new unsigned char[G_dem[indx].ippd * G_dem[indx].ippd];
-        tmp.signal = new unsigned char[G_dem[indx].ippd * G_dem[indx].ippd];
-        v->push_back(tmp);
-        out = &v->back();
-        found = 1;
-        break;
-    }
+          if (x >= 0 && x <= G_mpi && y >= 0 && y <= G_mpi) {
+              struct dem_output tmp;
+              tmp.min_north = dem.min_north;
+              tmp.max_north = dem.max_north;
+              tmp.min_west = dem.min_west;
+              tmp.max_west = dem.max_west;
+              tmp.dem = &dem;
+              tmp.mask = new unsigned char[dem.ippd * dem.ippd];
+              tmp.signal = new unsigned char[dem.ippd * dem.ippd];
+              v->push_back(tmp);
+              out = &v->back();
+              found = 1;
+              break;
+          }
+      }
   }
 
 	if (found) {
-		out->mask[DEM_INDEX(G_dem[out->indx], x, y)] = value;
-		return ((int)out->mask[DEM_INDEX(G_dem[out->indx], x, y)]);
+		out->mask[DEM_INDEX(out->dem->ippd, x, y)] = value;
+		return ((int)out->mask[DEM_INDEX(out->dem->ippd, x, y)]);
 	}
 
 	else
@@ -238,32 +241,33 @@ int OrMask(std::vector<dem_output> *v, double lat, double lon, int value)
 
   // if we couldn't find it in the output vector, find the right DEM
   // and create a corresponding output vector entry
-	for (indx = 0; indx < MAXPAGES && found == 0; indx++) {
-		x = (int)rint(G_ppd * (lat - G_dem[indx].min_north));
-		y = G_mpi - (int)rint(G_yppd * (LonDiff(G_dem[indx].max_west, lon)));
+  if (!found) {
+      for(auto & dem : G_dem) {
+          x = (int)rint(G_ppd * (lat - dem.min_north));
+          y = G_mpi - (int)rint(G_yppd * (LonDiff(dem.max_west, lon)));
 
-		if (x >= 0 && x <= G_mpi && y >= 0 && y <= G_mpi) {
-        printf("creating output for %f %f\n", lat, lon);
-        struct dem_output tmp;
-        tmp.min_north = G_dem[indx].min_north;
-        tmp.max_north = G_dem[indx].max_north;
-        tmp.min_west = G_dem[indx].min_west;
-        tmp.max_west = G_dem[indx].max_west;
-        tmp.indx = indx;
-        tmp.mask = new unsigned char[G_dem[indx].ippd * G_dem[indx].ippd];
-        bzero(tmp.mask, G_dem[indx].ippd * G_dem[indx].ippd);
-        tmp.signal = new unsigned char[G_dem[indx].ippd * G_dem[indx].ippd];
-        bzero(tmp.signal, G_dem[indx].ippd * G_dem[indx].ippd);
-        v->push_back(tmp);
-        out = &v->back();
-        found = 1;
-        break;
-    }
-	}
+          if (x >= 0 && x <= G_mpi && y >= 0 && y <= G_mpi) {
+              struct dem_output tmp;
+              tmp.min_north = dem.min_north;
+              tmp.max_north = dem.max_north;
+              tmp.min_west = dem.min_west;
+              tmp.max_west = dem.max_west;
+              tmp.dem = &dem;
+              tmp.mask = new unsigned char[dem.ippd * dem.ippd];
+              bzero(tmp.mask, dem.ippd * dem.ippd);
+              tmp.signal = new unsigned char[dem.ippd * dem.ippd];
+              bzero(tmp.signal, dem.ippd * dem.ippd);
+              v->push_back(tmp);
+              out = &v->back();
+              found = 1;
+              break;
+          }
+      }
+  }
 
 	if (found) {
-		out->mask[DEM_INDEX(G_dem[out->indx], x, y)] |= value;
-		return ((int)out->mask[DEM_INDEX(G_dem[out->indx], x, y)]);
+		out->mask[DEM_INDEX(out->dem->ippd, x, y)] |= value;
+		return ((int)out->mask[DEM_INDEX(out->dem->ippd, x, y)]);
 	}
 
 	else
@@ -290,7 +294,7 @@ int GetMask(std::vector<dem_output> *v, double lat, double lon)
   }
 
   if(found) {
-      return ((int)out->mask[DEM_INDEX(G_dem[out->indx], x, y)]);
+      return ((int)out->mask[DEM_INDEX(out->dem->ippd, x, y)]);
   } else {
       return 0;
   }
@@ -326,30 +330,32 @@ void PutSignal(std::vector<dem_output> *v, double lat, double lon, unsigned char
 
   // if we couldn't find it in the output vector, find the right DEM
   // and create a corresponding output vector entry
-	for (indx = 0; indx < MAXPAGES && found == 0; indx++) {
-		x = (int)rint(G_ppd * (lat - G_dem[indx].min_north));
-		y = G_mpi - (int)rint(G_yppd * (LonDiff(G_dem[indx].max_west, lon)));
+  if (!found) {
+      for(auto & dem : G_dem) {
+          x = (int)rint(G_ppd * (lat - dem.min_north));
+          y = G_mpi - (int)rint(G_yppd * (LonDiff(dem.max_west, lon)));
 
-		if (x >= 0 && x <= G_mpi && y >= 0 && y <= G_mpi) {
-        struct dem_output tmp;
-        tmp.min_north = G_dem[indx].min_north;
-        tmp.max_north = G_dem[indx].max_north;
-        tmp.min_west = G_dem[indx].min_west;
-        tmp.max_west = G_dem[indx].max_west;
-        tmp.indx = indx;
-        tmp.mask = new unsigned char[G_dem[indx].ippd * G_dem[indx].ippd];
-        bzero(tmp.mask, G_dem[indx].ippd * G_dem[indx].ippd);
-        tmp.signal = new unsigned char[G_dem[indx].ippd * G_dem[indx].ippd];
-        bzero(tmp.signal, G_dem[indx].ippd * G_dem[indx].ippd);
-        v->push_back(tmp);
-        out = &v->back();
-        found = 1;
-        break;
-    }
+          if (x >= 0 && x <= G_mpi && y >= 0 && y <= G_mpi) {
+              struct dem_output tmp;
+              tmp.min_north = dem.min_north;
+              tmp.max_north = dem.max_north;
+              tmp.min_west = dem.min_west;
+              tmp.max_west = dem.max_west;
+              tmp.dem = &dem;
+              tmp.mask = new unsigned char[dem.ippd * dem.ippd];
+              bzero(tmp.mask, dem.ippd * dem.ippd);
+              tmp.signal = new unsigned char[dem.ippd * dem.ippd];
+              bzero(tmp.signal, dem.ippd * dem.ippd);
+              v->push_back(tmp);
+              out = &v->back();
+              found = 1;
+              break;
+          }
+      }
   }
 
 	if (found) {		// Write values to file
-		out->signal[DEM_INDEX(G_dem[out->indx], x, y)] = signal;
+		out->signal[DEM_INDEX(out->dem->ippd, x, y)] = signal;
 		// return (dem[indx].signal[x][y]);
 		return;
 	}
@@ -381,7 +387,7 @@ unsigned char GetSignal(std::vector<dem_output> *v, double lat, double lon)
   }
 
 	if (found)
-		return (out->signal[DEM_INDEX(G_dem[out->indx], x, y)]);
+		return (out->signal[DEM_INDEX(out->dem->ippd, x, y)]);
 	else
 		return 0;
 }
@@ -392,24 +398,24 @@ double GetElevation(struct site location)
 	   represented by the digital elevation model data in memory.
 	   Function returns -5000.0 for locations not found in memory. */
 
-	char found;
 	int x = 0, y = 0, indx;
 	double elevation;
+  struct dem *found = NULL;
 
-	for (indx = 0, found = 0; indx < MAXPAGES && found == 0;) {
-		x = (int)rint(G_ppd * (location.lat - G_dem[indx].min_north));
+  for(auto & dem : G_dem) {
+		x = (int)rint(G_ppd * (location.lat - dem.min_north));
 		y = G_mpi -
 		    (int)rint(G_yppd *
-			      (LonDiff(G_dem[indx].max_west, location.lon)));
+			      (LonDiff(dem.max_west, location.lon)));
 
-		if (x >= 0 && x <= G_mpi && y >= 0 && y <= G_mpi)
-			found = 1;
-		else
-			indx++;
+		if (x >= 0 && x <= G_mpi && y >= 0 && y <= G_mpi) {
+			found = &dem;
+      break;
+    }
 	}
 
 	if (found)
-		elevation = 3.28084 * G_dem[indx].data[DEM_INDEX(G_dem[indx], x, y)];
+		elevation = 3.28084 * found->data[DEM_INDEX(found->ippd, x, y)];
 	else
 		elevation = -5000.0;
 
@@ -423,21 +429,21 @@ int AddElevation(double lat, double lon, double height, int size)
 	   in memory.  Does nothing and returns 0 for locations
 	   not found in memory. */
 
-	char found;
+	struct dem *found;
 	int i,j,x = 0, y = 0, indx;
 
-	for (indx = 0, found = 0; indx < MAXPAGES && found == 0;) {
-		x = (int)rint(G_ppd * (lat - G_dem[indx].min_north));
-		y = G_mpi - (int)rint(G_yppd * (LonDiff(G_dem[indx].max_west, lon)));
+  for(auto & dem : G_dem) {
+		x = (int)rint(G_ppd * (lat - dem.min_north));
+		y = G_mpi - (int)rint(G_yppd * (LonDiff(dem.max_west, lon)));
 
-		if (x >= 0 && x <= G_mpi && y >= 0 && y <= G_mpi)
-			found = 1;
-		else
-			indx++;
+		if (x >= 0 && x <= G_mpi && y >= 0 && y <= G_mpi) {
+			found = &dem;
+      break;
+    }
 	}
 
 	if (found && size<2)
-		G_dem[indx].data[DEM_INDEX(G_dem[indx], x, y)] += (short)rint(height);
+		found->data[DEM_INDEX(found->ippd, x, y)] += (short)rint(height);
 
 	// Make surrounding area bigger for wide area landcover. Should enhance 3x3 pixels including c.p
 	if (found && size>1){
@@ -445,14 +451,14 @@ int AddElevation(double lat, double lon, double height, int size)
 			for(j=size*-1; j <= size; j=j+1){
 				if(x+j >= 0 && x+j <=IPPD && y+i >= 0 && y+i <=IPPD)
             // coordinates are swapped for some reason?
-					G_dem[indx].data[DEM_INDEX(G_dem[indx], y+i, x+j)] += (short)rint(height);
+					found->data[DEM_INDEX(found->ippd, y+i, x+j)] += (short)rint(height);
 			}
 
 		}
 	}
 
 
-	return found;
+	return found != NULL;
 }
 
 double dist(double lat1, double lon1, double lat2, double lon2)
@@ -1061,16 +1067,6 @@ void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f,
 
 }
 
-void free_dem(void)
-{
-	int i;
-
-	for (i = 0; i < MAXPAGES; i++) {
-		delete [] G_dem[i].data;
-	}
-	delete [] G_dem;
-}
-
 void free_elev(void) {
   delete [] G_elev;
 }
@@ -1088,16 +1084,6 @@ void alloc_elev(void)
   G_elev  = new double[ARRAYSIZE + 10];
 }
 
-void alloc_dem(void)
-{
-	int i;
-
-	G_dem = new struct dem[MAXPAGES];
-	for (i = 0; i < MAXPAGES; i++) {
-    G_dem[i].ippd=IPPD;
-	}
-}
-
 void alloc_path(void)
 {
 	G_path.lat = new double[ARRAYSIZE];
@@ -1111,17 +1097,7 @@ void do_allocs(void)
 	int i;
 
 	alloc_elev();
-	alloc_dem();
 	alloc_path();
-
-	for (i = 0; i < MAXPAGES; i++) {
-		G_dem[i].min_el = 32767;
-		G_dem[i].max_el = -32768;
-		G_dem[i].min_north = 90;
-		G_dem[i].max_north = -90;
-		G_dem[i].min_west = 360;
-		G_dem[i].max_west = -1;
-	}
 }
 
 
@@ -2003,7 +1979,7 @@ int handle_args(int argc, char *argv[]) {
 		strncpy(tx_site[0].name, "Tx", 3);
 		strncpy(tx_site[1].name, "Rx", 3);
 		PlotPath(&v, tx_site[0], tx_site[1], 1);
-		//PathReport(tx_site[0], tx_site[1], tx_site[0].filename, 0, propmodel, pmenv, rxGain);
+		PathReport(tx_site[0], tx_site[1], tx_site[0].filename, 0, propmodel, pmenv, rxGain);
 		// Order flipped for benefit of graph. Makes no difference to data.
 		SeriesData(tx_site[1], tx_site[0], tx_site[0].filename, 1, normalise);
 	}

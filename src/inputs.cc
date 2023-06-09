@@ -151,22 +151,23 @@ int loadClutter(char *filename, double radius, struct site tx)
 	return 0;
 }
 
+/*
 int averageHeight(int x, int y){
 	int total = 0;
 	int c=0;
-	if(DEM_INDEX(G_dem[0], x-1, y-1)>0){
+	if(DEM_INDEX(&(G_dem[0]), x-1, y-1)>0){
 		total+=DEM_INDEX(G_dem[0], x-1, y-1);
 		c++;
 	}
-	if(DEM_INDEX(G_dem[0], x+1, y+1)>0){
+	if(DEM_INDEX(&G_dem[0], x+1, y+1)>0){
 		total+=DEM_INDEX(G_dem[0], x+1, y+1);
 		c++;
 	}
-	if(DEM_INDEX(G_dem[0], x+1, y-1)>0){
+	if(DEM_INDEX(&G_dem[0], x+1, y-1)>0){
 		total+=DEM_INDEX(G_dem[0], x+1, y-1);
 		c++;
 	}
-	if(DEM_INDEX(G_dem[0], x-1, y+1)>0){
+	if(DEM_INDEX(&G_dem[0], x-1, y+1)>0){
 		total+=DEM_INDEX(G_dem[0], x-1, y+1);
 		c++;
 	}
@@ -175,7 +176,7 @@ int averageHeight(int x, int y){
 	}else{
 		return 0;
 	}
-}
+}*/
 
 int loadLIDAR(char *filenames, int resample)
 {
@@ -452,7 +453,7 @@ int loadLIDAR(char *filenames, int resample)
 	for (size_t h = 0; h < new_height; h++, y--) {
 		int x = new_width-1;
 		for (size_t w = 0; w < new_width; w++, x--) {
-			G_dem[0].data[DEM_INDEX(G_dem[0], x, y)] = new_tile[h*new_width + w];
+			G_dem[0].data[DEM_INDEX(G_dem[0].ippd, x, y)] = new_tile[h*new_width + w];
 		}
 	}
 
@@ -462,9 +463,9 @@ int loadLIDAR(char *filenames, int resample)
 		int x = new_width-2;
 		for (size_t w = 0; w < new_width-2; w++, x--) {
 
-			if(G_dem[0].data[DEM_INDEX(G_dem[0], x, y)]<=0){
+			/*if(G_dem[0].data[DEM_INDEX(G_dem[0], x, y)]<=0){
 				G_dem[0].data[DEM_INDEX(G_dem[0], x, y)] = averageHeight(x,y);
-			}
+			}*/
 		}
 	}
 	if (G_width > 3600 * 8) {
@@ -497,7 +498,7 @@ int LoadSDF_BSDF(char *name)
 	   NOTE: On error, this function returns a negative errno */
 
 	int x, y, data = 0, indx, minlat, minlon, maxlat, maxlon, j;
-	char found, free_page = 0, line[20], jline[20], sdf_file[255],
+	char found = 0, free_page = 0, line[20], jline[20], sdf_file[255],
 	    path_plus_name[PATH_MAX];
 
 	int fd;
@@ -521,26 +522,17 @@ int LoadSDF_BSDF(char *name)
 
 	/* Is it already in memory? */
 
-	for (indx = 0, found = 0; indx < MAXPAGES && found == 0; indx++) {
-		if (minlat == G_dem[indx].min_north
-		    && minlon == G_dem[indx].min_west
-		    && maxlat == G_dem[indx].max_north
-		    && maxlon == G_dem[indx].max_west)
+  for(auto & dem : G_dem) {
+		if (minlat == dem.min_north
+		    && minlon == dem.min_west
+		    && maxlat == dem.max_north
+		    && maxlon == dem.max_west) {
 			found = 1;
+      break;
+    }
 	}
-
-	/* Is room available to load it? */
 
 	if (found == 0) {
-		for (indx = 0, free_page = 0; indx < MAXPAGES && free_page == 0;
-		     indx++)
-			if (G_dem[indx].max_north == -90)
-				free_page = 1;
-	}
-
-	indx--;
-
-	if (free_page && found == 0 && indx >= 0 && indx < MAXPAGES) {
 		/* Search for SDF file in current working directory first */
 
 		strncpy(path_plus_name, sdf_file, sizeof(path_plus_name)-1);
@@ -558,74 +550,78 @@ int LoadSDF_BSDF(char *name)
 
 		if (G_debug == 1) {
 			fprintf(stderr,
-				"Loading \"%s\" into page %d...\n",
-				path_plus_name, indx + 1);
+				"Loading \"%s\"...\n",
+				path_plus_name);
 			fflush(stderr);
 		}
 
-    G_dem[indx].data = (short*)mmap(NULL, 1200*1200*2, PROT_READ, MAP_PRIVATE, fd, 0);
+    struct dem dem;
 
-    G_dem[indx].min_north = minlat;
-    G_dem[indx].min_west = minlon;
-    G_dem[indx].max_north = maxlat;
-    G_dem[indx].max_west = maxlon;
+    dem.data = (short*)mmap(NULL, 1200*1200*2, PROT_READ, MAP_PRIVATE, fd, 0);
+
+    dem.min_north = minlat;
+    dem.min_west = minlon;
+    dem.max_north = maxlat;
+    dem.max_west = maxlon;
 
     lseek(fd, 1200*1200*2, SEEK_SET);
 
-    read(fd, &G_dem[indx].min_el, 2);
-    read(fd, &G_dem[indx].max_el, 2);
+    read(fd, &dem.min_el, 2);
+    read(fd, &dem.max_el, 2);
 
-    fprintf(stderr, "min elevation %d, max elevation %d\n", G_dem[indx].min_el, G_dem[indx].max_el);
+    fprintf(stderr, "min elevation %d, max elevation %d\n", dem.min_el, dem.max_el);
 
 		close(fd);
 
-		if (G_dem[indx].min_el < G_min_elevation)
-			G_min_elevation = G_dem[indx].min_el;
+		if (dem.min_el < G_min_elevation)
+			G_min_elevation = dem.min_el;
 
-		if (G_dem[indx].max_el > G_max_elevation)
-			G_max_elevation = G_dem[indx].max_el;
+		if (dem.max_el > G_max_elevation)
+			G_max_elevation = dem.max_el;
 
 		if (G_max_north == -90)
-			G_max_north = G_dem[indx].max_north;
+			G_max_north = dem.max_north;
 
-		else if (G_dem[indx].max_north > G_max_north)
-			G_max_north = G_dem[indx].max_north;
+		else if (dem.max_north > G_max_north)
+			G_max_north = dem.max_north;
 
 		if (G_min_north == 90)
-			G_min_north = G_dem[indx].min_north;
+			G_min_north = dem.min_north;
 
-		else if (G_dem[indx].min_north < G_min_north)
-			G_min_north = G_dem[indx].min_north;
+		else if (dem.min_north < G_min_north)
+			G_min_north = dem.min_north;
 
 		if (G_max_west == -1)
-			G_max_west = G_dem[indx].max_west;
+			G_max_west = dem.max_west;
 
 		else {
-			if (abs(G_dem[indx].max_west - G_max_west) < 180) {
-				if (G_dem[indx].max_west > G_max_west)
-					G_max_west = G_dem[indx].max_west;
+			if (abs(dem.max_west - G_max_west) < 180) {
+				if (dem.max_west > G_max_west)
+					G_max_west = dem.max_west;
 			}
 
 			else {
-				if (G_dem[indx].max_west < G_max_west)
-					G_max_west = G_dem[indx].max_west;
+				if (dem.max_west < G_max_west)
+					G_max_west = dem.max_west;
 			}
 		}
 
 		if (G_min_west == 360)
-			G_min_west = G_dem[indx].min_west;
+			G_min_west = dem.min_west;
 
 		else {
-			if (fabs(G_dem[indx].min_west - G_min_west) < 180.0) {
-				if (G_dem[indx].min_west < G_min_west)
-					G_min_west = G_dem[indx].min_west;
+			if (fabs(dem.min_west - G_min_west) < 180.0) {
+				if (dem.min_west < G_min_west)
+					G_min_west = dem.min_west;
 			}
 
 			else {
-				if (G_dem[indx].min_west > G_min_west)
-					G_min_west = G_dem[indx].min_west;
+				if (dem.min_west > G_min_west)
+					G_min_west = dem.min_west;
 			}
 		}
+
+    G_dem.push_back(dem);
 
 		return 1;
 	}
@@ -748,7 +744,7 @@ int LoadSDF_SDF(char *name)
 					data = atoi(line);
 				}
 
-				G_dem[indx].data[DEM_INDEX(G_dem[indx], x, y)] = data;
+				G_dem[indx].data[DEM_INDEX(G_dem[indx].ippd, x, y)] = data;
 
 				if (data > G_dem[indx].max_el)
 					G_dem[indx].max_el = data;
@@ -1008,7 +1004,7 @@ int LoadSDF_BZ(char *name)
 				       return -EIO;
 				data = atoi(line);
 
-				G_dem[indx].data[DEM_INDEX(G_dem[indx], x, y)] = data;
+				G_dem[indx].data[DEM_INDEX(G_dem[indx].ippd, x, y)] = data;
 
 				if (data > G_dem[indx].max_el)
 					G_dem[indx].max_el = data;
@@ -1301,7 +1297,7 @@ int LoadSDF_GZ(char *name)
 
 				data = atoi(line);
 
-				G_dem[indx].data[DEM_INDEX(G_dem[indx], x, y)] = data;
+				G_dem[indx].data[DEM_INDEX(G_dem[indx].ippd, x, y)] = data;
 
 				if (data > G_dem[indx].max_el)
 					G_dem[indx].max_el = data;
@@ -1408,8 +1404,8 @@ int LoadSDF(char *name)
 	   exists for the region requested, and that the region
 	   requested must be entirely over water. */
 
-	int x, y, indx, minlat, minlon, maxlat, maxlon;
-	char found, free_page = 0;
+	int x, y, minlat, minlon, maxlat, maxlon;
+	char found = 0, free_page = 0;
 	int return_value = -1;
 
 
@@ -1417,17 +1413,17 @@ int LoadSDF(char *name)
 
 	/* Try to load an uncompressed SDF first. */
 
-	return_value = LoadSDF_SDF(name);
+	//return_value = LoadSDF_SDF(name);
 
 	/* If that fails, try loading a BZ2 compressed SDF. */
 
-	if ( return_value <= 0 )
-	        return_value = LoadSDF_BZ(name);
+	//if ( return_value <= 0 )
+	//        return_value = LoadSDF_BZ(name);
 
 	/* If that fails, try loading a gzip compressed SDF. */
 
-	if ( return_value <= 0 )
-	        return_value = LoadSDF_GZ(name);
+	//if ( return_value <= 0 )
+	//        return_value = LoadSDF_GZ(name);
 
 	/* If no file format can be found, then assume the area is water. */
 
@@ -1438,93 +1434,87 @@ int LoadSDF(char *name)
 
 		/* Is it already in memory? */
 
-		for (indx = 0, found = 0; indx < MAXPAGES && found == 0; indx++) {
-			if (minlat == G_dem[indx].min_north
-			    && minlon == G_dem[indx].min_west
-			    && maxlat == G_dem[indx].max_north
-			    && maxlon == G_dem[indx].max_west)
+    for(auto & dem : G_dem) {
+			if (minlat == dem.min_north
+			    && minlon == dem.min_west
+			    && maxlat == dem.max_north
+			    && maxlon == dem.max_west) {
 				found = 1;
+        break;
+      }
 		}
 
-		/* Is room available to load it? */
-
-		if (found == 0) {
-			for (indx = 0, free_page = 0;
-			     indx < MAXPAGES && free_page == 0; indx++)
-				if (G_dem[indx].max_north == -90)
-					free_page = 1;
-		}
-
-		indx--;
-
-		if (free_page && found == 0 && indx >= 0 && indx < MAXPAGES) {
+    if (found == 0) {
 			if (G_debug == 1) {
 				fprintf(stderr,
-					"Region  \"%s\" assumed as sea-level into page %d...\n",
-					name, indx + 1);
+					"Region  \"%s\" assumed as sea-level...\n",
+					name);
 				fflush(stderr);
 			}
 
-			G_dem[indx].max_west = maxlon;
-			G_dem[indx].min_north = minlat;
-			G_dem[indx].min_west = minlon;
-			G_dem[indx].max_north = maxlat;
+      struct dem dem;
+			dem.max_west = maxlon;
+			dem.min_north = minlat;
+			dem.min_west = minlon;
+			dem.max_north = maxlat;
 
 			/* Fill DEM with sea-level topography */
-      G_dem[indx].data = new short[IPPD*IPPD];
-      bzero(G_dem[indx].data, IPPD*IPPD*sizeof(short));
+      dem.data = new short[IPPD*IPPD];
+      bzero(dem.data, IPPD*IPPD*sizeof(short));
 
 
-      if (G_dem[indx].min_el > 0)
-          G_dem[indx].min_el = 0;
+      if (dem.min_el > 0)
+          dem.min_el = 0;
 
-			if (G_dem[indx].min_el < G_min_elevation)
-				G_min_elevation = G_dem[indx].min_el;
+			if (dem.min_el < G_min_elevation)
+				G_min_elevation = dem.min_el;
 
-			if (G_dem[indx].max_el > G_max_elevation)
-				G_max_elevation = G_dem[indx].max_el;
+			if (dem.max_el > G_max_elevation)
+				G_max_elevation = dem.max_el;
 
 			if (G_max_north == -90)
-				G_max_north = G_dem[indx].max_north;
+				G_max_north = dem.max_north;
 
-			else if (G_dem[indx].max_north > G_max_north)
-				G_max_north = G_dem[indx].max_north;
+			else if (dem.max_north > G_max_north)
+				G_max_north = dem.max_north;
 
 			if (G_min_north == 90)
-				G_min_north = G_dem[indx].min_north;
+				G_min_north = dem.min_north;
 
-			else if (G_dem[indx].min_north < G_min_north)
-				G_min_north = G_dem[indx].min_north;
+			else if (dem.min_north < G_min_north)
+				G_min_north = dem.min_north;
 
 			if (G_max_west == -1)
-				G_max_west = G_dem[indx].max_west;
+				G_max_west = dem.max_west;
 
 			else {
-				if (abs(G_dem[indx].max_west - G_max_west) < 180) {
-					if (G_dem[indx].max_west > G_max_west)
-						G_max_west = G_dem[indx].max_west;
+				if (abs(dem.max_west - G_max_west) < 180) {
+					if (dem.max_west > G_max_west)
+						G_max_west = dem.max_west;
 				}
 
 				else {
-					if (G_dem[indx].max_west < G_max_west)
-						G_max_west = G_dem[indx].max_west;
+					if (dem.max_west < G_max_west)
+						G_max_west = dem.max_west;
 				}
 			}
 
 			if (G_min_west == 360)
-				G_min_west = G_dem[indx].min_west;
+				G_min_west = dem.min_west;
 
 			else {
-				if (abs(G_dem[indx].min_west - G_min_west) < 180) {
-					if (G_dem[indx].min_west < G_min_west)
-						G_min_west = G_dem[indx].min_west;
+				if (abs(dem.min_west - G_min_west) < 180) {
+					if (dem.min_west < G_min_west)
+						G_min_west = dem.min_west;
 				}
 
 				else {
-					if (G_dem[indx].min_west > G_min_west)
-						G_min_west = G_dem[indx].min_west;
+					if (dem.min_west > G_min_west)
+						G_min_west = dem.min_west;
 				}
 			}
+
+      G_dem.push_back(dem);
 
 			return_value = 1;
 		}
@@ -2444,7 +2434,6 @@ int LoadTopoData(double max_lon, double min_lon, double max_lat, double min_lat)
 
 				snprintf(basename, 255, "%d:%d:%d:%d", x, x + 1, ymin, ymax);
 				strcpy(string, basename);
-
 
 				if (G_ippd == 3600)
 				        strcat(string, "-hd");

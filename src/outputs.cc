@@ -122,8 +122,8 @@ void DoPathLoss(std::vector<dem_output> *v, char *filename, unsigned char geo, u
 			}
 
 			if (found != NULL) {
-				mask = found->mask[DEM_INDEX(G_dem[found->indx], x0, y0)];
-				loss = found->signal[DEM_INDEX(G_dem[found->indx], x0, y0)];
+				mask = found->mask[DEM_INDEX(found->dem->ippd, x0, y0)];
+				loss = found->signal[DEM_INDEX(found->dem->ippd, x0, y0)];
 				cityorcounty = 0;
 
 				match = 255;
@@ -184,8 +184,8 @@ void DoPathLoss(std::vector<dem_output> *v, char *filename, unsigned char geo, u
 						else {
 							/* Display land or sea elevation */
 
-							if (G_dem[found->indx].
-							    data[DEM_INDEX(G_dem[found->indx], x0, y0)] == 0)
+							if (found->dem->
+							    data[DEM_INDEX(found->dem->ippd, x0, y0)] == 0)
 								ADD_PIXEL(&ctx, 
 									0, 0,
 									170);
@@ -193,7 +193,7 @@ void DoPathLoss(std::vector<dem_output> *v, char *filename, unsigned char geo, u
 								terrain =
 								    (unsigned)
 								    (0.5 +
-								     pow((double)(G_dem[found->indx].data[DEM_INDEX(G_dem[found->indx], x0, y0)] - G_min_elevation), one_over_gamma) * conversion);
+								     pow((double)(found->dem->data[DEM_INDEX(found->dem->ippd, x0, y0)] - G_min_elevation), one_over_gamma) * conversion);
 								ADD_PIXEL(&ctx, 
 									terrain,
 									terrain,
@@ -213,8 +213,8 @@ void DoPathLoss(std::vector<dem_output> *v, char *filename, unsigned char geo, u
 
 						else {	/* terrain / sea-level */
 
-							if (G_dem[found->indx].
-							    data[DEM_INDEX(G_dem[found->indx], x0, y0)] == 0)
+							if (found->dem->
+							    data[DEM_INDEX(found->dem->ippd, x0, y0)] == 0)
 								ADD_PIXEL(&ctx, 
 									0, 0,
 									170);
@@ -223,7 +223,7 @@ void DoPathLoss(std::vector<dem_output> *v, char *filename, unsigned char geo, u
 								terrain =
 								    (unsigned)
 								    (0.5 +
-								     pow((double)(G_dem[found->indx].data[DEM_INDEX(G_dem[found->indx], x0, y0)] - G_min_elevation), one_over_gamma) * conversion);
+								     pow((double)(found->dem->data[DEM_INDEX(found->dem->ippd, x0, y0)] - G_min_elevation), one_over_gamma) * conversion);
 								ADD_PIXEL(&ctx, 
 									terrain,
 									terrain,
@@ -357,8 +357,8 @@ int DoSigStr(std::vector<dem_output> *v, char *filename, unsigned char geo, unsi
 			}
 
 			if (found) {
-				mask = found->mask[DEM_INDEX(G_dem[found->indx], x0, y0)];
-				signal = (found->signal[DEM_INDEX(G_dem[found->indx], x0, y0)]) - 100;
+				mask = found->mask[DEM_INDEX(found->dem->ippd, x0, y0)];
+				signal = (found->signal[DEM_INDEX(found->dem->ippd, x0, y0)]) - 100;
 				cityorcounty = 0;
 				match = 255;
 
@@ -417,8 +417,8 @@ int DoSigStr(std::vector<dem_output> *v, char *filename, unsigned char geo, unsi
 						else {
 							/* Display land or sea elevation */
 
-							if (G_dem[found->indx].
-							    data[DEM_INDEX(G_dem[found->indx], x0, y0)] == 0)
+							if (found->dem->
+							    data[DEM_INDEX(found->dem->ippd, x0, y0)] == 0)
 								ADD_PIXEL(&ctx, 
 									0, 0,
 									170);
@@ -426,7 +426,7 @@ int DoSigStr(std::vector<dem_output> *v, char *filename, unsigned char geo, unsi
 								terrain =
 								    (unsigned)
 								    (0.5 +
-								     pow((double)(G_dem[found->indx].data[DEM_INDEX(G_dem[found->indx], x0, y0)] - G_min_elevation), one_over_gamma) * conversion);
+								     pow((double)(found->dem->data[DEM_INDEX(found->dem->ippd, x0, y0)] - G_min_elevation), one_over_gamma) * conversion);
 								ADD_PIXEL(&ctx, 
 									terrain,
 									terrain,
@@ -452,8 +452,8 @@ int DoSigStr(std::vector<dem_output> *v, char *filename, unsigned char geo, unsi
 									255,
 									255);
 							else {
-								if (G_dem[found->indx].
-								    data[DEM_INDEX(G_dem[found->indx], x0, y0)]
+								if (found->dem->
+								    data[DEM_INDEX(found->dem->ippd, x0, y0)]
 								    == 0)
 									ADD_PIXEL(&ctx, 
 									     0,
@@ -467,7 +467,7 @@ int DoSigStr(std::vector<dem_output> *v, char *filename, unsigned char geo, unsi
 									    (0.5
 									     +
 									     pow
-									     ((double)(G_dem[found->indx].data[DEM_INDEX(G_dem[found->indx], x0, y0)] - G_min_elevation), one_over_gamma) * conversion);
+									     ((double)(found->dem->data[DEM_INDEX(found->dem->ippd, x0, y0)] - G_min_elevation), one_over_gamma) * conversion);
 									ADD_PIXEL(&ctx, 
 									     terrain,
 									     terrain,
@@ -602,8 +602,8 @@ void DoRxdPwr(std::vector<dem_output> *v, char *filename, unsigned char geo, uns
 			}
 
 			if (found) {
-				mask = found->mask[DEM_INDEX(G_dem[found->indx], x0, y0)];
-				dBm = (found->signal[DEM_INDEX(G_dem[found->indx], x0, y0)]) - 200;
+				mask = found->mask[DEM_INDEX(found->dem->ippd, x0, y0)];
+				dBm = (found->signal[DEM_INDEX(found->dem->ippd, x0, y0)]) - 200;
 				cityorcounty = 0;
 				match = 255;
 
@@ -659,8 +659,8 @@ void DoRxdPwr(std::vector<dem_output> *v, char *filename, unsigned char geo, uns
 						else {
 							/* Display land or sea elevation */
 
-							if (G_dem[found->indx].
-							    data[DEM_INDEX(G_dem[found->indx], x0, y0)] == 0)
+							if (found->dem->
+							    data[DEM_INDEX(found->dem->ippd, x0, y0)] == 0)
 								ADD_PIXEL(&ctx,
 									0, 0,
 									170);
@@ -668,7 +668,7 @@ void DoRxdPwr(std::vector<dem_output> *v, char *filename, unsigned char geo, uns
 								terrain =
 								    (unsigned)
 								    (0.5 +
-								     pow((double)(G_dem[found->indx].data[DEM_INDEX(G_dem[found->indx], x0, y0)] - G_min_elevation), one_over_gamma) * conversion);
+								     pow((double)(found->dem->data[DEM_INDEX(found->dem->ippd, x0, y0)] - G_min_elevation), one_over_gamma) * conversion);
 								ADD_PIXEL(&ctx,
 									terrain,
 									terrain,
@@ -694,8 +694,8 @@ void DoRxdPwr(std::vector<dem_output> *v, char *filename, unsigned char geo, uns
 									255,
 									255); // WHITE
 							else {
-								if (G_dem[found->indx].
-								    data[DEM_INDEX(G_dem[found->indx], x0, y0)]
+								if (found->dem->
+								    data[DEM_INDEX(found->dem->ippd, x0, y0)]
 								    == 0)
 									ADD_PIXEL(&ctx, 
 									     0,
@@ -709,7 +709,7 @@ void DoRxdPwr(std::vector<dem_output> *v, char *filename, unsigned char geo, uns
 									    (0.5
 									     +
 									     pow
-									     ((double)(G_dem[found->indx].data[DEM_INDEX(G_dem[found->indx], x0, y0)] - G_min_elevation), one_over_gamma) * conversion);
+									     ((double)(found->dem->data[DEM_INDEX(found->dem->ippd, x0, y0)] - G_min_elevation), one_over_gamma) * conversion);
 									ADD_PIXEL(&ctx, 
 									     terrain,
 									     terrain,
@@ -840,7 +840,7 @@ void DoLOS(std::vector<dem_output> *v, char *filename, unsigned char geo, unsign
 			}
 
 			if (found) {
-				mask = found->mask[DEM_INDEX(G_dem[found->indx], x0, y0)];
+				mask = found->mask[DEM_INDEX(found->dem->ippd, x0, y0)];
 
 				if (mask & 2)
 					/* Text Labels: Red */
@@ -948,8 +948,8 @@ void DoLOS(std::vector<dem_output> *v, char *filename, unsigned char geo, unsign
 								255, 255, 255);
 						else {
 							/* Sea-level: Medium Blue */
-							if (G_dem[found->indx].
-							    data[DEM_INDEX(G_dem[found->indx], x0, y0)] == 0)
+							if (found->dem->
+							    data[DEM_INDEX(found->dem->ippd, x0, y0)] == 0)
 								ADD_PIXEL(&ctx, 
 									0, 0,
 									170);
@@ -958,7 +958,7 @@ void DoLOS(std::vector<dem_output> *v, char *filename, unsigned char geo, unsign
 								terrain =
 								    (unsigned)
 								    (0.5 +
-								     pow((double)(G_dem[found->indx].data[DEM_INDEX(G_dem[found->indx], x0, y0)] - G_min_elevation), one_over_gamma) * conversion);
+								     pow((double)(found->dem->data[DEM_INDEX(found->dem->ippd, x0, y0)] - G_min_elevation), one_over_gamma) * conversion);
 								ADD_PIXEL(&ctx, 
 									terrain,
 									terrain,
@@ -1633,9 +1633,10 @@ void PathReport(struct site source, struct site destination, char *name,
 	ObstructionAnalysis(source, destination, G_LR.frq_mhz, fd2);
 	fclose(fd2);
 
-	fprintf(stderr,
+	/*fprintf(stderr,
 		"Path loss (dB), Received Power (dBm), Field strength (dBuV):\n%.1f\n%.1f\n%.1f",
-		G_loss, G_dBm, G_field_strength);
+		G_loss, G_dBm, G_field_strength);*/
+  printf("%.1f %.1f %.1f\n", G_loss, G_dBm, G_field_strength);
 
 	/* Skip plotting the graph if ONLY a path-loss report is needed. */
 
@@ -2008,7 +2009,7 @@ void SeriesData(struct site source, struct site destination, char *name,
 		}
 	}
 
-	fprintf(stderr, "\n");
-	fflush(stderr);
+	//fprintf(stderr, "\n");
+	fflush(stdout);
 
 }
