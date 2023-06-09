@@ -30,6 +30,7 @@ double version = 3.3;
 #include <limits.h>
 #include <bzlib.h>
 #include <zlib.h>
+#include <vector>
 
 #include "common.hh"
 #include "inputs.hh"
@@ -52,7 +53,7 @@ double G_earthradius, G_max_range = 0.0, forced_erp, G_dpp, G_ppd, G_yppd,
     G_westoffset=180, G_eastoffset=-180, G_delta=0, rxGain=0, antenna_rotation,
     antenna_downtilt,antenna_dt_direction, G_cropLat=-70, G_cropLon=0,cropLonNeg=0;
 
-int G_ippd, G_mpi, G_max_elevation = -32768, G_min_elevation = 32768, bzerror, gzerr,
+int G_ippd, G_mpi, G_max_elevation = -32768, G_min_elevation = 32767, bzerror, gzerr,
     G_contour_threshold, pred, pblue, pgreen, ter, multiplier = 256, G_debug = 0,
     G_loops = 100, G_jgets = 0, G_MAXRAD, hottest = 0, G_height, G_width, resample = 0,
     bzbuf_empty = 1, gzbuf_empty = 1;
@@ -158,7 +159,7 @@ void *dec2dms(double decimal, char *string)
 	return (string);
 }
 
-int PutMask(double lat, double lon, int value)
+int PutMask(std::vector<dem_output> *v, double lat, double lon, int value)
 {
 	/* Lines, text, markings, and coverage areas are stored in a
 	   mask that is combined with topology data when topographic
@@ -167,28 +168,52 @@ int PutMask(double lat, double lon, int value)
 	   area pointed to. */
 
 	int x = 0, y = 0, indx;
-	char found;
+  struct dem_output *out;
+	char found = 0;
 
-	for (indx = 0, found = 0; indx < MAXPAGES && found == 0;) {
+  for(auto & i : *v) {
+		x = (int)rint(G_ppd * (lat - i.min_north));
+		y = G_mpi - (int)rint(G_yppd * (LonDiff(i.max_west, lon)));
+
+		if (x >= 0 && x <= G_mpi && y >= 0 && y <= G_mpi) {
+			out = &i;
+      found = 1;
+      break;
+    }
+  }
+
+  // if we couldn't find it in the output vector, find the right DEM
+  // and create a corresponding output vector entry
+	for (indx = 0; indx < MAXPAGES && found == 0; indx++) {
 		x = (int)rint(G_ppd * (lat - G_dem[indx].min_north));
 		y = G_mpi - (int)rint(G_yppd * (LonDiff(G_dem[indx].max_west, lon)));
 
-		if (x >= 0 && x <= G_mpi && y >= 0 && y <= G_mpi)
-			found = 1;
-		else
-			indx++;
-	}
+		if (x >= 0 && x <= G_mpi && y >= 0 && y <= G_mpi) {
+        struct dem_output tmp;
+        tmp.min_north = G_dem[indx].min_north;
+        tmp.max_north = G_dem[indx].max_north;
+        tmp.min_west = G_dem[indx].min_west;
+        tmp.max_west = G_dem[indx].max_west;
+        tmp.indx = indx;
+        tmp.mask = new unsigned char[G_dem[indx].ippd * G_dem[indx].ippd];
+        tmp.signal = new unsigned char[G_dem[indx].ippd * G_dem[indx].ippd];
+        v->push_back(tmp);
+        out = &v->back();
+        found = 1;
+        break;
+    }
+  }
 
 	if (found) {
-		G_dem[indx].mask[DEM_INDEX(G_dem[indx], x, y)] = value;
-		return ((int)G_dem[indx].mask[DEM_INDEX(G_dem[indx], x, y)]);
+		out->mask[DEM_INDEX(G_dem[out->indx], x, y)] = value;
+		return ((int)out->mask[DEM_INDEX(G_dem[out->indx], x, y)]);
 	}
 
 	else
 		return -1;
 }
 
-int OrMask(double lat, double lon, int value)
+int OrMask(std::vector<dem_output> *v, double lat, double lon, int value)
 {
 	/* Lines, text, markings, and coverage areas are stored in a
 	   mask that is combined with topology data when topographic
@@ -197,39 +222,85 @@ int OrMask(double lat, double lon, int value)
 	   pointed to. */
 
 	int x = 0, y = 0, indx;
-	char found;
+  struct dem_output *out;
+	char found = 0;
 
-	for (indx = 0, found = 0; indx < MAXPAGES && found == 0;) {
+  for(auto & i : *v) {
+		x = (int)rint(G_ppd * (lat - i.min_north));
+		y = G_mpi - (int)rint(G_yppd * (LonDiff(i.max_west, lon)));
+
+		if (x >= 0 && x <= G_mpi && y >= 0 && y <= G_mpi) {
+			out = &i;
+      found = 1;
+      break;
+    }
+  }
+
+  // if we couldn't find it in the output vector, find the right DEM
+  // and create a corresponding output vector entry
+	for (indx = 0; indx < MAXPAGES && found == 0; indx++) {
 		x = (int)rint(G_ppd * (lat - G_dem[indx].min_north));
 		y = G_mpi - (int)rint(G_yppd * (LonDiff(G_dem[indx].max_west, lon)));
 
-		if (x >= 0 && x <= G_mpi && y >= 0 && y <= G_mpi)
-			found = 1;
-		else
-			indx++;
+		if (x >= 0 && x <= G_mpi && y >= 0 && y <= G_mpi) {
+        printf("creating output for %f %f\n", lat, lon);
+        struct dem_output tmp;
+        tmp.min_north = G_dem[indx].min_north;
+        tmp.max_north = G_dem[indx].max_north;
+        tmp.min_west = G_dem[indx].min_west;
+        tmp.max_west = G_dem[indx].max_west;
+        tmp.indx = indx;
+        tmp.mask = new unsigned char[G_dem[indx].ippd * G_dem[indx].ippd];
+        bzero(tmp.mask, G_dem[indx].ippd * G_dem[indx].ippd);
+        tmp.signal = new unsigned char[G_dem[indx].ippd * G_dem[indx].ippd];
+        bzero(tmp.signal, G_dem[indx].ippd * G_dem[indx].ippd);
+        v->push_back(tmp);
+        out = &v->back();
+        found = 1;
+        break;
+    }
 	}
 
 	if (found) {
-		G_dem[indx].mask[DEM_INDEX(G_dem[indx], x, y)] |= value;
-		return ((int)G_dem[indx].mask[DEM_INDEX(G_dem[indx], x, y)]);
+		out->mask[DEM_INDEX(G_dem[out->indx], x, y)] |= value;
+		return ((int)out->mask[DEM_INDEX(G_dem[out->indx], x, y)]);
 	}
 
 	else
 		return -1;
 }
 
-int GetMask(double lat, double lon)
+int GetMask(std::vector<dem_output> *v, double lat, double lon)
 {
 	/* This function returns the mask bits based on the latitude
 	   and longitude given. */
+	int x = 0, y = 0, indx;
+  struct dem_output *out;
+	char found = 0;
 
-	return (OrMask(lat, lon, 0));
+  for(auto & i : *v) {
+		x = (int)rint(G_ppd * (lat - i.min_north));
+		y = G_mpi - (int)rint(G_yppd * (LonDiff(i.max_west, lon)));
+
+		if (x >= 0 && x <= G_mpi && y >= 0 && y <= G_mpi) {
+			out = &i;
+      found = 1;
+      break;
+    }
+  }
+
+  if(found) {
+      return ((int)out->mask[DEM_INDEX(G_dem[out->indx], x, y)]);
+  } else {
+      return 0;
+  }
 }
 
-void PutSignal(double lat, double lon, unsigned char signal)
+void PutSignal(std::vector<dem_output> *v, double lat, double lon, unsigned char signal)
 {
 	int x = 0, y = 0, indx;
-	char found, dotfile[260], basename[255];
+	char found = 0, dotfile[260], basename[255];
+  struct dem_output *out;
 
 	/* This function writes a signal level (0-255)
 	   at the specified location for later recall. */
@@ -242,18 +313,43 @@ void PutSignal(double lat, double lon, unsigned char signal)
 		hottest = signal;
 
 	//lookup x/y for this co-ord
-	for (indx = 0, found = 0; indx < MAXPAGES && found == 0;) {
+  for(auto & i : *v) {
+		x = (int)rint(G_ppd * (lat - i.min_north));
+		y = G_mpi - (int)rint(G_yppd * (LonDiff(i.max_west, lon)));
+
+		if (x >= 0 && x <= G_mpi && y >= 0 && y <= G_mpi) {
+			out = &i;
+      found = 1;
+      break;
+    }
+  }
+
+  // if we couldn't find it in the output vector, find the right DEM
+  // and create a corresponding output vector entry
+	for (indx = 0; indx < MAXPAGES && found == 0; indx++) {
 		x = (int)rint(G_ppd * (lat - G_dem[indx].min_north));
 		y = G_mpi - (int)rint(G_yppd * (LonDiff(G_dem[indx].max_west, lon)));
 
-		if (x >= 0 && x <= G_mpi && y >= 0 && y <= G_mpi)
-			found = 1;
-		else
-			indx++;
-	}
+		if (x >= 0 && x <= G_mpi && y >= 0 && y <= G_mpi) {
+        struct dem_output tmp;
+        tmp.min_north = G_dem[indx].min_north;
+        tmp.max_north = G_dem[indx].max_north;
+        tmp.min_west = G_dem[indx].min_west;
+        tmp.max_west = G_dem[indx].max_west;
+        tmp.indx = indx;
+        tmp.mask = new unsigned char[G_dem[indx].ippd * G_dem[indx].ippd];
+        bzero(tmp.mask, G_dem[indx].ippd * G_dem[indx].ippd);
+        tmp.signal = new unsigned char[G_dem[indx].ippd * G_dem[indx].ippd];
+        bzero(tmp.signal, G_dem[indx].ippd * G_dem[indx].ippd);
+        v->push_back(tmp);
+        out = &v->back();
+        found = 1;
+        break;
+    }
+  }
 
 	if (found) {		// Write values to file
-		G_dem[indx].signal[DEM_INDEX(G_dem[indx], x, y)] = signal;
+		out->signal[DEM_INDEX(G_dem[out->indx], x, y)] = signal;
 		// return (dem[indx].signal[x][y]);
 		return;
 	}
@@ -262,27 +358,30 @@ void PutSignal(double lat, double lon, unsigned char signal)
 	  return;
 }
 
-unsigned char GetSignal(double lat, double lon)
+unsigned char GetSignal(std::vector<dem_output> *v, double lat, double lon)
 {
 	/* This function reads the signal level (0-255) at the
 	   specified location that was previously written by the
 	   complimentary PutSignal() function. */
 
 	int x = 0, y = 0, indx;
-	char found;
+	char found = 0;
+  struct dem_output *out = NULL;
 
-	for (indx = 0, found = 0; indx < MAXPAGES && found == 0;) {
-		x = (int)rint(G_ppd * (lat - G_dem[indx].min_north));
-		y = G_mpi - (int)rint(G_yppd * (LonDiff(G_dem[indx].max_west, lon)));
+	//lookup x/y for this co-ord
+  for(auto & i : *v) {
+		x = (int)rint(G_ppd * (lat - i.min_north));
+		y = G_mpi - (int)rint(G_yppd * (LonDiff(i.max_west, lon)));
 
-		if (x >= 0 && x <= G_mpi && y >= 0 && y <= G_mpi)
-			found = 1;
-		else
-			indx++;
-	}
+		if (x >= 0 && x <= G_mpi && y >= 0 && y <= G_mpi) {
+			out = &i;
+      found = 1;
+      break;
+    }
+  }
 
 	if (found)
-		return (G_dem[indx].signal[DEM_INDEX(G_dem[indx], x, y)]);
+		return (out->signal[DEM_INDEX(G_dem[out->indx], x, y)]);
 	else
 		return 0;
 }
@@ -965,12 +1064,9 @@ void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f,
 void free_dem(void)
 {
 	int i;
-	int j;
 
 	for (i = 0; i < MAXPAGES; i++) {
 		delete [] G_dem[i].data;
-		delete [] G_dem[i].mask;
-		delete [] G_dem[i].signal;
 	}
 	delete [] G_dem;
 }
@@ -995,16 +1091,10 @@ void alloc_elev(void)
 void alloc_dem(void)
 {
 	int i;
-	int j;
 
 	G_dem = new struct dem[MAXPAGES];
 	for (i = 0; i < MAXPAGES; i++) {
     G_dem[i].ippd=IPPD;
-		G_dem[i].data = new short[IPPD*IPPD];
-		G_dem[i].mask = new unsigned char[IPPD*IPPD];
-    bzero(G_dem[i].mask, IPPD*IPPD);
-		G_dem[i].signal = new unsigned char[IPPD*IPPD];
-    bzero(G_dem[i].signal, IPPD*IPPD);
 	}
 }
 
@@ -1025,7 +1115,7 @@ void do_allocs(void)
 	alloc_path();
 
 	for (i = 0; i < MAXPAGES; i++) {
-		G_dem[i].min_el = 32768;
+		G_dem[i].min_el = 32767;
 		G_dem[i].max_el = -32768;
 		G_dem[i].min_north = 90;
 		G_dem[i].max_north = -90;
@@ -1034,8 +1124,10 @@ void do_allocs(void)
 	}
 }
 
-int main(int argc, char *argv[])
-{
+
+int handle_args(int argc, char *argv[]) {
+
+	/* Scan for command line arguments */
 	int x, y, z = 0, propmodel, knifeedge = 0, ppa = 0, normalise = 0,
 	  haf = 0, pmenv = 1, lidar=0, result;
 
@@ -1053,116 +1145,18 @@ int main(int argc, char *argv[])
 	double altitude = 0.0, altitudeLR = 0.0, tx_range = 0.0,
 	    rx_range = 0.0, deg_range = 0.0, deg_limit = 0.0, deg_range_lon;
 
-	if (strstr(argv[0], "signalserverHD")) {
-	        MAXPAGES = 32;  // was 9
-		ARRAYSIZE = 115210;  // was 32410
-		IPPD = 3600;
-	}
-
-	if (strstr(argv[0], "signalserverLIDAR")) {
-		MAXPAGES = 100; // 10x10
-		lidar = 1;
-		IPPD = 6000; // will be overridden based upon file header...
-	}
-
-	strncpy(ss_name, "Signal Server\0", 14);
-
-	if (argc == 1) {
-
-		fprintf(stdout, "Version: %s %.2f (Built for %d DEM tiles at %d pixels)\n", ss_name, version,MAXPAGES, IPPD);
-		fprintf(stdout, "License: GNU General Public License (GPL) version 2\n\n");
-		fprintf(stdout, "Radio propagation simulator by Alex Farrant QCVS, 2E0TDW\n");
-		fprintf(stdout, "Based upon SPLAT! by John Magliacane, KD2BD\n");
-		fprintf(stdout, "Some feature enhancements/additions by Aaron A. Collins, N9OZB\n\n");
-		fprintf(stdout, "Usage: signalserver [data options] [input options] [antenna options] [output options] -o outputfile\n\n");
-		fprintf(stdout, "Data:\n");
-		fprintf(stdout, "     -sdf Directory containing SRTM derived .sdf DEM tiles (may be .gz or .bz2)\n");
-		fprintf(stdout, "     -lid ASCII grid tile (LIDAR) with dimensions and resolution defined in header\n");
-		fprintf(stdout, "     -udt User defined point clutter as decimal co-ordinates: 'latitude,longitude,height'\n");
-		fprintf(stdout, "     -clt MODIS 17-class wide area clutter in ASCII grid format\n");
-		fprintf(stdout, "     -color File to pre-load .scf/.lcf/.dcf for Signal/Loss/dBm color palette\n");
-		fprintf(stdout, "Input:\n");
-		fprintf(stdout,	"     -lat Tx Latitude (decimal degrees) -70/+70\n");
-		fprintf(stdout,	"     -lon Tx Longitude (decimal degrees) -180/+180\n");
-		fprintf(stdout,	"     -rla (Optional) Rx Latitude for PPA (decimal degrees) -70/+70\n");
-		fprintf(stdout, "     -rlo (Optional) Rx Longitude for PPA (decimal degrees) -180/+180\n");
-		fprintf(stdout,	"     -f Tx Frequency (MHz) 20MHz to 100GHz (LOS after 20GHz)\n");
-		fprintf(stdout,	"     -erp Tx Total Effective Radiated Power in Watts (dBd) inc Tx+Rx gain. 2.14dBi = 0dBd\n");
-		fprintf(stdout, "     -gc Random ground clutter (feet/meters)\n");
-		fprintf(stdout, "     -m Metric units of measurement\n");
-		fprintf(stdout, "     -te Terrain code 1-6 (optional - 1. Water, 2. Marsh, 3. Farmland,\n");
-		fprintf(stdout, "          4. Mountain, 5. Desert, 6. Urban\n");
-		fprintf(stdout,	"     -terdic Terrain dielectric value 2-80 (optional)\n");
-		fprintf(stdout,	"     -tercon Terrain conductivity 0.01-0.0001 (optional)\n");
-		fprintf(stdout, "     -cl Climate code 1-7 (optional - 1. Equatorial 2. Continental subtropical\n");
-		fprintf(stdout,	"          3. Maritime subtropical 4. Desert 5. Continental temperate\n");
-		fprintf(stdout,	"          6. Maritime temperate (Land) 7. Maritime temperate (Sea)\n");
-		fprintf(stdout, "     -rel Reliability for ITM model (%% of 'time') 1 to 99 (optional, default 50%%)\n");
-		fprintf(stdout, "     -conf Confidence for ITM model (%% of 'situations') 1 to 99 (optional, default 50%%)\n");
-		fprintf(stdout, "     -resample Reduce Lidar resolution by specified factor (2 = 50%%)\n");
-		fprintf(stdout, "Output:\n");
-		fprintf(stdout, "     -o basename (Output file basename - required)\n");
-		fprintf(stdout,	"     -dbm Plot Rxd signal power instead of field strength in dBuV/m\n");
-		fprintf(stdout, "     -rt Rx Threshold (dB / dBm / dBuV/m)\n");
-		fprintf(stdout, "     -R Radius (miles/kilometers)\n");
-		fprintf(stdout,	"     -res Pixels per tile. 300/600/1200/3600 (Optional. LIDAR res is within the tile)\n");
-		fprintf(stdout,	"     -pm Propagation model. 1: ITM, 2: LOS, 3: Hata, 4: ECC33,\n");
-		fprintf(stdout,	"          5: SUI, 6: COST-Hata, 7: FSPL, 8: ITWOM, 9: Ericsson,\n");
-		fprintf(stdout, "          10: Plane earth, 11: Egli VHF/UHF, 12: Soil\n");
-		fprintf(stdout,	"     -pe Propagation model mode: 1=Urban,2=Suburban,3=Rural\n");
-		fprintf(stdout,	"     -ked Knife edge diffraction (Already on for ITM)\n");
-		fprintf(stdout, "Antenna:\n");
-		fprintf(stdout, "     -ant (antenna pattern file basename+path for .az and .el files)\n");
-		fprintf(stdout, "     -txh Tx Height (above ground)\n");
-		fprintf(stdout,	"     -rxh Rx Height(s) (optional. Default=0.1)\n");
-		fprintf(stdout,	"     -rxg Rx gain dBd (optional for PPA text report)\n");
-		fprintf(stdout,	"     -hp Horizontal Polarisation (default=vertical)\n");
-		fprintf(stdout, "     -rot  (  0.0 - 359.0 degrees, default 0.0) Antenna Pattern Rotation\n");
-		fprintf(stdout, "     -dt   ( -10.0 - 90.0 degrees, default 0.0) Antenna Downtilt\n");
-		fprintf(stdout, "     -dtdir ( 0.0 - 359.0 degrees, default 0.0) Antenna Downtilt Direction\n");
-		fprintf(stdout, "Debugging:\n");
-		fprintf(stdout, "     -t Terrain greyscale background\n");
-		fprintf(stdout, "     -dbg Verbose debug messages\n");
-		fprintf(stdout, "     -ng Normalise Path Profile graph\n");
-		fprintf(stdout, "     -haf Halve 1 or 2 (optional)\n");
-		fprintf(stdout, "     -nothreads Turn off threaded processing\n");
-
-		fflush(stdout);
-
-		return 1;
-	}
-
-	/*
-	 * If we're not called as signalserverLIDAR we can allocate various
-	 * memory now. For LIDAR we need to wait until we've parsed
-	 * the headers in the .asc file to know how much memory to allocate...
-	 */
-	if (!lidar)
-		do_allocs();
-
-	y = argc - 1;
 	kml = 0;
 	geo = 0;
-	G_dbm = 0;
-	G_gpsav = 0;
-	G_metric = 0;
 	mapfile[0] = 0;
 	clutter_file[0] = 0;
-	G_clutter = 0.0;
 	forced_erp = -1.0;
 	forced_freq = 0.0;
-	G_sdf_path[0] = 0;
 	udt_file = NULL;
 	color_file = NULL;
-	G_path.length = 0;
 	max_txsites = 30;
-	G_fzone_clearance = 0.6;
-	G_contour_threshold = 0;
 	resample = 0;
 
 	ano_filename[0] = 0;
-	G_earthradius = EARTHRADIUS;
-	G_max_range = 1.0;
 	propmodel = 1;		//ITM
 	lat = 0;
 	lon = 0;
@@ -1171,20 +1165,8 @@ int main(int argc, char *argv[])
 	kml = 1;
 	LRmap = 1;
 	area_mode = 1;
-	G_ippd = IPPD;		// default resolution
 
 	sscanf("0.1", "%lf", &altitudeLR);
-
-	// Defaults
-	G_LR.eps_dielect = 15.0;	// Farmland
-	G_LR.sgm_conductivity = 0.005;	// Farmland
-	G_LR.eno_ns_surfref = 301.0;
-	G_LR.frq_mhz = 19.0;	// Deliberately too low
-	G_LR.radio_climate = 5;	// continental
-	G_LR.pol = 1;		// vert
-	G_LR.conf = 0.50;
-	G_LR.rel = 0.50;
-	G_LR.erp = 0.0;		// will default to Path Loss
 
 	antenna_rotation = -1;  // unique defaults to test usage
 	antenna_downtilt = 99.0; // don't mess with them!
@@ -1196,9 +1178,9 @@ int main(int argc, char *argv[])
 	tx_site[1].lat = 91.0;
 	tx_site[1].lon = 361.0;
 
-	/* Scan for command line arguments */
+	y = argc - 1;
 
-	for (x = 1; x <= y; x++) {
+	for (x = 0; x <= y; x++) {
 
 		if (strcmp(argv[x], "-R") == 0) {
 			z = x + 1;
@@ -1346,12 +1328,6 @@ int main(int argc, char *argv[])
 		if (strcmp(argv[x], "-dbm") == 0)
 			G_dbm = 1;
 
-		if (strcmp(argv[x], "-sdf") == 0) {
-			z = x + 1;
-
-			if (z <= y && argv[z][0] && argv[z][0] != '-')
-				strncpy(G_sdf_path, argv[z], 253);
-		}
 		
 		if (strcmp(argv[x], "-lid") == 0) {
 			z = x + 1;
@@ -1564,9 +1540,6 @@ int main(int argc, char *argv[])
 			G_LR.pol = 0;
 		}
 
-		if (strcmp(argv[x], "-dbg") == 0) {
-			G_debug = 1;
-		}
 
 	
 		 /*UDT*/
@@ -1620,6 +1593,7 @@ int main(int argc, char *argv[])
 		//Disable threads
 		if (strcmp(argv[x], "-nothreads") == 0) {
 			z = x + 1;
+      printf("disabling threads\n");
 			use_threads = false;
 		}
 
@@ -1950,14 +1924,16 @@ int main(int argc, char *argv[])
 		}
 	}
 
+  std::vector<struct dem_output> v;
+
 	if (ppa == 0) {
 	  if (propmodel == 2) {  // Model 2 = LOS
 			cropping = false; // TODO: File is written in DoLOS() so this needs moving to PlotPropagation() to allow styling, cropping etc
-			PlotLOSMap(tx_site[0], altitudeLR, ano_filename, use_threads);
-			DoLOS(mapfile, geo, kml, ngs, tx_site, txsites);
+			PlotLOSMap(&v, tx_site[0], altitudeLR, ano_filename, use_threads);
+			DoLOS(&v, mapfile, geo, kml, ngs, tx_site, txsites);
 		} else {
 			// 90% of effort here
-			PlotPropagation(tx_site[0], altitudeLR, ano_filename, propmodel, knifeedge, haf, pmenv, use_threads);
+			PlotPropagation(&v, tx_site[0], altitudeLR, ano_filename, propmodel, knifeedge, haf, pmenv, use_threads);
 
                         if (G_debug) {
                         	fprintf(stderr,"Finished PlotPropagation()\n");
@@ -1992,11 +1968,11 @@ int main(int argc, char *argv[])
 
 			// Write bitmap
 			if (G_LR.erp == 0.0)
-				DoPathLoss(mapfile, geo, kml, ngs, tx_site, txsites);
+				DoPathLoss(&v, mapfile, geo, kml, ngs, tx_site, txsites);
 			else if (G_dbm)
-				DoRxdPwr((to_stdout == true ? NULL : mapfile), geo, kml, ngs, tx_site, txsites);
+				DoRxdPwr(&v, (to_stdout == true ? NULL : mapfile), geo, kml, ngs, tx_site, txsites);
 			else
-			        if ((result = DoSigStr(mapfile, geo, kml, ngs, tx_site, txsites)) != 0)
+			        if ((result = DoSigStr(&v, mapfile, geo, kml, ngs, tx_site, txsites)) != 0)
 					return result;
 		}
 		/*if(lidar){
@@ -2026,7 +2002,7 @@ int main(int argc, char *argv[])
 	} else {
 		strncpy(tx_site[0].name, "Tx", 3);
 		strncpy(tx_site[1].name, "Rx", 3);
-		PlotPath(tx_site[0], tx_site[1], 1);
+		PlotPath(&v, tx_site[0], tx_site[1], 1);
 		//PathReport(tx_site[0], tx_site[1], tx_site[0].filename, 0, propmodel, pmenv, rxGain);
 		// Order flipped for benefit of graph. Makes no difference to data.
 		SeriesData(tx_site[1], tx_site[0], tx_site[0].filename, 1, normalise);
@@ -2035,3 +2011,176 @@ int main(int argc, char *argv[])
 
 	return 0;
 }
+
+int scan_stdin() {
+    char buffer[1024];
+  while( fgets(buffer, 1024 , stdin) ) {
+      int argc = 0;
+      char *argv[64];
+
+      char *p2 = strtok(buffer, " ");
+      while (p2 && argc < 64-1)
+      {
+          argv[argc++] = p2;
+          p2 = strtok(NULL, " ");
+      }
+      argv[argc] = NULL;
+      handle_args(argc, argv);
+  }
+}
+
+int main(int argc, char *argv[])
+{
+	int x, y, z = 0, propmodel, knifeedge = 0, ppa = 0, normalise = 0,
+	  haf = 0, pmenv = 1, lidar=0, result, daemon=0;
+
+	double min_lat, min_lon, max_lat, max_lon, rxlat, rxlon, txlat, txlon,
+	  west_min, west_max, nortRxHin, nortRxHax;
+
+	unsigned char LRmap = 0, txsites = 0, topomap = 0, geo = 0, kml =
+	    0, area_mode = 0, max_txsites, ngs = 0;
+
+	char mapfile[255], ano_filename[255], lidar_tiles[27000], clutter_file[255],antenna_file[255];
+	char *az_filename, *el_filename, *udt_file = NULL;
+
+	double altitude = 0.0, altitudeLR = 0.0, tx_range = 0.0,
+	    rx_range = 0.0, deg_range = 0.0, deg_limit = 0.0, deg_range_lon;
+
+	if (strstr(argv[0], "signalserverHD")) {
+	        MAXPAGES = 32;  // was 9
+		ARRAYSIZE = 115210;  // was 32410
+		IPPD = 3600;
+	}
+
+	if (strstr(argv[0], "signalserverLIDAR")) {
+		MAXPAGES = 100; // 10x10
+		lidar = 1;
+		IPPD = 6000; // will be overridden based upon file header...
+	}
+
+	strncpy(ss_name, "Signal Server\0", 14);
+
+	if (argc == 1) {
+
+		fprintf(stdout, "Version: %s %.2f (Built for %d DEM tiles at %d pixels)\n", ss_name, version,MAXPAGES, IPPD);
+		fprintf(stdout, "License: GNU General Public License (GPL) version 2\n\n");
+		fprintf(stdout, "Radio propagation simulator by Alex Farrant QCVS, 2E0TDW\n");
+		fprintf(stdout, "Based upon SPLAT! by John Magliacane, KD2BD\n");
+		fprintf(stdout, "Some feature enhancements/additions by Aaron A. Collins, N9OZB\n\n");
+		fprintf(stdout, "Usage: signalserver [data options] [input options] [antenna options] [output options] -o outputfile\n\n");
+		fprintf(stdout, "Data:\n");
+		fprintf(stdout, "     -sdf Directory containing SRTM derived .sdf DEM tiles (may be .gz or .bz2)\n");
+		fprintf(stdout, "     -lid ASCII grid tile (LIDAR) with dimensions and resolution defined in header\n");
+		fprintf(stdout, "     -udt User defined point clutter as decimal co-ordinates: 'latitude,longitude,height'\n");
+		fprintf(stdout, "     -clt MODIS 17-class wide area clutter in ASCII grid format\n");
+		fprintf(stdout, "     -color File to pre-load .scf/.lcf/.dcf for Signal/Loss/dBm color palette\n");
+		fprintf(stdout, "Input:\n");
+		fprintf(stdout,	"     -lat Tx Latitude (decimal degrees) -70/+70\n");
+		fprintf(stdout,	"     -lon Tx Longitude (decimal degrees) -180/+180\n");
+		fprintf(stdout,	"     -rla (Optional) Rx Latitude for PPA (decimal degrees) -70/+70\n");
+		fprintf(stdout, "     -rlo (Optional) Rx Longitude for PPA (decimal degrees) -180/+180\n");
+		fprintf(stdout,	"     -f Tx Frequency (MHz) 20MHz to 100GHz (LOS after 20GHz)\n");
+		fprintf(stdout,	"     -erp Tx Total Effective Radiated Power in Watts (dBd) inc Tx+Rx gain. 2.14dBi = 0dBd\n");
+		fprintf(stdout, "     -gc Random ground clutter (feet/meters)\n");
+		fprintf(stdout, "     -m Metric units of measurement\n");
+		fprintf(stdout, "     -te Terrain code 1-6 (optional - 1. Water, 2. Marsh, 3. Farmland,\n");
+		fprintf(stdout, "          4. Mountain, 5. Desert, 6. Urban\n");
+		fprintf(stdout,	"     -terdic Terrain dielectric value 2-80 (optional)\n");
+		fprintf(stdout,	"     -tercon Terrain conductivity 0.01-0.0001 (optional)\n");
+		fprintf(stdout, "     -cl Climate code 1-7 (optional - 1. Equatorial 2. Continental subtropical\n");
+		fprintf(stdout,	"          3. Maritime subtropical 4. Desert 5. Continental temperate\n");
+		fprintf(stdout,	"          6. Maritime temperate (Land) 7. Maritime temperate (Sea)\n");
+		fprintf(stdout, "     -rel Reliability for ITM model (%% of 'time') 1 to 99 (optional, default 50%%)\n");
+		fprintf(stdout, "     -conf Confidence for ITM model (%% of 'situations') 1 to 99 (optional, default 50%%)\n");
+		fprintf(stdout, "     -resample Reduce Lidar resolution by specified factor (2 = 50%%)\n");
+		fprintf(stdout, "Output:\n");
+		fprintf(stdout, "     -o basename (Output file basename - required)\n");
+		fprintf(stdout,	"     -dbm Plot Rxd signal power instead of field strength in dBuV/m\n");
+		fprintf(stdout, "     -rt Rx Threshold (dB / dBm / dBuV/m)\n");
+		fprintf(stdout, "     -R Radius (miles/kilometers)\n");
+		fprintf(stdout,	"     -res Pixels per tile. 300/600/1200/3600 (Optional. LIDAR res is within the tile)\n");
+		fprintf(stdout,	"     -pm Propagation model. 1: ITM, 2: LOS, 3: Hata, 4: ECC33,\n");
+		fprintf(stdout,	"          5: SUI, 6: COST-Hata, 7: FSPL, 8: ITWOM, 9: Ericsson,\n");
+		fprintf(stdout, "          10: Plane earth, 11: Egli VHF/UHF, 12: Soil\n");
+		fprintf(stdout,	"     -pe Propagation model mode: 1=Urban,2=Suburban,3=Rural\n");
+		fprintf(stdout,	"     -ked Knife edge diffraction (Already on for ITM)\n");
+		fprintf(stdout, "Antenna:\n");
+		fprintf(stdout, "     -ant (antenna pattern file basename+path for .az and .el files)\n");
+		fprintf(stdout, "     -txh Tx Height (above ground)\n");
+		fprintf(stdout,	"     -rxh Rx Height(s) (optional. Default=0.1)\n");
+		fprintf(stdout,	"     -rxg Rx gain dBd (optional for PPA text report)\n");
+		fprintf(stdout,	"     -hp Horizontal Polarisation (default=vertical)\n");
+		fprintf(stdout, "     -rot  (  0.0 - 359.0 degrees, default 0.0) Antenna Pattern Rotation\n");
+		fprintf(stdout, "     -dt   ( -10.0 - 90.0 degrees, default 0.0) Antenna Downtilt\n");
+		fprintf(stdout, "     -dtdir ( 0.0 - 359.0 degrees, default 0.0) Antenna Downtilt Direction\n");
+		fprintf(stdout, "Debugging:\n");
+		fprintf(stdout, "     -t Terrain greyscale background\n");
+		fprintf(stdout, "     -dbg Verbose debug messages\n");
+		fprintf(stdout, "     -ng Normalise Path Profile graph\n");
+		fprintf(stdout, "     -haf Halve 1 or 2 (optional)\n");
+		fprintf(stdout, "     -nothreads Turn off threaded processing\n");
+
+		fflush(stdout);
+
+		return 1;
+	}
+
+	/*
+	 * If we're not called as signalserverLIDAR we can allocate various
+	 * memory now. For LIDAR we need to wait until we've parsed
+	 * the headers in the .asc file to know how much memory to allocate...
+	 */
+	if (!lidar)
+		do_allocs();
+
+	G_dbm = 0;
+	G_gpsav = 0;
+	G_metric = 0;
+	G_clutter = 0.0;
+	G_sdf_path[0] = 0;
+	G_path.length = 0;
+	G_fzone_clearance = 0.6;
+	G_contour_threshold = 0;
+	G_earthradius = EARTHRADIUS;
+	G_max_range = 1.0;
+	G_ippd = IPPD;		// default resolution
+
+	// Defaults
+	G_LR.eps_dielect = 15.0;	// Farmland
+	G_LR.sgm_conductivity = 0.005;	// Farmland
+	G_LR.eno_ns_surfref = 301.0;
+	G_LR.frq_mhz = 19.0;	// Deliberately too low
+	G_LR.radio_climate = 5;	// continental
+	G_LR.pol = 1;		// vert
+	G_LR.conf = 0.50;
+	G_LR.rel = 0.50;
+	G_LR.erp = 0.0;		// will default to Path Loss
+
+	y = argc - 1;
+
+  // parse all the global flags here
+	for (x = 1; x <= y; x++) {
+		if (strcmp(argv[x], "-dbg") == 0) {
+			G_debug = 1;
+		}
+		if (strcmp(argv[x], "-sdf") == 0) {
+        printf("using sdf dir %s\n", argv[x+1]);
+			z = x + 1;
+
+			if (z <= y && argv[z][0] && argv[z][0] != '-')
+				strncpy(G_sdf_path, argv[z], 253);
+		}
+
+
+    if (strcmp(argv[x], "-daemon") == 0) {
+        daemon = 1;
+    }
+  }
+
+  if(daemon) {
+      return scan_stdin();
+  }
+
+  return handle_args(argc - 1, argv + 1);
+}
+

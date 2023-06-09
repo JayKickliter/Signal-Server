@@ -5,6 +5,7 @@
 #include <math.h>
 #include <bzlib.h>
 #include <zlib.h>
+#include <vector>
 
 #include "common.hh"
 #include "main.hh"
@@ -18,7 +19,7 @@
 #include "models/sui.hh"
 #include "image.hh"
 
-void DoPathLoss(char *filename, unsigned char geo, unsigned char kml,
+void DoPathLoss(std::vector<dem_output> *v, char *filename, unsigned char geo, unsigned char kml,
 		unsigned char ngs, struct site *xmtr, unsigned char txsites)
 {
 	/* This function generates a topographic map in Portable Pix Map
@@ -29,8 +30,9 @@ void DoPathLoss(char *filename, unsigned char geo, unsigned char kml,
 
 	char mapfile[255];
 	unsigned red, green, blue, terrain = 0;
-	unsigned char found, mask, cityorcounty;
-	int indx, x, y, z, x0 = 0, y0 = 0, loss, match;
+	unsigned char mask, cityorcounty;
+  struct dem_output *found;
+	int x, y, z, x0 = 0, y0 = 0, loss, match;
 	double lat, lon, conversion, one_over_gamma, minwest;
 	FILE *fd;
 	image_ctx_t ctx;
@@ -100,34 +102,28 @@ void DoPathLoss(char *filename, unsigned char geo, unsigned char kml,
 			if (lon < 0.0)
 				lon += 360.0;
 
-			for (indx = 0, found = 0;
-			     indx < MAXPAGES && found == 0;) {
+      found = NULL;
+      //for (std::vector<dem_output>::iterator i = v.begin(); i != v.end() && found == 0; ++i) {
+      for(auto & i : *v) {
 				x0 = (int)rint(G_ppd *
 					       (lat -
-						(double)G_dem[indx].min_north));
+						(double)i.min_north));
 				y0 = G_mpi -
 				    (int)rint(G_ppd *
 					      (LonDiff
-					       ((double)G_dem[indx].max_west,
+					       ((double)i.max_west,
 						lon)));
-				 // fix for multi-tile lidar
-                              /*  if(width==10000 && (indx==1 || indx==3)){
-                                        if(y0 >= 3432){ //3535
-                                                y0=y0-3432;
-                                        }
-                                }*/
-
 
 				if (x0 >= 0 && x0 <= G_mpi && y0 >= 0
-				    && y0 <= G_mpi)
-					found = 1;
-				else
-					indx++;
+				    && y0 <= G_mpi) {
+            found = &i;
+            break;
+        }
 			}
 
-			if (found) {
-				mask = G_dem[indx].mask[DEM_INDEX(G_dem[indx], x0, y0)];
-				loss = (G_dem[indx].signal[DEM_INDEX(G_dem[indx], x0, y0)]);
+			if (found != NULL) {
+				mask = found->mask[DEM_INDEX(G_dem[found->indx], x0, y0)];
+				loss = found->signal[DEM_INDEX(G_dem[found->indx], x0, y0)];
 				cityorcounty = 0;
 
 				match = 255;
@@ -188,8 +184,8 @@ void DoPathLoss(char *filename, unsigned char geo, unsigned char kml,
 						else {
 							/* Display land or sea elevation */
 
-							if (G_dem[indx].
-							    data[DEM_INDEX(G_dem[indx], x0, y0)] == 0)
+							if (G_dem[found->indx].
+							    data[DEM_INDEX(G_dem[found->indx], x0, y0)] == 0)
 								ADD_PIXEL(&ctx, 
 									0, 0,
 									170);
@@ -197,7 +193,7 @@ void DoPathLoss(char *filename, unsigned char geo, unsigned char kml,
 								terrain =
 								    (unsigned)
 								    (0.5 +
-								     pow((double)(G_dem[indx].data[DEM_INDEX(G_dem[indx], x0, y0)] - G_min_elevation), one_over_gamma) * conversion);
+								     pow((double)(G_dem[found->indx].data[DEM_INDEX(G_dem[found->indx], x0, y0)] - G_min_elevation), one_over_gamma) * conversion);
 								ADD_PIXEL(&ctx, 
 									terrain,
 									terrain,
@@ -217,8 +213,8 @@ void DoPathLoss(char *filename, unsigned char geo, unsigned char kml,
 
 						else {	/* terrain / sea-level */
 
-							if (G_dem[indx].
-							    data[DEM_INDEX(G_dem[indx], x0, y0)] == 0)
+							if (G_dem[found->indx].
+							    data[DEM_INDEX(G_dem[found->indx], x0, y0)] == 0)
 								ADD_PIXEL(&ctx, 
 									0, 0,
 									170);
@@ -227,7 +223,7 @@ void DoPathLoss(char *filename, unsigned char geo, unsigned char kml,
 								terrain =
 								    (unsigned)
 								    (0.5 +
-								     pow((double)(G_dem[indx].data[DEM_INDEX(G_dem[indx], x0, y0)] - G_min_elevation), one_over_gamma) * conversion);
+								     pow((double)(G_dem[found->indx].data[DEM_INDEX(G_dem[found->indx], x0, y0)] - G_min_elevation), one_over_gamma) * conversion);
 								ADD_PIXEL(&ctx, 
 									terrain,
 									terrain,
@@ -261,7 +257,7 @@ void DoPathLoss(char *filename, unsigned char geo, unsigned char kml,
 
 }
 
-int DoSigStr(char *filename, unsigned char geo, unsigned char kml,
+int DoSigStr(std::vector<dem_output> *v, char *filename, unsigned char geo, unsigned char kml,
 	      unsigned char ngs, struct site *xmtr, unsigned char txsites)
 {
 	/* This function generates a topographic map in Portable Pix Map
@@ -272,8 +268,9 @@ int DoSigStr(char *filename, unsigned char geo, unsigned char kml,
 
 	char mapfile[255];
 	unsigned terrain, red, green, blue;
-	unsigned char found, mask, cityorcounty;
-	int indx, x, y, z = 1, x0 = 0, y0 = 0, signal, match;
+	unsigned char mask, cityorcounty;
+  struct dem_output *found;
+	int x, y, z = 1, x0 = 0, y0 = 0, signal, match;
 	double conversion, one_over_gamma, lat, lon, minwest;
 	FILE *fd;
 	image_ctx_t ctx;
@@ -340,35 +337,28 @@ int DoSigStr(char *filename, unsigned char geo, unsigned char kml,
 			if (lon < 0.0)
 				lon += 360.0;
 
-			for (indx = 0, found = 0;
-			     indx < MAXPAGES && found == 0;) {
+
+      found = NULL;
+      for(auto & i : *v) {
 				x0 = (int)rint(G_ppd *
 					       (lat -
-						(double)G_dem[indx].min_north));
+						(double)i.min_north));
 				y0 = G_mpi -
 				    (int)rint(G_ppd *
 					      (LonDiff
-					       ((double)G_dem[indx].max_west,
+					       ((double)i.max_west,
 						lon)));
 
-				 // fix for multi-tile lidar
-                           /*     if(width==10000 && (indx==1 || indx==3)){
-                                        if(y0 >= 3432){ //3535
-                                                y0=y0-3432;
-                                        }
-                                }
-				*/
-
 				if (x0 >= 0 && x0 <= G_mpi && y0 >= 0
-				    && y0 <= G_mpi)
-					found = 1;
-				else
-					indx++;
+				    && y0 <= G_mpi) {
+					found = &i;
+          break;
+        }
 			}
 
 			if (found) {
-				mask = G_dem[indx].mask[DEM_INDEX(G_dem[indx], x0, y0)];
-				signal = (G_dem[indx].signal[DEM_INDEX(G_dem[indx], x0, y0)]) - 100;
+				mask = found->mask[DEM_INDEX(G_dem[found->indx], x0, y0)];
+				signal = (found->signal[DEM_INDEX(G_dem[found->indx], x0, y0)]) - 100;
 				cityorcounty = 0;
 				match = 255;
 
@@ -427,8 +417,8 @@ int DoSigStr(char *filename, unsigned char geo, unsigned char kml,
 						else {
 							/* Display land or sea elevation */
 
-							if (G_dem[indx].
-							    data[DEM_INDEX(G_dem[indx], x0, y0)] == 0)
+							if (G_dem[found->indx].
+							    data[DEM_INDEX(G_dem[found->indx], x0, y0)] == 0)
 								ADD_PIXEL(&ctx, 
 									0, 0,
 									170);
@@ -436,7 +426,7 @@ int DoSigStr(char *filename, unsigned char geo, unsigned char kml,
 								terrain =
 								    (unsigned)
 								    (0.5 +
-								     pow((double)(G_dem[indx].data[DEM_INDEX(G_dem[indx], x0, y0)] - G_min_elevation), one_over_gamma) * conversion);
+								     pow((double)(G_dem[found->indx].data[DEM_INDEX(G_dem[found->indx], x0, y0)] - G_min_elevation), one_over_gamma) * conversion);
 								ADD_PIXEL(&ctx, 
 									terrain,
 									terrain,
@@ -462,8 +452,8 @@ int DoSigStr(char *filename, unsigned char geo, unsigned char kml,
 									255,
 									255);
 							else {
-								if (G_dem[indx].
-								    data[DEM_INDEX(G_dem[indx], x0, y0)]
+								if (G_dem[found->indx].
+								    data[DEM_INDEX(G_dem[found->indx], x0, y0)]
 								    == 0)
 									ADD_PIXEL(&ctx, 
 									     0,
@@ -477,7 +467,7 @@ int DoSigStr(char *filename, unsigned char geo, unsigned char kml,
 									    (0.5
 									     +
 									     pow
-									     ((double)(G_dem[indx].data[DEM_INDEX(G_dem[indx], x0, y0)] - G_min_elevation), one_over_gamma) * conversion);
+									     ((double)(G_dem[found->indx].data[DEM_INDEX(G_dem[found->indx], x0, y0)] - G_min_elevation), one_over_gamma) * conversion);
 									ADD_PIXEL(&ctx, 
 									     terrain,
 									     terrain,
@@ -512,7 +502,7 @@ int DoSigStr(char *filename, unsigned char geo, unsigned char kml,
 	return 0;
 }
 
-void DoRxdPwr(char *filename, unsigned char geo, unsigned char kml,
+void DoRxdPwr(std::vector<dem_output> *v, char *filename, unsigned char geo, unsigned char kml,
 	      unsigned char ngs, struct site *xmtr, unsigned char txsites)
 {
 	/* This function generates a topographic map in Portable Pix Map
@@ -523,8 +513,9 @@ void DoRxdPwr(char *filename, unsigned char geo, unsigned char kml,
 
 	char mapfile[255];
 	unsigned terrain, red, green, blue;
-	unsigned char found, mask, cityorcounty;
-	int indx, x, y, z = 1, x0 = 0, y0 = 0, dBm, match;
+	unsigned char mask, cityorcounty;
+  struct dem_output *found;
+	int x, y, z = 1, x0 = 0, y0 = 0, dBm, match;
 	double conversion, one_over_gamma, lat, lon, minwest;
 	FILE *fd;
 	image_ctx_t ctx;
@@ -592,30 +583,27 @@ void DoRxdPwr(char *filename, unsigned char geo, unsigned char kml,
 			if (lon < 0.0)
 				lon += 360.0;
 
-			for (indx = 0, found = 0;
-			     indx < MAXPAGES && found == 0;) {
-
+      found = NULL;
+      for(auto & i : *v) {
 				x0 = (int)rint((G_ppd *
 					      (lat -
-						(double)G_dem[indx].min_north))); 
+						(double)i.min_north))); 
 				y0 = G_mpi -
 				    (int)rint(G_ppd * 
 					      (LonDiff
-					       ((double)G_dem[indx].max_west,lon)));
+					       ((double)i.max_west,lon)));
 
 
 				if (x0 >= 0 && x0 <= G_mpi && y0 >= 0
-				    && y0 <= G_mpi)
-					found = 1;
-				else
-					indx++;
-
-
+				    && y0 <= G_mpi) {
+					found = &i;
+          break;
+        }
 			}
 
 			if (found) {
-				mask = G_dem[indx].mask[DEM_INDEX(G_dem[indx], x0, y0)];
-				dBm = (G_dem[indx].signal[DEM_INDEX(G_dem[indx], x0, y0)]) - 200;
+				mask = found->mask[DEM_INDEX(G_dem[found->indx], x0, y0)];
+				dBm = (found->signal[DEM_INDEX(G_dem[found->indx], x0, y0)]) - 200;
 				cityorcounty = 0;
 				match = 255;
 
@@ -671,8 +659,8 @@ void DoRxdPwr(char *filename, unsigned char geo, unsigned char kml,
 						else {
 							/* Display land or sea elevation */
 
-							if (G_dem[indx].
-							    data[DEM_INDEX(G_dem[indx], x0, y0)] == 0)
+							if (G_dem[found->indx].
+							    data[DEM_INDEX(G_dem[found->indx], x0, y0)] == 0)
 								ADD_PIXEL(&ctx,
 									0, 0,
 									170);
@@ -680,7 +668,7 @@ void DoRxdPwr(char *filename, unsigned char geo, unsigned char kml,
 								terrain =
 								    (unsigned)
 								    (0.5 +
-								     pow((double)(G_dem[indx].data[DEM_INDEX(G_dem[indx], x0, y0)] - G_min_elevation), one_over_gamma) * conversion);
+								     pow((double)(G_dem[found->indx].data[DEM_INDEX(G_dem[found->indx], x0, y0)] - G_min_elevation), one_over_gamma) * conversion);
 								ADD_PIXEL(&ctx,
 									terrain,
 									terrain,
@@ -706,8 +694,8 @@ void DoRxdPwr(char *filename, unsigned char geo, unsigned char kml,
 									255,
 									255); // WHITE
 							else {
-								if (G_dem[indx].
-								    data[DEM_INDEX(G_dem[indx], x0, y0)]
+								if (G_dem[found->indx].
+								    data[DEM_INDEX(G_dem[found->indx], x0, y0)]
 								    == 0)
 									ADD_PIXEL(&ctx, 
 									     0,
@@ -721,7 +709,7 @@ void DoRxdPwr(char *filename, unsigned char geo, unsigned char kml,
 									    (0.5
 									     +
 									     pow
-									     ((double)(G_dem[indx].data[DEM_INDEX(G_dem[indx], x0, y0)] - G_min_elevation), one_over_gamma) * conversion);
+									     ((double)(G_dem[found->indx].data[DEM_INDEX(G_dem[found->indx], x0, y0)] - G_min_elevation), one_over_gamma) * conversion);
 									ADD_PIXEL(&ctx, 
 									     terrain,
 									     terrain,
@@ -758,7 +746,7 @@ void DoRxdPwr(char *filename, unsigned char geo, unsigned char kml,
 
 }
 
-void DoLOS(char *filename, unsigned char geo, unsigned char kml,
+void DoLOS(std::vector<dem_output> *v, char *filename, unsigned char geo, unsigned char kml,
 	   unsigned char ngs, struct site *xmtr, unsigned char txsites)
 {
 	/* This function generates a topographic map in Portable Pix Map
@@ -769,8 +757,9 @@ void DoLOS(char *filename, unsigned char geo, unsigned char kml,
 
 	char mapfile[255];
 	unsigned terrain;
-	unsigned char found, mask;
-	int indx, x, y, x0 = 0, y0 = 0;
+	unsigned char mask;
+  struct dem_output *found;
+	int x, y, x0 = 0, y0 = 0;
 	double conversion, one_over_gamma, lat, lon, minwest;
 	FILE *fd;
 	image_ctx_t ctx;
@@ -832,26 +821,26 @@ void DoLOS(char *filename, unsigned char geo, unsigned char kml,
 			if (lon < 0.0)
 				lon += 360.0;
 
-			for (indx = 0, found = 0;
-			     indx < MAXPAGES && found == 0;) {
+      found = NULL;
+      for(auto & i : *v) {
 				x0 = (int)rint(G_ppd *
 					       (lat -
-						(double)G_dem[indx].min_north));
+						(double)i.min_north));
 				y0 = G_mpi -
 				    (int)rint(G_ppd *
 					      (LonDiff
-					       ((double)G_dem[indx].max_west,
+					       ((double)i.max_west,
 						lon)));
 
 				if (x0 >= 0 && x0 <= G_mpi && y0 >= 0
-				    && y0 <= G_mpi)
-					found = 1;
-				else
-					indx++;
+				    && y0 <= G_mpi) {
+            found = &i;
+            break;
+        }
 			}
 
 			if (found) {
-				mask = G_dem[indx].mask[DEM_INDEX(G_dem[indx], x0, y0)];
+				mask = found->mask[DEM_INDEX(G_dem[found->indx], x0, y0)];
 
 				if (mask & 2)
 					/* Text Labels: Red */
@@ -959,8 +948,8 @@ void DoLOS(char *filename, unsigned char geo, unsigned char kml,
 								255, 255, 255);
 						else {
 							/* Sea-level: Medium Blue */
-							if (G_dem[indx].
-							    data[DEM_INDEX(G_dem[indx], x0, y0)] == 0)
+							if (G_dem[found->indx].
+							    data[DEM_INDEX(G_dem[found->indx], x0, y0)] == 0)
 								ADD_PIXEL(&ctx, 
 									0, 0,
 									170);
@@ -969,7 +958,7 @@ void DoLOS(char *filename, unsigned char geo, unsigned char kml,
 								terrain =
 								    (unsigned)
 								    (0.5 +
-								     pow((double)(G_dem[indx].data[DEM_INDEX(G_dem[indx], x0, y0)] - G_min_elevation), one_over_gamma) * conversion);
+								     pow((double)(G_dem[found->indx].data[DEM_INDEX(G_dem[found->indx], x0, y0)] - G_min_elevation), one_over_gamma) * conversion);
 								ADD_PIXEL(&ctx, 
 									terrain,
 									terrain,

@@ -2,17 +2,18 @@
 #define _MAIN_HH_
 
 #include <stdio.h>
+#include <vector>
 
 #include "common.hh"
 
 int ReduceAngle(double angle);
 double LonDiff(double lon1, double lon2);
 void *dec2dms(double decimal, char *string);
-int PutMask(double lat, double lon, int value);
-int OrMask(double lat, double lon, int value);
-int GetMask(double lat, double lon);
-void PutSignal(double lat, double lon, unsigned char signal);
-unsigned char GetSignal(double lat, double lon);
+int PutMask(std::vector<dem_output> *v, double lat, double lon, int value);
+int OrMask(std::vector<dem_output> *v, double lat, double lon, int value);
+int GetMask(std::vector<dem_output> *v, double lat, double lon);
+void PutSignal(std::vector<dem_output> *v, double lat, double lon, unsigned char signal);
+unsigned char GetSignal(std::vector<dem_output> *v, double lat, double lon);
 double GetElevation(struct site location);
 int AddElevation(double lat, double lon, double height, int size);
 double Distance(struct site site1, struct site site2);

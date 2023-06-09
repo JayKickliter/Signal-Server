@@ -13,6 +13,7 @@
 #include "egli.hh"
 #include "soil.hh"
 #include <pthread.h>
+#include <vector>
 
 #define NUM_SECTIONS 4
 
@@ -31,6 +32,7 @@ namespace {
 		unsigned char mask_value;
 		FILE *fd;
 		int propmodel, knifeedge, pmenv;
+    std::vector<dem_output> *out;
 	};
 
 	void* rangePropagation(void *parameters)
@@ -56,9 +58,9 @@ namespace {
 			edge.alt = v->altitude;
 
 			if(v->los)
-				PlotLOSPath(v->source, edge, v->mask_value, v->fd);
+				PlotLOSPath(v->out, v->source, edge, v->mask_value, v->fd);
 			else
-				PlotPropPath(v->source, edge, v->mask_value, v->fd, v->propmodel,
+				PlotPropPath(v->out, v->source, edge, v->mask_value, v->fd, v->propmodel,
 					v->knifeedge, v->pmenv);
 
 			++y;
@@ -225,7 +227,7 @@ static double ked(double freq, double rxh, double dkm)
 	}
 }
 
-void PlotLOSPath(struct site source, struct site destination, char mask_value,
+void PlotLOSPath(std::vector<dem_output> *v, struct site source, struct site destination, char mask_value,
          FILE *fd)
 {
     /* This function analyzes the path between the source and
@@ -301,8 +303,8 @@ void PlotLOSPath(struct site source, struct site destination, char mask_value,
            an obstruction exists.
            Mark this point only if it hasn't been already marked */
 
-        if ((cos_horizon_angle >= cos_angle) && ((GetMask(G_path.lat[x], G_path.lon[x]) & mask_value) == 0) && (can_process(G_path.lat[x], G_path.lon[x]))) {
-            OrMask(G_path.lat[x], G_path.lon[x], mask_value);
+        if ((cos_horizon_angle >= cos_angle) && ((GetMask(v, G_path.lat[x], G_path.lon[x]) & mask_value) == 0) && (can_process(G_path.lat[x], G_path.lon[x]))) {
+            OrMask(v, G_path.lat[x], G_path.lon[x], mask_value);
         }
 
         if (cos_test_angle < cos_horizon_angle) {
@@ -339,7 +341,7 @@ void PlotLOSPath(struct site source, struct site destination, char mask_value,
     }
 }
 
-void PlotPropPath(struct site source, struct site destination,
+void PlotPropPath(std::vector<dem_output> *v, struct site source, struct site destination,
 		  unsigned char mask_value, FILE * fd, int propmodel,
 		  int knifeedge, int pmenv)
 {
@@ -390,7 +392,7 @@ void PlotPropPath(struct site source, struct site destination,
 		/* Process this point only if it
 		   has not already been processed. */
 
-		if ( (GetMask(G_path.lat[y], G_path.lon[y]) & 248) !=
+		if ( (GetMask(v, G_path.lat[y], G_path.lon[y]) & 248) !=
 			(mask_value << 3) && can_process(G_path.lat[y], G_path.lon[y])) {
 
 			char fd_buffer[64];
@@ -663,12 +665,12 @@ void PlotPropPath(struct site source, struct site destination,
 						ifs = 255;
 
 					ofs =
-					    GetSignal(G_path.lat[y], G_path.lon[y]);
+					    GetSignal(v, G_path.lat[y], G_path.lon[y]);
 
 					if (ofs > ifs)
 						ifs = ofs;
 
-					PutSignal(G_path.lat[y], G_path.lon[y],
+					PutSignal(v, G_path.lat[y], G_path.lon[y],
 						  (unsigned char)ifs);
 
 				}
@@ -689,12 +691,12 @@ void PlotPropPath(struct site source, struct site destination,
 						ifs = 255;
 
 					ofs =
-					    GetSignal(G_path.lat[y], G_path.lon[y]);
+					    GetSignal(v, G_path.lat[y], G_path.lon[y]);
 
 					if (ofs > ifs)
 						ifs = ofs;
 
-					PutSignal(G_path.lat[y], G_path.lon[y],
+					PutSignal(v, G_path.lat[y], G_path.lon[y],
 						  (unsigned char)ifs);
 
 					if (fd != NULL)
@@ -710,12 +712,12 @@ void PlotPropPath(struct site source, struct site destination,
 				else
 					ifs = (int)rint(loss);
 				
-				ofs = GetSignal(G_path.lat[y], G_path.lon[y]);
+				ofs = GetSignal(v, G_path.lat[y], G_path.lon[y]);
 
 				if (ofs < ifs && ofs != 0)
 					ifs = ofs;
 
-				PutSignal(G_path.lat[y], G_path.lon[y],
+				PutSignal(v, G_path.lat[y], G_path.lon[y],
 					  (unsigned char)ifs);
 			}
 
@@ -728,8 +730,8 @@ void PlotPropPath(struct site source, struct site destination,
 
 			/* Mark this point as having been analyzed */
 
-			PutMask(G_path.lat[y], G_path.lon[y],
-				(GetMask(G_path.lat[y], G_path.lon[y]) & 7) +
+			PutMask(v, G_path.lat[y], G_path.lon[y],
+				(GetMask(v, G_path.lat[y], G_path.lon[y]) & 7) +
 				(mask_value << 3));
 		}
 	}
@@ -745,7 +747,7 @@ void PlotPropPath(struct site source, struct site destination,
 	//	cropLon-=360;
 }
 
-void PlotLOSMap(struct site source, double altitude, char *plo_filename,
+void PlotLOSMap(std::vector<dem_output> *v, struct site source, double altitude, char *plo_filename,
 		bool use_threads)
 {
 	/* This function performs a 360 degree sweep around the
@@ -794,6 +796,7 @@ void PlotLOSMap(struct site source, double altitude, char *plo_filename,
 		range->source = source;
 		range->mask_value = mask_value;
 		range->fd = fd;
+    range->out = v;
 
 		if(use_threads)
 			beginThread(range);
@@ -827,7 +830,7 @@ void PlotLOSMap(struct site source, double altitude, char *plo_filename,
 }
 
 
-void PlotPropagation(struct site source, double altitude, char *plo_filename,
+void PlotPropagation(std::vector<dem_output> *v, struct site source, double altitude, char *plo_filename,
 		     int propmodel, int knifeedge, int haf, int pmenv, bool
 		     use_threads)
 {
@@ -904,6 +907,7 @@ void PlotPropagation(struct site source, double altitude, char *plo_filename,
 		range->propmodel = propmodel;
 		range->knifeedge = knifeedge;
 		range->pmenv = pmenv;
+    range->out = v;
 
 		if(use_threads)
 			beginThread(range);
@@ -928,7 +932,7 @@ void PlotPropagation(struct site source, double altitude, char *plo_filename,
 		mask_value++;
 }
 
-void PlotPath(struct site source, struct site destination, char mask_value)
+void PlotPath(std::vector<dem_output> *v, struct site source, struct site destination, char mask_value)
 {
 	/* This function analyzes the path between the source and
 	   destination locations.  It determines which points along
@@ -950,7 +954,7 @@ void PlotPath(struct site source, struct site destination, char mask_value)
 		/* Test this point only if it hasn't been already
 		   tested and found to be free of obstructions. */
 
-		if ((GetMask(G_path.lat[y], G_path.lon[y]) & mask_value) == 0) {
+		if ((GetMask(v, G_path.lat[y], G_path.lon[y]) & mask_value) == 0) {
 			distance = FEET_PER_MILE * G_path.distance[y];
 			tx_alt = G_earthradius + source.alt + G_path.elevation[0];
 			rx_alt =
@@ -990,7 +994,7 @@ void PlotPath(struct site source, struct site destination, char mask_value)
 			}
 
 			if (block == 0)
-				OrMask(G_path.lat[y], G_path.lon[y], mask_value);
+				OrMask(v, G_path.lat[y], G_path.lon[y], mask_value);
 		}
 	}
 }

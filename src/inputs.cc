@@ -453,8 +453,6 @@ int loadLIDAR(char *filenames, int resample)
 		int x = new_width-1;
 		for (size_t w = 0; w < new_width; w++, x--) {
 			G_dem[0].data[DEM_INDEX(G_dem[0], x, y)] = new_tile[h*new_width + w];
-			G_dem[0].signal[DEM_INDEX(G_dem[0], x, y)] = 0;
-			G_dem[0].mask[DEM_INDEX(G_dem[0], x, y)] = 0;
 		}
 	}
 
@@ -565,7 +563,6 @@ int LoadSDF_BSDF(char *name)
 			fflush(stderr);
 		}
 
-    delete G_dem[indx].data;
     G_dem[indx].data = (short*)mmap(NULL, 1200*1200*2, PROT_READ, MAP_PRIVATE, fd, 0);
 
     G_dem[indx].min_north = minlat;
@@ -733,6 +730,7 @@ int LoadSDF_SDF(char *name)
 				return -errno;
 		}
 
+    G_dem[indx].data = new short[IPPD*IPPD];
 		/*
 		   Here X lines of DEM will be read until IPPD is reached.
 		   Each .sdf tile contains 1200x1200 = 1.44M 'points'
@@ -751,8 +749,6 @@ int LoadSDF_SDF(char *name)
 				}
 
 				G_dem[indx].data[DEM_INDEX(G_dem[indx], x, y)] = data;
-				G_dem[indx].signal[DEM_INDEX(G_dem[indx], x, y)] = 0;
-				G_dem[indx].mask[DEM_INDEX(G_dem[indx], x, y)] = 0;
 
 				if (data > G_dem[indx].max_el)
 					G_dem[indx].max_el = data;
@@ -991,6 +987,7 @@ int LoadSDF_BZ(char *name)
 		if (bzerror != BZ_OK || pos == EOF)
 		        return -errno;
 
+    G_dem[indx].data = new short[IPPD*IPPD];
 		/*
 		   Here X lines of DEM will be read until IPPD is reached.
 		   Each .sdf tile contains 1200x1200 = 1.44M 'points'
@@ -1012,8 +1009,6 @@ int LoadSDF_BZ(char *name)
 				data = atoi(line);
 
 				G_dem[indx].data[DEM_INDEX(G_dem[indx], x, y)] = data;
-				G_dem[indx].signal[DEM_INDEX(G_dem[indx], x, y)] = 0;
-				G_dem[indx].mask[DEM_INDEX(G_dem[indx], x, y)] = 0;
 
 				if (data > G_dem[indx].max_el)
 					G_dem[indx].max_el = data;
@@ -1282,6 +1277,7 @@ int LoadSDF_GZ(char *name)
 			fflush(stderr);
 		}
 
+    G_dem[indx].data = new short[IPPD*IPPD];
 		/*
 		   Here X lines of DEM will be read until IPPD is reached.
 		   Each .sdf tile contains 1200x1200 = 1.44M 'points'
@@ -1306,8 +1302,6 @@ int LoadSDF_GZ(char *name)
 				data = atoi(line);
 
 				G_dem[indx].data[DEM_INDEX(G_dem[indx], x, y)] = data;
-				G_dem[indx].signal[DEM_INDEX(G_dem[indx], x, y)] = 0;
-				G_dem[indx].mask[DEM_INDEX(G_dem[indx], x, y)] = 0;
 
 				if (data > G_dem[indx].max_el)
 					G_dem[indx].max_el = data;
@@ -1477,16 +1471,12 @@ int LoadSDF(char *name)
 			G_dem[indx].max_north = maxlat;
 
 			/* Fill DEM with sea-level topography */
+      G_dem[indx].data = new short[IPPD*IPPD];
+      bzero(G_dem[indx].data, IPPD*IPPD*sizeof(short));
 
-			for (x = 0; x < G_ippd; x++)
-				for (y = 0; y < G_ippd; y++) {
-					G_dem[indx].data[DEM_INDEX(G_dem[indx], x, y)] = 0;
-					G_dem[indx].signal[DEM_INDEX(G_dem[indx], x, y)] = 0;
-					G_dem[indx].mask[DEM_INDEX(G_dem[indx], x, y)] = 0;
 
-					if (G_dem[indx].min_el > 0)
-						G_dem[indx].min_el = 0;
-				}
+      if (G_dem[indx].min_el > 0)
+          G_dem[indx].min_el = 0;
 
 			if (G_dem[indx].min_el < G_min_elevation)
 				G_min_elevation = G_dem[indx].min_el;

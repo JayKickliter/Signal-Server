@@ -37,6 +37,14 @@ struct dem {
 	short max_el;
 	short min_el;
 	short *data;
+};
+
+struct dem_output {
+    int indx; // position of corresponding dem in global array
+	float min_north;
+	float max_north;
+	float min_west;
+	float max_west;
 	unsigned char *mask;
 	unsigned char *signal;
 };

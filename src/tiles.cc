@@ -163,7 +163,7 @@ int tile_rescale(tile_t *tile, float scale){
 	}
 
 	tile->max_el = -32768;
-	tile->min_el = 32768;
+	tile->min_el = 32767;
 
 	/* Making the tile data smaller */
 	if (scale < 1) {
