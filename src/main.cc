@@ -1110,7 +1110,7 @@ int handle_args(int argc, char *argv[]) {
 	double min_lat, min_lon, max_lat, max_lon, rxlat, rxlon, txlat, txlon,
 	  west_min, west_max, nortRxHin, nortRxHax;
 
-	bool use_threads = true;
+	bool use_threads = false;
 
 	unsigned char LRmap = 0, txsites = 0, topomap = 0, geo = 0, kml =
 	    0, area_mode = 0, max_txsites, ngs = 0;
