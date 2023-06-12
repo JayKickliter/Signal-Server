@@ -67,7 +67,13 @@ struct path {
 	int length;
 };
 
+// TODO what does LR mean
 struct LR {
+  double max_range;
+  double clutter;
+  int contour_threshold;
+  char dbm;
+  unsigned char metric;
 	double eps_dielect;
 	double sgm_conductivity;
 	double eno_ns_surfref;
@@ -99,7 +105,6 @@ extern int G_MAXRAD;
 extern int G_mpi;
 extern int G_max_elevation;
 extern int G_min_elevation;
-extern int G_contour_threshold;
 extern int G_loops;
 extern int G_jgets;
 extern int G_width;
@@ -110,12 +115,10 @@ extern double G_north;
 extern double G_east;
 extern double G_south;
 extern double G_west;
-extern double G_max_range;
 extern double G_dpp;
 extern double G_ppd;
 extern double G_yppd;
 extern double G_fzone_clearance;
-extern double G_clutter;
 extern double G_dBm;
 extern double G_loss;
 extern double G_field_strength;
@@ -132,8 +135,6 @@ extern char G_gpsav;
 
 extern unsigned char G_got_elevation_pattern;
 extern unsigned char G_got_azimuth_pattern;
-extern unsigned char G_metric;
-extern unsigned char G_dbm;
 
 extern std::vector<struct dem> G_dem;
 extern __thread struct path G_path;

@@ -33,6 +33,7 @@ namespace {
 		FILE *fd;
 		int propmodel, knifeedge, pmenv;
     std::vector<dem_output> *out;
+    struct LR LR;
 	};
 
 	void* rangePropagation(void *parameters)
@@ -58,10 +59,10 @@ namespace {
 			edge.alt = v->altitude;
 
 			if(v->los)
-				PlotLOSPath(v->out, v->source, edge, v->mask_value, v->fd);
+				PlotLOSPath(v->out, v->source, edge, v->mask_value, v->fd, v->LR);
 			else
 				PlotPropPath(v->out, v->source, edge, v->mask_value, v->fd, v->propmodel,
-					v->knifeedge, v->pmenv);
+					v->knifeedge, v->pmenv, v->LR);
 
 			++y;
 			if(v->eastwest)
@@ -231,7 +232,7 @@ static double ked(double freq, double rxh, double dkm)
 }
 
 void PlotLOSPath(std::vector<dem_output> *v, struct site source, struct site destination, char mask_value,
-         FILE *fd)
+         FILE *fd, const struct LR LR)
 {
     /* This function analyzes the path between the source and
        destination locations. It determines which points along
@@ -267,7 +268,7 @@ void PlotLOSPath(std::vector<dem_output> *v, struct site source, struct site des
     tx_alt = G_earthradius + source.alt + G_path.elevation[0];
     tx_alt2 = tx_alt * tx_alt;
 
-    for (x = 0; (bStop == false) && (x < (G_path.length - 1)) && (G_path.distance[x] <= G_max_range); x++) {
+    for (x = 0; (bStop == false) && (x < (G_path.length - 1)) && (G_path.distance[x] <= LR.max_range); x++) {
 
         if (x > 0) {
             distance = FEET_PER_MILE * G_path.distance[x];
@@ -289,7 +290,7 @@ void PlotLOSPath(std::vector<dem_output> *v, struct site source, struct site des
                 cos_angle = -1.0;
             }
 
-            test_alt = G_earthradius + (G_path.elevation[x] == 0.0 ? G_path.elevation[x] : G_path.elevation[x] + G_clutter);
+            test_alt = G_earthradius + (G_path.elevation[x] == 0.0 ? G_path.elevation[x] : G_path.elevation[x] + LR.clutter);
             test_alt2 = test_alt * test_alt;
 
             /* Calculate the cosine of the elevation between
@@ -346,7 +347,7 @@ void PlotLOSPath(std::vector<dem_output> *v, struct site source, struct site des
 
 void PlotPropPath(std::vector<dem_output> *v, struct site source, struct site destination,
 		  unsigned char mask_value, FILE * fd, int propmodel,
-		  int knifeedge, int pmenv)
+		  int knifeedge, int pmenv, const struct LR LR)
 {
 
 	int x, y, ifs, ofs, errnum;
@@ -366,7 +367,7 @@ void PlotPropPath(std::vector<dem_output> *v, struct site source, struct site de
 	for (x = 1; x < G_path.length - 1; x++)
 		G_elev[x + 2] =
 		    (G_path.elevation[x] ==
-		     0.0 ? G_path.elevation[x] * METERS_PER_FOOT : (G_clutter +
+		     0.0 ? G_path.elevation[x] * METERS_PER_FOOT : (LR.clutter +
 								  G_path.
 								  elevation[x])
 		     * METERS_PER_FOOT);
@@ -390,7 +391,7 @@ void PlotPropPath(std::vector<dem_output> *v, struct site source, struct site de
 	   calculation for overall path loss. */
 	//if(debug)
 	//	fprintf(stderr,"four_thirds_earth %.1f source.alt %.1f path.elevation[0] %.1f\n",four_thirds_earth,source.alt,path.elevation[0]);
-	for (y = 2; (y < (G_path.length - 1) && G_path.distance[y] <= G_max_range);
+	for (y = 2; (y < (G_path.length - 1) && G_path.distance[y] <= LR.max_range);
 	     y++) {
 		/* Process this point only if it
 		   has not already been processed. */
@@ -436,7 +437,7 @@ void PlotPropPath(std::vector<dem_output> *v, struct site source, struct site de
 					    four_thirds_earth +
 					    (G_path.elevation[x] ==
 					     0.0 ? G_path.elevation[x] : G_path.
-					     elevation[x] + G_clutter);
+					     elevation[x] + LR.clutter);
 
 					/* Calculate the cosine of the elevation
 					   angle of the terrain (test point)
@@ -503,23 +504,23 @@ void PlotPropPath(std::vector<dem_output> *v, struct site source, struct site de
 				point_to_point_ITM(source.alt * METERS_PER_FOOT,
 						   destination.alt *
 						   METERS_PER_FOOT,
-						   G_LR.eps_dielect,
-						   G_LR.sgm_conductivity,
-						   G_LR.eno_ns_surfref,
-						   G_LR.frq_mhz, G_LR.radio_climate,
-						   G_LR.pol, G_LR.conf, G_LR.rel,
+						   LR.eps_dielect,
+						   LR.sgm_conductivity,
+						   LR.eno_ns_surfref,
+						   LR.frq_mhz, LR.radio_climate,
+						   LR.pol, LR.conf, LR.rel,
 						   loss, strmode, errnum);
 				break;
 			case 3:
 				//HATA 1, 2 & 3
 				loss =
-				    HATApathLoss(G_LR.frq_mhz, source.alt * METERS_PER_FOOT,
+				    HATApathLoss(LR.frq_mhz, source.alt * METERS_PER_FOOT,
 						(G_path.elevation[y] * METERS_PER_FOOT) +	 (destination.alt * METERS_PER_FOOT), dkm, pmenv);
 				break;
 			case 4:
 				// ECC33
 				loss =
-				    ECC33pathLoss(G_LR.frq_mhz, source.alt * METERS_PER_FOOT,
+				    ECC33pathLoss(LR.frq_mhz, source.alt * METERS_PER_FOOT,
 						(G_path.elevation[y] *
 						 METERS_PER_FOOT) +
 						  (destination.alt *
@@ -529,7 +530,7 @@ void PlotPropPath(std::vector<dem_output> *v, struct site source, struct site de
 			case 5:
 				// SUI
 				loss =
-				    SUIpathLoss(G_LR.frq_mhz, source.alt * METERS_PER_FOOT,
+				    SUIpathLoss(LR.frq_mhz, source.alt * METERS_PER_FOOT,
 						(G_path.elevation[y] *
 						 METERS_PER_FOOT) +
 						(destination.alt *
@@ -538,7 +539,7 @@ void PlotPropPath(std::vector<dem_output> *v, struct site source, struct site de
 			case 6:
 				// COST231-Hata
 				loss =
-				    COST231pathLoss(G_LR.frq_mhz, source.alt * METERS_PER_FOOT,
+				    COST231pathLoss(LR.frq_mhz, source.alt * METERS_PER_FOOT,
 						(G_path.elevation[y] *
 						 METERS_PER_FOOT) +
 						    (destination.alt *
@@ -547,24 +548,24 @@ void PlotPropPath(std::vector<dem_output> *v, struct site source, struct site de
 				break;
 			case 7:
 				// ITU-R P.525 Free space path loss
-				loss = FSPLpathLoss(G_LR.frq_mhz, dkm, false);
+				loss = FSPLpathLoss(LR.frq_mhz, dkm, false);
 				break;
 			case 8:
 				// ITWOM 3.0
 				point_to_point(source.alt * METERS_PER_FOOT,
 					       destination.alt *
-					       METERS_PER_FOOT, G_LR.eps_dielect,
-					       G_LR.sgm_conductivity,
+					       METERS_PER_FOOT, LR.eps_dielect,
+					       LR.sgm_conductivity,
 
-					       G_LR.eno_ns_surfref, G_LR.frq_mhz,
-					       G_LR.radio_climate, G_LR.pol,
-					       G_LR.conf, G_LR.rel, loss, strmode,
+					       LR.eno_ns_surfref, LR.frq_mhz,
+					       LR.radio_climate, LR.pol,
+					       LR.conf, LR.rel, loss, strmode,
 					       errnum);
 				break;
 			case 9:
 				// Ericsson
 				loss =
-				    EricssonpathLoss(G_LR.frq_mhz, source.alt * METERS_PER_FOOT,
+				    EricssonpathLoss(LR.frq_mhz, source.alt * METERS_PER_FOOT,
 						(G_path.elevation[y] *
 						 METERS_PER_FOOT) +
 						     (destination.alt *
@@ -577,11 +578,11 @@ void PlotPropPath(std::vector<dem_output> *v, struct site source, struct site de
 				break;
 			case 11:
 				// Egli VHF/UHF
-				loss = EgliPathLoss(G_LR.frq_mhz, source.alt * METERS_PER_FOOT, (G_path.elevation[y] * METERS_PER_FOOT) + (destination.alt * METERS_PER_FOOT),dkm);
+				loss = EgliPathLoss(LR.frq_mhz, source.alt * METERS_PER_FOOT, (G_path.elevation[y] * METERS_PER_FOOT) + (destination.alt * METERS_PER_FOOT),dkm);
 				break;
                         case 12:
                                 // Soil
-                                loss = SoilPathLoss(G_LR.frq_mhz, dkm, G_LR.eps_dielect);
+                                loss = SoilPathLoss(LR.frq_mhz, dkm, LR.eps_dielect);
                                 break;
 
 
@@ -589,11 +590,11 @@ void PlotPropPath(std::vector<dem_output> *v, struct site source, struct site de
 				point_to_point_ITM(source.alt * METERS_PER_FOOT,
 						   destination.alt *
 						   METERS_PER_FOOT,
-						   G_LR.eps_dielect,
-						   G_LR.sgm_conductivity,
-						   G_LR.eno_ns_surfref,
-						   G_LR.frq_mhz, G_LR.radio_climate,
-						   G_LR.pol, G_LR.conf, G_LR.rel,
+						   LR.eps_dielect,
+						   LR.sgm_conductivity,
+						   LR.eno_ns_surfref,
+						   LR.frq_mhz, LR.radio_climate,
+						   LR.pol, LR.conf, LR.rel,
 						   loss, strmode, errnum);
 
 			}
@@ -601,7 +602,7 @@ void PlotPropPath(std::vector<dem_output> *v, struct site source, struct site de
 
 			if (knifeedge == 1 && propmodel > 1) {
 				diffloss =
-				    ked(G_LR.frq_mhz,
+				    ked(LR.frq_mhz,
 					destination.alt * METERS_PER_FOOT, dkm);
 				loss += (diffloss);	// ;)
 			}
@@ -622,7 +623,7 @@ void PlotPropPath(std::vector<dem_output> *v, struct site source, struct site de
 			   output file.  Otherwise, write field strength
 			   or received power level (below), as appropriate. */
 
-			if (fd != NULL && G_LR.erp == 0.0)
+			if (fd != NULL && LR.erp == 0.0)
 				buffer_offset += sprintf(fd_buffer+buffer_offset,
 					"%.2f", loss);
 
@@ -635,7 +636,7 @@ void PlotPropPath(std::vector<dem_output> *v, struct site source, struct site de
 				azimuth = rint(azimuth);
 
 				pattern =
-				    (double)G_LR.antenna_pattern[(int)azimuth][x];
+				    (double)LR.antenna_pattern[(int)azimuth][x];
 
 				if (pattern != 0.0) {
 					pattern = 20.0 * log10(pattern);
@@ -643,12 +644,12 @@ void PlotPropPath(std::vector<dem_output> *v, struct site source, struct site de
 				}
 			}
 
-			if (G_LR.erp != 0.0) {
-				if (G_dbm) {
+			if (LR.erp != 0.0) {
+				if (LR.dbm) {
 					/* dBm is based on EIRP (ERP + 2.14) */
 
 					rxp =
-					    G_LR.erp /
+					    LR.erp /
 					    (pow(10.0, (loss - 2.14) / 10.0));
 
 					dBm = 10.0 * (log10(rxp * 1000.0));
@@ -681,9 +682,9 @@ void PlotPropPath(std::vector<dem_output> *v, struct site source, struct site de
 				else {
 					field_strength =
 					    (139.4 +
-					     (20.0 * log10(G_LR.frq_mhz)) -
+					     (20.0 * log10(LR.frq_mhz)) -
 					     loss) +
-					    (10.0 * log10(G_LR.erp / 1000.0));
+					    (10.0 * log10(LR.erp / 1000.0));
 
 					ifs = 100 + (int)rint(field_strength);
 
@@ -835,16 +836,16 @@ void PlotLOSMap(std::vector<dem_output> *v, struct site source, double altitude,
 
 void PlotPropagation(std::vector<dem_output> *v, struct site source, double altitude, char *plo_filename,
 		     int propmodel, int knifeedge, int haf, int pmenv, bool
-		     use_threads)
+		     use_threads, const struct LR LR)
 {
 	static __thread unsigned char mask_value = 1;
 	FILE *fd = NULL;
 	
-	if (G_LR.erp == 0.0 && G_debug)
+	if (LR.erp == 0.0 && G_debug)
 		fprintf(stderr, "path loss");
 	else {
 		if (G_debug) {
-			if (G_dbm)
+			if (LR.dbm)
 				fprintf(stderr, "signal power level");
 			else
 				fprintf(stderr, "field strength");
@@ -854,16 +855,16 @@ void PlotPropagation(std::vector<dem_output> *v, struct site source, double alti
 		fprintf(stderr,
 			" contours of \"%s\" out to a radius of %.2f %s with Rx antenna(s) at %.2f %s AGL\n",
 			source.name,
-			G_metric ? G_max_range * KM_PER_MILE : G_max_range,
-			G_metric ? "kilometers" : "miles",
-			G_metric ? altitude * METERS_PER_FOOT : altitude,
-			G_metric ? "meters" : "feet");
+			LR.metric ? LR.max_range * KM_PER_MILE : LR.max_range,
+			LR.metric ? "kilometers" : "miles",
+			LR.metric ? altitude * METERS_PER_FOOT : altitude,
+			LR.metric ? "meters" : "feet");
 	}
 
-	if (G_clutter > 0.0 && G_debug)
+	if (LR.clutter > 0.0 && G_debug)
 		fprintf(stderr, "\nand %.2f %s of ground clutter",
-			G_metric ? G_clutter * METERS_PER_FOOT : G_clutter,
-			G_metric ? "meters" : "feet");
+			LR.metric ? LR.clutter * METERS_PER_FOOT : LR.clutter,
+			LR.metric ? "meters" : "feet");
 
 	if (plo_filename[0] != 0)
 		fd = fopen(plo_filename, "wb");
@@ -935,7 +936,7 @@ void PlotPropagation(std::vector<dem_output> *v, struct site source, double alti
 		mask_value++;
 }
 
-void PlotPath(std::vector<dem_output> *v, struct site source, struct site destination, char mask_value)
+void PlotPath(std::vector<dem_output> *v, struct site source, struct site destination, char mask_value, const struct LR LR)
 {
 	/* This function analyzes the path between the source and
 	   destination locations.  It determines which points along
@@ -978,7 +979,7 @@ void PlotPath(std::vector<dem_output> *v, struct site source, struct site destin
 				    G_earthradius + (G_path.elevation[x] ==
 						   0.0 ? G_path.
 						   elevation[x] : G_path.
-						   elevation[x] + G_clutter);
+						   elevation[x] + LR.clutter);
 
 				cos_test_angle =
 				    ((rx_alt * rx_alt) + (distance * distance) -

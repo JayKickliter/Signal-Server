@@ -1524,7 +1524,7 @@ int LoadSDF(char *name)
 	return return_value;
 }
 
-int LoadPAT(char *az_filename, char *el_filename)
+int LoadPAT(char *az_filename, char *el_filename, struct LR *LR)
 {
 	/* This function reads and processes antenna pattern (.az
 	   and .el) files that may correspond in name to previously
@@ -1895,7 +1895,7 @@ int LoadPAT(char *az_filename, char *el_filename)
 				else
 					az = 1.0;
 
-				G_LR.antenna_pattern[x][y] = az * elevation;
+				LR->antenna_pattern[x][y] = az * elevation;
 			}
 		}
 	}

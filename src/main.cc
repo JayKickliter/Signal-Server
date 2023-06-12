@@ -46,21 +46,21 @@ int ARRAYSIZE = (MAXPAGES * IPPD) + 10;
 
 char G_sdf_path[255], opened = 0, G_gpsav = 0, ss_name[16], dashes[80], *color_file = NULL;
 
-double G_earthradius, G_max_range = 0.0, forced_erp, G_dpp, G_ppd, G_yppd,
-    G_fzone_clearance = 0.6, forced_freq, G_clutter, lat, lon, txh, tercon, terdic,
+double G_earthradius, forced_erp, G_dpp, G_ppd, G_yppd,
+    G_fzone_clearance = 0.6, forced_freq, lat, lon, txh, tercon, terdic,
     G_north, G_east, G_south, G_west, G_dBm, G_loss, G_field_strength,
     G_min_north = 90, G_max_north = -90, G_min_west = 360, G_max_west = -1,
     G_westoffset=180, G_eastoffset=-180, G_delta=0, rxGain=0, antenna_rotation,
     antenna_downtilt,antenna_dt_direction, G_cropLat=-70, G_cropLon=0,cropLonNeg=0;
 
 int G_ippd, G_mpi, G_max_elevation = -32768, G_min_elevation = 32767, bzerror, gzerr,
-    G_contour_threshold, pred, pblue, pgreen, ter, multiplier = 256, G_debug = 0,
+    pred, pblue, pgreen, ter, multiplier = 256, G_debug = 0,
     G_loops = 100, G_jgets = 0, G_MAXRAD, hottest = 0, G_height, G_width, resample = 0,
     bzbuf_empty = 1, gzbuf_empty = 1;
 
 long bzbuf_pointer = 0L, bzbytes_read, gzbuf_pointer = 0L, gzbytes_read;
 
-unsigned char G_got_elevation_pattern, G_got_azimuth_pattern, G_metric = 0, G_dbm = 0;
+unsigned char G_got_elevation_pattern, G_got_azimuth_pattern;
 
 bool to_stdout = false, cropping = true;
 
@@ -70,7 +70,7 @@ struct site tx_site[2];
 
 std::vector<struct dem> G_dem;
 
-struct LR G_LR;
+struct LR LR;
 struct region G_region;
 
 double arccos(double x, double y)
@@ -727,7 +727,7 @@ double ElevationAngle2(struct site source, struct site destination, double er)
 		test_alt =
 		    G_earthradius + (G_path.elevation[x] ==
 				   0.0 ? G_path.elevation[x] : G_path.elevation[x] +
-				   G_clutter);
+				   LR.clutter);
 
 		cos_test_angle =
 		    ((source_alt2) + (distance * distance) -
@@ -849,14 +849,14 @@ void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f,
 	if (f)
 		lambda = 9.8425e8 / (f * 1e6);
 
-	if (G_clutter > 0.0) {
+	if (LR.clutter > 0.0) {
 		fprintf(outfile, "Terrain has been raised by");
 
-		if (G_metric)
+		if (LR.metric)
 			fprintf(outfile, " %.2f meters",
-				METERS_PER_FOOT * G_clutter);
+				METERS_PER_FOOT * LR.clutter);
 		else
-			fprintf(outfile, " %.2f feet", G_clutter);
+			fprintf(outfile, " %.2f feet", LR.clutter);
 
 		fprintf(outfile, " to account for ground clutter.\n\n");
 	}
@@ -880,7 +880,7 @@ void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f,
 		site_x.lon = G_path.lon[x];
 		site_x.alt = 0.0;
 
-		h_x = GetElevation(site_x) + G_earthradius + G_clutter;
+		h_x = GetElevation(site_x) + G_earthradius + LR.clutter;
 		d_x = FEET_PER_MILE * Distance(rcvr, site_x);
 
 		/* Deal with the LOS path first. */
@@ -896,7 +896,7 @@ void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f,
 					rcvr.name, xmtr.name);
 
 			if (site_x.lat >= 0.0) {
-				if (G_metric)
+				if (LR.metric)
 					fprintf(outfile,
 						"   %8.4f N,%9.4f W, %5.2f kilometers, %6.2f meters AMSL\n",
 						site_x.lat, site_x.lon,
@@ -912,7 +912,7 @@ void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f,
 			}
 
 			else {
-				if (G_metric)
+				if (LR.metric)
 					fprintf(outfile,
 						"   %8.4f S,%9.4f W, %5.2f kilometers, %6.2f meters AMSL\n",
 						-site_x.lat, site_x.lon,
@@ -993,7 +993,7 @@ void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f,
 	}
 
 	if (h_r > h_r_orig) {
-		if (G_metric)
+		if (LR.metric)
 			snprintf(string, 150,
 				 "\nAntenna at %s must be raised to at least %.2f meters AGL\nto clear all obstructions detected.\n",
 				 rcvr.name,
@@ -1012,7 +1012,7 @@ void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f,
 
 	if (f) {
 		if (h_r_fpt6 > h_r_orig) {
-			if (G_metric)
+			if (LR.metric)
 				snprintf(string_fpt6, 150,
 					 "\nAntenna at %s must be raised to at least %.2f meters AGL\nto clear %.0f%c of the first Fresnel zone.\n",
 					 rcvr.name,
@@ -1036,7 +1036,7 @@ void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f,
 				 G_fzone_clearance * 100.0, 37);
 
 		if (h_r_f1 > h_r_orig) {
-			if (G_metric)
+			if (LR.metric)
 				snprintf(string_f1, 150,
 					 "\nAntenna at %s must be raised to at least %.2f meters AGL\nto clear the first Fresnel zone.\n",
 					 rcvr.name,
@@ -1132,6 +1132,24 @@ int handle_args(int argc, char *argv[]) {
 	max_txsites = 30;
 	resample = 0;
 
+  struct LR LR;
+
+  // all these need to be made per-request variables
+	LR.max_range = 1.0;
+	LR.contour_threshold = 0;
+	LR.clutter = 0.0;
+	LR.dbm = 0;
+	LR.metric = 0;
+	LR.eps_dielect = 15.0;	// Farmland
+	LR.sgm_conductivity = 0.005;	// Farmland
+	LR.eno_ns_surfref = 301.0;
+	LR.frq_mhz = 19.0;	// Deliberately too low
+	LR.radio_climate = 5;	// continental
+	LR.pol = 1;		// vert
+	LR.conf = 0.50;
+	LR.rel = 0.50;
+	LR.erp = 0.0;		// will default to Path Loss
+
 	ano_filename[0] = 0;
 	propmodel = 1;		//ITM
 	lat = 0;
@@ -1162,7 +1180,7 @@ int handle_args(int argc, char *argv[]) {
 			z = x + 1;
 
 			if (z <= y && argv[z][0] && argv[z][0] != '-') {
-				sscanf(argv[z], "%lf", &G_max_range);
+				sscanf(argv[z], "%lf", &LR.max_range);
 
 			}
 		}
@@ -1171,10 +1189,10 @@ int handle_args(int argc, char *argv[]) {
 			z = x + 1;
 
 			if (z <= y && argv[z][0] && argv[z][0] != '-') {
-				sscanf(argv[z], "%lf", &G_clutter);
+				sscanf(argv[z], "%lf", &LR.clutter);
 
-				if (G_clutter < 0.0)
-					G_clutter = 0.0;
+				if (LR.clutter < 0.0)
+					LR.clutter = 0.0;
 			}
 		}
 
@@ -1259,7 +1277,7 @@ int handle_args(int argc, char *argv[]) {
 				        strcpy(el_filename, argv[z]);
 				strcat(el_filename, EL_FILE_SUFFIX);
 
-				if( (result = LoadPAT(az_filename,el_filename)) != 0 ){
+				if( (result = LoadPAT(az_filename,el_filename, &LR)) != 0 ){
 					fprintf(stderr,"Permissions error reading antenna pattern file\n");
 					free(az_filename);
 					free(el_filename);
@@ -1289,11 +1307,11 @@ int handle_args(int argc, char *argv[]) {
 			z = x + 1;
 
 			if (z <= y && argv[z][0])	/* A minus argument is legal here */
-				sscanf(argv[z], "%d", &G_contour_threshold);
+				sscanf(argv[z], "%d", &LR.contour_threshold);
 		}
 
 		if (strcmp(argv[x], "-m") == 0) {
-			G_metric = 1;
+			LR.metric = 1;
 
 		}
 
@@ -1302,7 +1320,7 @@ int handle_args(int argc, char *argv[]) {
 		}
 
 		if (strcmp(argv[x], "-dbm") == 0)
-			G_dbm = 1;
+			LR.dbm = 1;
 
 		
 		if (strcmp(argv[x], "-lid") == 0) {
@@ -1312,7 +1330,10 @@ int handle_args(int argc, char *argv[]) {
 				strncpy(lidar_tiles, argv[z], 27000); // 900 tiles!
 		}
 
-		if (strcmp(argv[x], "-res") == 0) {
+    // TODO we need to handle resolution better
+    // or make resolution explicit in the data
+    // XXX assume 1200 for now
+		/*if (strcmp(argv[x], "-res") == 0) {
 			z = x + 1;
 
 			if (!lidar &&
@@ -1344,7 +1365,7 @@ int handle_args(int argc, char *argv[]) {
 					break;
 				}
 			}
-		}
+		}*/
 
 		if (strcmp(argv[x], "-resample") == 0) {
 			z = x + 1;
@@ -1424,7 +1445,7 @@ int handle_args(int argc, char *argv[]) {
 			z = x + 1;
 
 			if (z <= y && argv[z][0] && argv[z][0] != '-') {
-				sscanf(argv[z], "%lf", &G_LR.frq_mhz);
+				sscanf(argv[z], "%lf", &LR.frq_mhz);
 			}
 		}
 
@@ -1432,7 +1453,7 @@ int handle_args(int argc, char *argv[]) {
 			z = x + 1;
 
 			if (z <= y && argv[z][0] && argv[z][0] != '-') {
-				sscanf(argv[z], "%lf", &G_LR.erp);
+				sscanf(argv[z], "%lf", &LR.erp);
 			}
 		}
 
@@ -1441,7 +1462,7 @@ int handle_args(int argc, char *argv[]) {
 
 			if (z <= y && argv[z][0] && argv[z][0] != '-') {
 
-				sscanf(argv[z], "%d", &G_LR.radio_climate);
+				sscanf(argv[z], "%d", &LR.radio_climate);
 
 			}
 		}
@@ -1481,8 +1502,8 @@ int handle_args(int argc, char *argv[]) {
 					tercon = 0.001;
 					break;
 				}
-				G_LR.eps_dielect = terdic;
-				G_LR.sgm_conductivity = tercon;
+				LR.eps_dielect = terdic;
+				LR.sgm_conductivity = tercon;
 
 			}
 		}
@@ -1494,7 +1515,7 @@ int handle_args(int argc, char *argv[]) {
 
 				sscanf(argv[z], "%lf", &terdic);
 
-				G_LR.eps_dielect = terdic;
+				LR.eps_dielect = terdic;
 
 			}
 		}
@@ -1506,14 +1527,14 @@ int handle_args(int argc, char *argv[]) {
 
 				sscanf(argv[z], "%lf", &tercon);
 
-				G_LR.sgm_conductivity = tercon;
+				LR.sgm_conductivity = tercon;
 
 			}
 		}
 
 		if (strcmp(argv[x], "-hp") == 0) {
 			// Horizontal polarisation (0)
-			G_LR.pol = 0;
+			LR.pol = 0;
 		}
 
 
@@ -1578,8 +1599,8 @@ int handle_args(int argc, char *argv[]) {
 			z = x + 1;
 
 			if (z <= y && argv[z][0]) {
-				sscanf(argv[z], "%lf", &G_LR.rel);
-				G_LR.rel=G_LR.rel/100;
+				sscanf(argv[z], "%lf", &LR.rel);
+				LR.rel=LR.rel/100;
 			}
 		}
 		// Confidence % for ITM model
@@ -1587,8 +1608,8 @@ int handle_args(int argc, char *argv[]) {
 			z = x + 1;
 
 			if (z <= y && argv[z][0]) {
-				sscanf(argv[z], "%lf", &G_LR.conf);
-				G_LR.conf=G_LR.conf/100;
+				sscanf(argv[z], "%lf", &LR.conf);
+				LR.conf=LR.conf/100;
 			}
 		}
 		// LossColors for the -scf, -dcf and -lcf, depending on mode
@@ -1617,22 +1638,22 @@ int handle_args(int argc, char *argv[]) {
 		exit(EINVAL);
 
 	}
-	if (G_LR.frq_mhz < 20 || G_LR.frq_mhz > 100000) {
+	if (LR.frq_mhz < 20 || LR.frq_mhz > 100000) {
 		fprintf(stderr,
 			"ERROR: Either the Frequency was missing or out of range!");
 		exit(EINVAL);
 	}
-	if (G_LR.erp > 500000000) {
+	if (LR.erp > 500000000) {
 		fprintf(stderr, "ERROR: Power was out of range!");
 		exit(EINVAL);
 
 	}
-	if (G_LR.eps_dielect > 80 || G_LR.eps_dielect < 0.1) {
+	if (LR.eps_dielect > 80 || LR.eps_dielect < 0.1) {
 		fprintf(stderr, "ERROR: Ground Dielectric value out of range!");
 		exit(EINVAL);
 
 	}
-	if (G_LR.sgm_conductivity > 0.01 || G_LR.sgm_conductivity < 0.000001) {
+	if (LR.sgm_conductivity > 0.01 || LR.sgm_conductivity < 0.000001) {
 		fprintf(stderr, "ERROR: Ground conductivity out of range!");
 		exit(EINVAL);
 
@@ -1657,12 +1678,12 @@ int handle_args(int argc, char *argv[]) {
 		}
 	}
 
-	if (G_contour_threshold < -200 || G_contour_threshold > 240) {
+	if (LR.contour_threshold < -200 || LR.contour_threshold > 240) {
 		fprintf(stderr,
 			"ERROR: Receiver threshold out of range (-200 / +240)");
 		exit(EINVAL);
 	}
-	if (propmodel > 2 && propmodel < 7 && G_LR.frq_mhz < 150) {
+	if (propmodel > 2 && propmodel < 7 && LR.frq_mhz < 150) {
 		fprintf(stderr,
 			"ERROR: Frequency too low for Propagation model");
 		exit(EINVAL);
@@ -1679,13 +1700,13 @@ int handle_args(int argc, char *argv[]) {
 			"ERROR: Cannot resample higher than a factor of 10");
 		exit(EINVAL);	
 	}
-	if (G_metric) {
+	if (LR.metric) {
 		altitudeLR /= METERS_PER_FOOT;	/* 10ft * 0.3 = 3.3m */
-		G_max_range /= KM_PER_MILE;	/* 10 / 1.6 = 7.5 */
+		LR.max_range /= KM_PER_MILE;	/* 10 / 1.6 = 7.5 */
 		altitude /= METERS_PER_FOOT;
 		tx_site[0].alt /= METERS_PER_FOOT;	/* Feet to metres */
 		tx_site[1].alt /= METERS_PER_FOOT;	/* Feet to metres */
-		G_clutter /= METERS_PER_FOOT;	/* Feet to metres */
+		LR.clutter /= METERS_PER_FOOT;	/* Feet to metres */
 	}
 
 	/* Ensure a trailing '/' is present in sdf_path */
@@ -1810,10 +1831,10 @@ int handle_args(int argc, char *argv[]) {
 				   width of the analysis and the size of
 				   the map. */
 
-				if (G_max_range == 0.0)
-					G_max_range = tx_range + rx_range;
+				if (LR.max_range == 0.0)
+					LR.max_range = tx_range + rx_range;
 
-				deg_range = G_max_range / 57.0;
+				deg_range = LR.max_range / 57.0;
 
 				// No more than 8 degs
 				deg_limit = 3.5;
@@ -1894,7 +1915,7 @@ int handle_args(int argc, char *argv[]) {
 		Clutter tiles cover 16 x 12 degs but we only need a fraction of that area.
 		Limit by max_range / miles per degree (at equator)
 		*/
-		if( (result = loadClutter(clutter_file,G_max_range/45,tx_site[0])) != 0 ){
+		if( (result = loadClutter(clutter_file,LR.max_range/45,tx_site[0])) != 0 ){
 			fprintf(stderr, "Error, invalid or clutter file not found\n");
 			return result;
 		}
@@ -1909,7 +1930,7 @@ int handle_args(int argc, char *argv[]) {
 			DoLOS(&v, mapfile, geo, kml, ngs, tx_site, txsites);
 		} else {
 			// 90% of effort here
-			PlotPropagation(&v, tx_site[0], altitudeLR, ano_filename, propmodel, knifeedge, haf, pmenv, use_threads);
+			PlotPropagation(&v, tx_site[0], altitudeLR, ano_filename, propmodel, knifeedge, haf, pmenv, use_threads, LR);
 
                         if (G_debug) {
                         	fprintf(stderr,"Finished PlotPropagation()\n");
@@ -1943,12 +1964,12 @@ int handle_args(int argc, char *argv[]) {
 			}
 
 			// Write bitmap
-			if (G_LR.erp == 0.0)
-				DoPathLoss(&v, mapfile, geo, kml, ngs, tx_site, txsites);
-			else if (G_dbm)
-				DoRxdPwr(&v, (to_stdout == true ? NULL : mapfile), geo, kml, ngs, tx_site, txsites);
+			if (LR.erp == 0.0)
+				DoPathLoss(&v, mapfile, geo, kml, ngs, tx_site, txsites, LR);
+			else if (LR.dbm)
+				DoRxdPwr(&v, (to_stdout == true ? NULL : mapfile), geo, kml, ngs, tx_site, txsites, LR);
 			else
-			        if ((result = DoSigStr(&v, mapfile, geo, kml, ngs, tx_site, txsites)) != 0)
+			        if ((result = DoSigStr(&v, mapfile, geo, kml, ngs, tx_site, txsites, LR)) != 0)
 					return result;
 		}
 		/*if(lidar){
@@ -1978,10 +1999,10 @@ int handle_args(int argc, char *argv[]) {
 	} else {
 		strncpy(tx_site[0].name, "Tx", 3);
 		strncpy(tx_site[1].name, "Rx", 3);
-		PlotPath(&v, tx_site[0], tx_site[1], 1);
-		PathReport(tx_site[0], tx_site[1], tx_site[0].filename, 0, propmodel, pmenv, rxGain);
+		PlotPath(&v, tx_site[0], tx_site[1], 1, LR);
+		PathReport(tx_site[0], tx_site[1], tx_site[0].filename, 0, propmodel, pmenv, rxGain, LR);
 		// Order flipped for benefit of graph. Makes no difference to data.
-		SeriesData(tx_site[1], tx_site[0], tx_site[0].filename, 1, normalise);
+		SeriesData(tx_site[1], tx_site[0], tx_site[0].filename, 1, normalise, LR);
 	}
 	fflush(stderr);
 
@@ -2109,28 +2130,15 @@ int main(int argc, char *argv[])
 	if (!lidar)
 		do_allocs();
 
-	G_dbm = 0;
+  // these can stay globals
 	G_gpsav = 0;
-	G_metric = 0;
-	G_clutter = 0.0;
 	G_sdf_path[0] = 0;
 	G_path.length = 0;
 	G_fzone_clearance = 0.6;
-	G_contour_threshold = 0;
 	G_earthradius = EARTHRADIUS;
-	G_max_range = 1.0;
 	G_ippd = IPPD;		// default resolution
 
-	// Defaults
-	G_LR.eps_dielect = 15.0;	// Farmland
-	G_LR.sgm_conductivity = 0.005;	// Farmland
-	G_LR.eno_ns_surfref = 301.0;
-	G_LR.frq_mhz = 19.0;	// Deliberately too low
-	G_LR.radio_climate = 5;	// continental
-	G_LR.pol = 1;		// vert
-	G_LR.conf = 0.50;
-	G_LR.rel = 0.50;
-	G_LR.erp = 0.0;		// will default to Path Loss
+
 
 	y = argc - 1;
 
@@ -2140,7 +2148,6 @@ int main(int argc, char *argv[])
 			G_debug = 1;
 		}
 		if (strcmp(argv[x], "-sdf") == 0) {
-        printf("using sdf dir %s\n", argv[x+1]);
 			z = x + 1;
 
 			if (z <= y && argv[z][0] && argv[z][0] != '-')
