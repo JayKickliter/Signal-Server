@@ -1033,8 +1033,6 @@ int handle_args(int argc, char *argv[])
     LRmap = 1;
     area_mode = 1;
 
-    sscanf("0.1", "%lf", &altitudeLR);
-
     antenna_rotation = -1;    // unique defaults to test usage
     antenna_downtilt = 99.0;  // don't mess with them!
     antenna_dt_direction = -1;
