@@ -45,6 +45,7 @@
 #include <string.h>
 
 #include <complex>
+#include <vector>
 
 #include "../common.hh"
 
@@ -1869,7 +1870,6 @@ double d1thx2(double pfl[], const double &x1, const double &x2)
 {
     int np, ka, kb, n, k, kmx, j;
     double d1thx2v, sn, xa, xb, xc;
-    double *s;
 
     np = (int)pfl[0];
     xa = x1 / pfl[1];
@@ -1885,7 +1885,7 @@ double d1thx2(double pfl[], const double &x1, const double &x2)
     n = 10 * ka - 5;
     kb = n - ka + 1;
     sn = n - 1;
-    assert((s = new double[n + 2]) != 0);
+    std::vector<double> s(n + 2, 0.0);
     s[0] = sn;
     s[1] = 1.0;
     xb = (xb - xa) / sn;
@@ -1902,7 +1902,7 @@ double d1thx2(double pfl[], const double &x1, const double &x2)
         xc = xc + xb;
     }
 
-    z1sq2(s, 0.0, sn, xa, xb);
+    z1sq2(s.data(), 0.0, sn, xa, xb);
     xb = (xb - xa) / sn;
 
     for (j = 0; j < n; j++) {
@@ -1910,9 +1910,8 @@ double d1thx2(double pfl[], const double &x1, const double &x2)
         xa = xa + xb;
     }
 
-    d1thx2v = qtile(n - 1, s + 2, ka - 1) - qtile(n - 1, s + 2, kb - 1);
+    d1thx2v = qtile(n - 1, s.data() + 2, ka - 1) - qtile(n - 1, s.data() + 2, kb - 1);
     d1thx2v /= 1.0 - 0.8 * exp(-(x2 - x1) / 50.0e3);
-    delete[] s;
     return d1thx2v;
 }
 
