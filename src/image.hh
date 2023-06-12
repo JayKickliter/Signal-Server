@@ -1,7 +1,9 @@
 #ifndef _IMAGE_HH_
 #define _IMAGE_HH_
 
+#include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #define RGB_SIZE 3
 #define RGBA_SIZE 4

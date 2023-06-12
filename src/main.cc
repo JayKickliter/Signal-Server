@@ -1838,6 +1838,7 @@ int scan_stdin()
         argv[argc] = NULL;
         handle_args(argc, argv);
     }
+    return 1;
 }
 
 int main(int argc, char *argv[])

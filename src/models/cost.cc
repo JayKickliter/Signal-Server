@@ -36,8 +36,8 @@ double COST231pathLoss(float f, float TxH, float RxH, float d, int mode)
     int C = 3;  // 3dB for Urban
     float lRxH = log10(11.75 * RxH);
     float C_H = 3.2 * (lRxH * lRxH) - 4.97;  // Large city (conservative)
-    int c0 = 69.55;
-    int cf = 26.16;
+    float c0 = 69.55;
+    float cf = 26.16;
     if (f > 1500) {
         c0 = 46.3;
         cf = 33.9;
