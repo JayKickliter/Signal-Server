@@ -489,8 +489,8 @@ int LoadSDF_BSDF(char *name)
        dem[] structure.
        NOTE: On error, this function returns a negative errno */
 
-    int x, y, data = 0, indx, minlat, minlon, maxlat, maxlon, j;
-    char found = 0, free_page = 0, line[20], jline[20], sdf_file[255], path_plus_name[PATH_MAX];
+    int x, minlat, minlon, maxlat, maxlon;
+    char found = 0, sdf_file[255], path_plus_name[PATH_MAX];
 
     int fd;
 
@@ -1272,8 +1272,8 @@ int LoadSDF(char *name)
        exists for the region requested, and that the region
        requested must be entirely over water. */
 
-    int x, y, minlat, minlon, maxlat, maxlon;
-    char found = 0, free_page = 0;
+    int minlat, minlon, maxlat, maxlon;
+    char found = 0;
     int return_value = -1;
 
     return_value = LoadSDF_BSDF(name);

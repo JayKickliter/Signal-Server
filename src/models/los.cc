@@ -61,7 +61,7 @@ void *rangePropagation(void *parameters)
         edge.alt = v->altitude;
 
         if (v->los)
-            PlotLOSPath(v->out, v->source, edge, v->mask_value, v->fd, v->LR);
+            PlotLOSPath(v->out, v->source, edge, v->mask_value, v->LR);
         else
             PlotPropPath(v->out, v->source, edge, v->mask_value, v->fd, v->propmodel, v->knifeedge, v->pmenv, v->LR);
 
@@ -220,8 +220,7 @@ static double ked(double freq, double rxh, double dkm)
     }
 }
 
-void PlotLOSPath(std::vector<dem_output> *v, struct site source, struct site destination, char mask_value, FILE *fd,
-                 const struct LR LR)
+void PlotLOSPath(std::vector<dem_output> *v, struct site source, struct site destination, char mask_value, const struct LR LR)
 {
     /* This function analyzes the path between the source and
        destination locations. It determines which points along

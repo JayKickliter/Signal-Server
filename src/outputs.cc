@@ -21,7 +21,7 @@
 #include "models/sui.hh"
 
 void DoPathLoss(std::vector<dem_output> *v, char *filename, unsigned char geo, unsigned char kml, unsigned char ngs,
-                struct site *xmtr, unsigned char txsites, const struct LR LR)
+                struct site *xmtr, const struct LR LR)
 {
     /* This function generates a topographic map in Portable Pix Map
        (PPM) format based on the content of flags held in the mask[][]
@@ -214,8 +214,8 @@ void DoPathLoss(std::vector<dem_output> *v, char *filename, unsigned char geo, u
     }
 }
 
-int DoSigStr(std::vector<dem_output> *v, char *filename, unsigned char geo, unsigned char kml, unsigned char ngs,
-             struct site *xmtr, unsigned char txsites, const struct LR LR)
+int DoSigStr(std::vector<dem_output> *v, char *filename, unsigned char kml, unsigned char ngs, struct site *xmtr,
+             const struct LR LR)
 {
     /* This function generates a topographic map in Portable Pix Map
        (PPM) format based on the signal strength values held in the
@@ -409,8 +409,8 @@ int DoSigStr(std::vector<dem_output> *v, char *filename, unsigned char geo, unsi
     return 0;
 }
 
-void DoRxdPwr(std::vector<dem_output> *v, char *filename, unsigned char geo, unsigned char kml, unsigned char ngs,
-              struct site *xmtr, unsigned char txsites, const struct LR LR)
+void DoRxdPwr(std::vector<dem_output> *v, char *filename, unsigned char kml, unsigned char ngs, struct site *xmtr,
+              const struct LR LR)
 {
     /* This function generates a topographic map in Portable Pix Map
        (PPM) format based on the signal power level values held in the
@@ -606,8 +606,7 @@ void DoRxdPwr(std::vector<dem_output> *v, char *filename, unsigned char geo, uns
     }
 }
 
-void DoLOS(std::vector<dem_output> *v, char *filename, unsigned char geo, unsigned char kml, unsigned char ngs,
-           struct site *xmtr, unsigned char txsites)
+void DoLOS(std::vector<dem_output> *v, char *filename, unsigned char kml, unsigned char ngs, struct site *xmtr)
 {
     /* This function generates a topographic map in Portable Pix Map
        (PPM) format based on the signal power level values held in the

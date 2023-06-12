@@ -251,7 +251,7 @@ double ahd(double td)
 
 double abq_alos(complex<double> r) { return r.real() * r.real() + r.imag() * r.imag(); }
 
-double saalos(double d, prop_type &prop, propa_type &propa)
+double saalos(double d, prop_type &prop)
 {
     double ensa, encca, q, dp, dx, tde, hc, ucrpc, ctip, tip, tic, stic, ctic, sta;
     double ttc, cttc, crpc, ssnps, d1a, rsp, tsp, arte, zi, pd, pdk, hone, tvsr;
@@ -579,7 +579,7 @@ double adiff2(double d, prop_type &prop, propa_type &propa)
                         adiffv2 += aknfe(vv);
                     }
                     /* finally, add clutter loss */
-                    closs = saalos(rd, prop, propa);
+                    closs = saalos(rd, prop);
                     adiffv2 += mymin(22.0, closs);
                 }
                 else { /* rcvr site too close to 2nd obs */
@@ -610,7 +610,7 @@ double adiff2(double d, prop_type &prop, propa_type &propa)
                             vv = 0.6365 * prop.wn * abs(dro2 + dhh2 - drto);
                         }
                         adiffv2 += aknfe(vv);
-                        closs = saalos(rd, prop, propa);
+                        closs = saalos(rd, prop);
                         adiffv2 += mymin(closs, 22.0);
                     }
                     else { /* rcvr very close to bare cliff or skyscraper */
@@ -661,7 +661,7 @@ double adiff2(double d, prop_type &prop, propa_type &propa)
                         adiffv2 = aknfe(vv);
                     }
                     /* finally, add clutter loss */
-                    closs = saalos(rd, prop, propa);
+                    closs = saalos(rd, prop);
                     adiffv2 += mymin(closs, 22.0);
                 }
                 else { /* receive grazing angle too high */
@@ -677,7 +677,7 @@ double adiff2(double d, prop_type &prop, propa_type &propa)
                             vv = 0.6365 * prop.wn * abs(dto + dro - dtr);
                             adiffv2 = aknfe(vv);
                         }
-                        closs = saalos(rd, prop, propa);
+                        closs = saalos(rd, prop);
                         adiffv2 += mymin(22.0, closs);
                     }
                     else { /* receiver very close to bare cliff or skyscraper */
@@ -835,7 +835,7 @@ double alos(double d, prop_type &prop, propa_type &propa)
     return alosv;
 }
 
-double alos2(double d, prop_type &prop, propa_type &propa)
+double alos2(double d, prop_type &prop)
 {
     complex<double> prop_zgnd(prop.zgndreal, prop.zgndimag);
     complex<double> r;
@@ -912,10 +912,10 @@ double alos2(double d, prop_type &prop, propa_type &propa)
 
         if ((prop.hg[1] < prop.cch) && (prop.thera < 0.785) && (prop.thenr < 0.785)) {
             if (sps < 0.05) {
-                alosv = alosv + saalos(pd, prop, propa);
+                alosv = alosv + saalos(pd, prop);
             }
             else {
-                alosv = saalos(pd, prop, propa);
+                alosv = saalos(pd, prop);
             }
         }
     }
@@ -1191,7 +1191,7 @@ void lrprop2(double d, prop_type &prop, propa_type &propa)
         if (iw <= 0.0) { /* if interval width is zero or less, used for area mode */
 
             if (!wlos) {
-                q = alos2(0.0, prop, propa);
+                q = alos2(0.0, prop);
                 d2 = propa.dlsa;
                 a2 = propa.aed + d2 * propa.emd;
                 d0 = 1.908 * prop.wn * prop.he[0] * prop.he[1];
@@ -1208,12 +1208,12 @@ void lrprop2(double d, prop_type &prop, propa_type &propa)
 
                         d1 = mymax(-propa.aed / propa.emd, 0.25 * propa.dla);
                     }
-                    a1 = alos2(d1, prop, propa);
+                    a1 = alos2(d1, prop);
                     wq = false;
 
                     if (d0 < d1) {
-                        a0 = alos2(d0, prop, propa);
-                        a2 = mymin(a2, alos2(d2, prop, propa));
+                        a0 = alos2(d0, prop);
+                        a2 = mymin(a2, alos2(d2, prop));
                         q = log(d2 / d0);
                         propa.ak2 = mymax(
                             0.0, ((d2 - d0) * (a1 - a0) - (d1 - d0) * (a2 - a0)) / ((d2 - d0) * log(d1 / d0) - (d1 - d0) * q));
@@ -1245,16 +1245,16 @@ void lrprop2(double d, prop_type &prop, propa_type &propa)
         else { /* for ITWOM point-to-point mode */
 
             if (!wlos) {
-                q = alos2(0.0, prop, propa); /* coefficient setup */
+                q = alos2(0.0, prop); /* coefficient setup */
                 wlos = true;
             }
 
             if (prop.los == 1) { /* if line of sight */
-                prop.aref = alos2(pd1, prop, propa);
+                prop.aref = alos2(pd1, prop);
             }
             else {
                 if (int(prop.dist - prop.dl[0]) == 0) { /* if at 1st horiz */
-                    prop.aref = 5.8 + alos2(pd1, prop, propa);
+                    prop.aref = 5.8 + alos2(pd1, prop);
                 }
                 else if (int(prop.dist - prop.dl[0]) > 0.0) { /* if past 1st horiz */
                     q = adiff2(0.0, prop, propa);
@@ -1574,7 +1574,7 @@ void hzns(double pfl[], prop_type &prop)
     }
 }
 
-void hzns2(double pfl[], prop_type &prop, propa_type &propa)
+void hzns2(double pfl[], prop_type &prop)
 {
     bool wq;
     int np, rp, i, j;
@@ -1865,7 +1865,7 @@ double d1thx(double pfl[], const double &x1, const double &x2)
     return d1thxv;
 }
 
-double d1thx2(double pfl[], const double &x1, const double &x2, propa_type &propa)
+double d1thx2(double pfl[], const double &x1, const double &x2)
 {
     int np, ka, kb, n, k, kmx, j;
     double d1thx2v, sn, xa, xb, xc;
@@ -1987,7 +1987,7 @@ void qlrpfl2(double pfl[], int klimx, int mdvarx, prop_type &prop, propa_type &p
 
     prop.dist = pfl[0] * pfl[1];
     np = (int)pfl[0];
-    hzns2(pfl, prop, propa);
+    hzns2(pfl, prop);
     dlb = prop.dl[0] + prop.dl[1];
     prop.rch[0] = prop.hg[0] + pfl[2];
     prop.rch[1] = prop.hg[1] + pfl[np + 2];
@@ -1995,7 +1995,7 @@ void qlrpfl2(double pfl[], int klimx, int mdvarx, prop_type &prop, propa_type &p
     for (j = 0; j < 2; j++) xl[j] = mymin(15.0 * prop.hg[j], 0.1 * prop.dl[j]);
 
     xl[1] = prop.dist - xl[1];
-    prop.dh = d1thx2(pfl, xl[0], xl[1], propa);
+    prop.dh = d1thx2(pfl, xl[0], xl[1]);
 
     if ((np < 1) || (pfl[1] > 150.0)) {
         /* for TRANSHORIZON; diffraction over a mutual horizon, or for one or more obstructions */
@@ -2417,8 +2417,7 @@ void point_to_pointMDH_two(double tht_m, double rht_m, double eps_dielect, doubl
 
 void point_to_pointDH(double tht_m, double rht_m, double eps_dielect, double sgm_conductivity, double eno_ns_surfref,
                       double enc_ncc_clcref, double clutter_height, double clutter_density, double delta_h_diff, double frq_mhz,
-                      int radio_climate, int pol, double conf, double rel, double loc, double &dbloss, double &deltaH,
-                      int &errnum)
+                      int radio_climate, int pol, double conf, double rel, double &dbloss, double &deltaH, int &errnum)
 /*************************************************************************************************
          pol: 0-Horizontal, 1-Vertical
          radio_climate: 1-Equatorial, 2-Continental Subtropical, 3-Maritime Tropical,
@@ -2510,8 +2509,8 @@ void point_to_pointDH(double tht_m, double rht_m, double eps_dielect, double sgm
 
 void area(long ModVar, double deltaH, double tht_m, double rht_m, double dist_km, int TSiteCriteria, int RSiteCriteria,
           double eps_dielect, double sgm_conductivity, double eno_ns_surfref, double enc_ncc_clcref, double clutter_height,
-          double clutter_density, double delta_h_diff, double frq_mhz, int radio_climate, int pol, int mode_var, double pctTime,
-          double pctLoc, double pctConf, double &dbloss, char *strmode, int &errnum)
+          double clutter_density, double delta_h_diff, double frq_mhz, int radio_climate, int pol, double pctTime,
+          double pctLoc, double pctConf, double &dbloss, int &errnum)
 {
     // pol: 0-Horizontal, 1-Vertical
     // TSiteCriteria, RSiteCriteria:
@@ -2583,14 +2582,13 @@ void area(long ModVar, double deltaH, double tht_m, double rht_m, double dist_km
 double ITMAreadBLoss(long ModVar, double deltaH, double tht_m, double rht_m, double dist_km, int TSiteCriteria,
                      int RSiteCriteria, double eps_dielect, double sgm_conductivity, double eno_ns_surfref,
                      double enc_ncc_clcref, double clutter_height, double clutter_density, double delta_h_diff, double frq_mhz,
-                     int radio_climate, int pol, int mode_var, double pctTime, double pctLoc, double pctConf)
+                     int radio_climate, int pol, double pctTime, double pctLoc, double pctConf)
 {
-    char strmode[200];
     int errnum;
     double dbloss;
     area(ModVar, deltaH, tht_m, rht_m, dist_km, TSiteCriteria, RSiteCriteria, eps_dielect, sgm_conductivity, eno_ns_surfref,
-         enc_ncc_clcref, clutter_height, clutter_density, delta_h_diff, frq_mhz, radio_climate, pol, mode_var, pctTime, pctLoc,
-         pctConf, dbloss, strmode, errnum);
+         enc_ncc_clcref, clutter_height, clutter_density, delta_h_diff, frq_mhz, radio_climate, pol, pctTime, pctLoc, pctConf,
+         dbloss, errnum);
     return dbloss;
 }
 

@@ -25,7 +25,7 @@ int ppm_init(image_ctx_t *ctx)
     return 0;
 }
 
-int ppm_add_pixel(image_ctx_t *ctx, const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a)
+int ppm_add_pixel(image_ctx_t *ctx, const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t)
 {
     uint8_t *next;
 
@@ -37,13 +37,6 @@ int ppm_add_pixel(image_ctx_t *ctx, const uint8_t r, const uint8_t g, const uint
 
     ctx->next_pixel += 3;
 
-    return 0;
-}
-
-int ppm_get_pixel(image_ctx_t *ctx, const size_t x, const size_t y, const uint8_t *r, const uint8_t *g, const uint8_t *b,
-                  const uint8_t *a)
-{
-    /* STUB */
     return 0;
 }
 

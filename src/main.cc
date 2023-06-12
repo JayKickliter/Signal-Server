@@ -160,7 +160,7 @@ int PutMask(std::vector<dem_output> *v, double lat, double lon, int value)
        bits in the mask based on the latitude and longitude of the
        area pointed to. */
 
-    int x = 0, y = 0, indx;
+    int x = 0, y = 0;
     struct dem_output *out;
     char found = 0;
 
@@ -216,7 +216,7 @@ int OrMask(std::vector<dem_output> *v, double lat, double lon, int value)
        the mask based on the latitude and longitude of the area
        pointed to. */
 
-    int x = 0, y = 0, indx;
+    int x = 0, y = 0;
     struct dem_output *out;
     char found = 0;
 
@@ -270,7 +270,7 @@ int GetMask(std::vector<dem_output> *v, double lat, double lon)
 {
     /* This function returns the mask bits based on the latitude
        and longitude given. */
-    int x = 0, y = 0, indx;
+    int x = 0, y = 0;
     struct dem_output *out;
     char found = 0;
 
@@ -295,7 +295,7 @@ int GetMask(std::vector<dem_output> *v, double lat, double lon)
 
 void PutSignal(std::vector<dem_output> *v, double lat, double lon, unsigned char signal)
 {
-    int x = 0, y = 0, indx;
+    int x = 0, y = 0;
     char found = 0, dotfile[260], basename[255];
     struct dem_output *out;
 
@@ -363,7 +363,7 @@ unsigned char GetSignal(std::vector<dem_output> *v, double lat, double lon)
        specified location that was previously written by the
        complimentary PutSignal() function. */
 
-    int x = 0, y = 0, indx;
+    int x = 0, y = 0;
     char found = 0;
     struct dem_output *out = NULL;
 
@@ -391,7 +391,7 @@ double GetElevation(struct site location)
        represented by the digital elevation model data in memory.
        Function returns -5000.0 for locations not found in memory. */
 
-    int x = 0, y = 0, indx;
+    int x = 0, y = 0;
     double elevation;
     struct dem *found = NULL;
 
@@ -421,7 +421,7 @@ int AddElevation(double lat, double lon, double height, int size)
        not found in memory. */
 
     struct dem *found;
-    int i, j, x = 0, y = 0, indx;
+    int i, j, x = 0, y = 0;
 
     for (auto &dem : G_dem) {
         x = (int)rint(G_ppd * (lat - dem.min_north));
@@ -974,8 +974,6 @@ void alloc_path(void)
 
 void do_allocs(void)
 {
-    int i;
-
     alloc_elev();
     alloc_path();
 }
@@ -1740,7 +1738,7 @@ int handle_args(int argc, char *argv[])
             cropping = false;  // TODO: File is written in DoLOS() so this needs moving to PlotPropagation() to allow styling,
                                // cropping etc
             PlotLOSMap(&v, tx_site[0], altitudeLR, ano_filename, use_threads);
-            DoLOS(&v, mapfile, geo, kml, ngs, tx_site, txsites);
+            DoLOS(&v, mapfile, kml, ngs, tx_site);
         }
         else {
             // 90% of effort here
@@ -1781,10 +1779,10 @@ int handle_args(int argc, char *argv[])
 
             // Write bitmap
             if (LR.erp == 0.0)
-                DoPathLoss(&v, mapfile, geo, kml, ngs, tx_site, txsites, LR);
+                DoPathLoss(&v, mapfile, geo, kml, ngs, tx_site, LR);
             else if (LR.dbm)
-                DoRxdPwr(&v, (to_stdout == true ? NULL : mapfile), geo, kml, ngs, tx_site, txsites, LR);
-            else if ((result = DoSigStr(&v, mapfile, geo, kml, ngs, tx_site, txsites, LR)) != 0)
+                DoRxdPwr(&v, (to_stdout == true ? NULL : mapfile), kml, ngs, tx_site, LR);
+            else if ((result = DoSigStr(&v, mapfile, kml, ngs, tx_site, LR)) != 0)
                 return result;
         }
         /*if(lidar){
@@ -1843,16 +1841,7 @@ int scan_stdin()
 
 int main(int argc, char *argv[])
 {
-    int x, y, z = 0, propmodel, knifeedge = 0, ppa = 0, normalise = 0, haf = 0, pmenv = 1, lidar = 0, result, daemon = 0;
-
-    double min_lat, min_lon, max_lat, max_lon, rxlat, rxlon, txlat, txlon, west_min, west_max, nortRxHin, nortRxHax;
-
-    unsigned char LRmap = 0, txsites = 0, topomap = 0, geo = 0, kml = 0, area_mode = 0, max_txsites, ngs = 0;
-
-    char mapfile[255], ano_filename[255], lidar_tiles[27000], clutter_file[255], antenna_file[255];
-    char *az_filename, *el_filename, *udt_file = NULL;
-
-    double altitude = 0.0, altitudeLR = 0.0, tx_range = 0.0, rx_range = 0.0, deg_range = 0.0, deg_limit = 0.0, deg_range_lon;
+    int x, y, z = 0, lidar = 0, daemon = 0;
 
     if (strstr(argv[0], "signalserverHD")) {
         MAXPAGES = 32;       // was 9
