@@ -12,6 +12,20 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 
 ##########################################################################
+# Clang tools                                                            #
+##########################################################################
+
+# get all project files
+file(GLOB_RECURSE ALL_SOURCE_FILES *.cc *.hh)
+
+add_custom_target(
+  format
+  COMMAND clang-format
+  -i
+  ${ALL_SOURCE_FILES}
+)
+
+##########################################################################
 # Common external libraries                                              #
 ##########################################################################
 find_library(bz2 bz2)
@@ -26,6 +40,3 @@ find_library(z z)
 
 # Main applicaiton(s)
 add_subdirectory(src)
-
-# USGS to SDF utility
-add_subdirectory(utils/sdf/usgs2sdf)
