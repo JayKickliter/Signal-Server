@@ -2082,7 +2082,7 @@ double deg2rad(double d) { return d * 3.1415926535897 / 180.0; }
 
 void point_to_point_ITM(double tht_m, double rht_m, double eps_dielect, double sgm_conductivity, double eno_ns_surfref,
                         double frq_mhz, int radio_climate, int pol, double conf, double rel, double &dbloss, char *strmode,
-                        int &errnum)
+                        double *elev, int &errnum)
 
 /******************************************************************************
 
@@ -2132,7 +2132,7 @@ Note that point_to_point has become point_to_point_ITM for use as the old ITM
     prop.mdp = -1;
     zc = qerfi(conf);
     zr = qerfi(rel);
-    np = (long)G_elev[0];
+    np = (long)elev[0];
     /* dkm=(elev[1]*elev[0])/1000.0; */
     /* xkm=elev[1]/1000.0; */
     eno = eno_ns_surfref;
@@ -2140,10 +2140,10 @@ Note that point_to_point has become point_to_point_ITM for use as the old ITM
     q = enso;
 
     if (q <= 0.0) {
-        ja = (long)(3.0 + 0.1 * G_elev[0]); /* added (long) to correct */
+        ja = (long)(3.0 + 0.1 * elev[0]); /* added (long) to correct */
         jb = np - ja + 6;
 
-        for (i = ja - 1; i < jb; ++i) zsys += G_elev[i];
+        for (i = ja - 1; i < jb; ++i) zsys += elev[i];
 
         zsys /= (jb - ja + 1);
         q = eno;
@@ -2151,7 +2151,7 @@ Note that point_to_point has become point_to_point_ITM for use as the old ITM
 
     propv.mdvar = 12;
     qlrps(frq_mhz, zsys, q, pol, eps_dielect, sgm_conductivity, prop);
-    qlrpfl(G_elev, propv.klim, propv.mdvar, prop, propa, propv);
+    qlrpfl(elev, propv.klim, propv.mdvar, prop, propa, propv);
     fs = 32.45 + 20.0 * log10(frq_mhz) + 20.0 * log10(prop.dist / 1000.0);
     q = prop.dist - propa.dla;
 
@@ -2177,7 +2177,7 @@ Note that point_to_point has become point_to_point_ITM for use as the old ITM
 
 void point_to_point(double tht_m, double rht_m, double eps_dielect, double sgm_conductivity, double eno_ns_surfref,
                     double frq_mhz, int radio_climate, int pol, double conf, double rel, double &dbloss, char *strmode,
-                    int &errnum)
+                    double *elev, int &errnum)
 
 /******************************************************************************
 
@@ -2255,7 +2255,7 @@ void point_to_point(double tht_m, double rht_m, double eps_dielect, double sgm_c
     prop.thenr = 0.0;
     zc = qerfi(conf);
     zr = qerfi(rel);
-    np = (long)G_elev[0];
+    np = (long)elev[0];
     /* dkm=(elev[1]*elev[0])/1000.0; */
     /* xkm=elev[1]/1000.0; */
     eno = eno_ns_surfref;
@@ -2273,10 +2273,10 @@ void point_to_point(double tht_m, double rht_m, double eps_dielect, double sgm_c
     prop.dhd = 0.0;      /* delta_h_diff preset */
 
     if (q <= 0.0) {
-        ja = (long)(3.0 + 0.1 * G_elev[0]);
+        ja = (long)(3.0 + 0.1 * elev[0]);
         jb = np - ja + 6;
 
-        for (i = ja - 1; i < jb; ++i) zsys += G_elev[i];
+        for (i = ja - 1; i < jb; ++i) zsys += elev[i];
 
         zsys /= (jb - ja + 1);
         q = eno;
@@ -2284,7 +2284,7 @@ void point_to_point(double tht_m, double rht_m, double eps_dielect, double sgm_c
 
     propv.mdvar = mode_var;
     qlrps(frq_mhz, zsys, q, pol, eps_dielect, sgm_conductivity, prop);
-    qlrpfl2(G_elev, propv.klim, propv.mdvar, prop, propa, propv);
+    qlrpfl2(elev, propv.klim, propv.mdvar, prop, propa, propv);
     tpd = sqrt((prop.he[0] - prop.he[1]) * (prop.he[0] - prop.he[1]) + (prop.dist) * (prop.dist));
     fs = 32.45 + 20.0 * log10(frq_mhz) + 20.0 * log10(tpd / 1000.0);
     q = prop.dist - propa.dla;
@@ -2317,7 +2317,7 @@ void point_to_point(double tht_m, double rht_m, double eps_dielect, double sgm_c
 void point_to_pointMDH_two(double tht_m, double rht_m, double eps_dielect, double sgm_conductivity, double eno_ns_surfref,
                            double enc_ncc_clcref, double clutter_height, double clutter_density, double delta_h_diff,
                            double frq_mhz, int radio_climate, int pol, int mode_var, double timepct, double locpct,
-                           double confpct, double &dbloss, int &propmode, double &deltaH, int &errnum)
+                           double confpct, double &dbloss, int &propmode, double &deltaH, double *elev, int &errnum)
 
 /*************************************************************************************************
          pol: 0-Horizontal, 1-Vertical
@@ -2370,7 +2370,7 @@ void point_to_pointMDH_two(double tht_m, double rht_m, double eps_dielect, doubl
     ztime = qerfi(timepct);
     zloc = qerfi(locpct);
     zconf = qerfi(confpct);
-    np = (long)G_elev[0];
+    np = (long)elev[0];
     /* dkm = (elev[1] * elev[0]) / 1000.0; */
     /* xkm = elev[1] / 1000.0; */
     eno = eno_ns_surfref;
@@ -2385,15 +2385,15 @@ void point_to_pointMDH_two(double tht_m, double rht_m, double eps_dielect, doubl
     mode_var = 1;        /* int mode_var set for FCC ILLR */
 
     if (q <= 0.0) {
-        ja = (long)(3.0 + 0.1 * G_elev[0]); /* to match addition of (long) */
+        ja = (long)(3.0 + 0.1 * elev[0]); /* to match addition of (long) */
         jb = np - ja + 6;
-        for (i = ja - 1; i < jb; ++i) zsys += G_elev[i];
+        for (i = ja - 1; i < jb; ++i) zsys += elev[i];
         zsys /= (jb - ja + 1);
         q = eno;
     }
     propv.mdvar = 12;
     qlrps(frq_mhz, zsys, q, pol, eps_dielect, sgm_conductivity, prop);
-    qlrpfl2(G_elev, propv.klim, propv.mdvar, prop, propa, propv);
+    qlrpfl2(elev, propv.klim, propv.mdvar, prop, propa, propv);
     fs = 32.45 + 20.0 * log10(frq_mhz) + 20.0 * log10(prop.dist / 1000.0);
 
     deltaH = prop.dh;
@@ -2416,7 +2416,7 @@ void point_to_pointMDH_two(double tht_m, double rht_m, double eps_dielect, doubl
 
 void point_to_pointDH(double tht_m, double rht_m, double eps_dielect, double sgm_conductivity, double eno_ns_surfref,
                       double enc_ncc_clcref, double clutter_height, double clutter_density, double delta_h_diff, double frq_mhz,
-                      int radio_climate, int pol, double conf, double rel, double &dbloss, double &deltaH, int &errnum)
+                      int radio_climate, int pol, double conf, double rel, double &dbloss, double &deltaH, double *elev, int &errnum)
 /*************************************************************************************************
          pol: 0-Horizontal, 1-Vertical
          radio_climate: 1-Equatorial, 2-Continental Subtropical, 3-Maritime Tropical,
@@ -2460,7 +2460,7 @@ void point_to_pointDH(double tht_m, double rht_m, double eps_dielect, double sgm
     prop.thenr = 0.0;
     zc = qerfi(conf);
     zr = qerfi(rel);
-    np = (long)G_elev[0];
+    np = (long)elev[0];
     /* dkm = (elev[1] * elev[0]) / 1000.0; */
     /* xkm = elev[1] / 1000.0; */
     eno = eno_ns_surfref;
@@ -2474,15 +2474,15 @@ void point_to_pointDH(double tht_m, double rht_m, double eps_dielect, double sgm
     prop.cd = 1.00;      /* double clutter_density */
 
     if (q <= 0.0) {
-        ja = (long)(3.0 + 0.1 * G_elev[0]); /* to match KD2BD addition of (long)  */
+        ja = (long)(3.0 + 0.1 * elev[0]); /* to match KD2BD addition of (long)  */
         jb = np - ja + 6;
-        for (i = ja - 1; i < jb; ++i) zsys += G_elev[i];
+        for (i = ja - 1; i < jb; ++i) zsys += elev[i];
         zsys /= (jb - ja + 1);
         q = eno;
     }
     propv.mdvar = 12;
     qlrps(frq_mhz, zsys, q, pol, eps_dielect, sgm_conductivity, prop);
-    qlrpfl2(G_elev, propv.klim, propv.mdvar, prop, propa, propv);
+    qlrpfl2(elev, propv.klim, propv.mdvar, prop, propa, propv);
     fs = 32.45 + 20.0 * log10(frq_mhz) + 20.0 * log10(prop.dist / 1000.0);
     deltaH = prop.dh;
     q = prop.dist - propa.dla;

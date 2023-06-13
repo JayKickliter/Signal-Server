@@ -50,12 +50,12 @@ char G_sdf_path[255], opened = 0, G_gpsav = 0, ss_name[16], dashes[80], *color_f
 
 double G_earthradius, forced_erp, G_dpp, G_ppd, G_yppd,
     G_fzone_clearance = 0.6, forced_freq, lat, lon, txh, tercon, terdic, G_north, G_east, G_south, G_west, G_dBm, G_loss,
-    G_field_strength, G_min_north = 90, G_max_north = -90, G_min_west = 360, G_max_west = -1, G_westoffset = 180,
+    G_field_strength, G_westoffset = 180,
     G_eastoffset = -180, G_delta = 0, rxGain = 0, antenna_rotation, antenna_downtilt, antenna_dt_direction, G_cropLat = -70,
     G_cropLon = 0, cropLonNeg = 0;
 
-int G_ippd, G_mpi, G_max_elevation = -32768, G_min_elevation = 32767, bzerror, gzerr, pred, pblue, pgreen, ter,
-                   multiplier = 256, G_debug = 0, G_loops = 100, G_jgets = 0, G_MAXRAD, hottest = 0, G_height, G_width,
+int G_ippd, G_mpi, bzerror, gzerr, pred, pblue, pgreen, ter,
+                   multiplier = 256, G_debug = 0, G_MAXRAD, hottest = 0,
                    resample = 0, bzbuf_empty = 1, gzbuf_empty = 1;
 
 long bzbuf_pointer = 0L, bzbytes_read, gzbuf_pointer = 0L, gzbytes_read;
@@ -64,8 +64,6 @@ unsigned char G_got_elevation_pattern, G_got_azimuth_pattern;
 
 bool to_stdout = false, cropping = true;
 
-__thread double *G_elev;
-__thread struct path G_path;
 struct site tx_site[2];
 
 std::vector<struct dem> G_dem;
@@ -153,7 +151,7 @@ void *dec2dms(double decimal, char *string)
     return (string);
 }
 
-int PutMask(std::vector<dem_output> *v, double lat, double lon, int value)
+int PutMask(struct output *out, double lat, double lon, int value)
 {
     /* Lines, text, markings, and coverage areas are stored in a
        mask that is combined with topology data when topographic
@@ -162,16 +160,14 @@ int PutMask(std::vector<dem_output> *v, double lat, double lon, int value)
        area pointed to. */
 
     int x = 0, y = 0;
-    struct dem_output *out;
-    char found = 0;
+    struct dem_output *found = NULL;
 
-    for (auto &i : *v) {
+    for (auto &i : out->dem_out) {
         x = (int)rint(G_ppd * (lat - i.min_north));
         y = G_mpi - (int)rint(G_yppd * (LonDiff(i.max_west, lon)));
 
         if (x >= 0 && x <= G_mpi && y >= 0 && y <= G_mpi) {
-            out = &i;
-            found = 1;
+            found = &i;
             break;
         }
     }
@@ -192,24 +188,23 @@ int PutMask(std::vector<dem_output> *v, double lat, double lon, int value)
                 tmp.dem = &dem;
                 tmp.mask = new unsigned char[dem.ippd * dem.ippd];
                 tmp.signal = new unsigned char[dem.ippd * dem.ippd];
-                v->push_back(tmp);
-                out = &v->back();
-                found = 1;
+                out->dem_out.push_back(tmp);
+                found = &out->dem_out.back();
                 break;
             }
         }
     }
 
     if (found) {
-        out->mask[DEM_INDEX(out->dem->ippd, x, y)] = value;
-        return ((int)out->mask[DEM_INDEX(out->dem->ippd, x, y)]);
+        found->mask[DEM_INDEX(found->dem->ippd, x, y)] = value;
+        return ((int)found->mask[DEM_INDEX(found->dem->ippd, x, y)]);
     }
 
     else
         return -1;
 }
 
-int OrMask(std::vector<dem_output> *v, double lat, double lon, int value)
+int OrMask(struct output *out, double lat, double lon, int value)
 {
     /* Lines, text, markings, and coverage areas are stored in a
        mask that is combined with topology data when topographic
@@ -218,16 +213,14 @@ int OrMask(std::vector<dem_output> *v, double lat, double lon, int value)
        pointed to. */
 
     int x = 0, y = 0;
-    struct dem_output *out;
-    char found = 0;
+    struct dem_output *found = NULL;
 
-    for (auto &i : *v) {
+    for (auto &i : out->dem_out) {
         x = (int)rint(G_ppd * (lat - i.min_north));
         y = G_mpi - (int)rint(G_yppd * (LonDiff(i.max_west, lon)));
 
         if (x >= 0 && x <= G_mpi && y >= 0 && y <= G_mpi) {
-            out = &i;
-            found = 1;
+            found = &i;
             break;
         }
     }
@@ -250,55 +243,52 @@ int OrMask(std::vector<dem_output> *v, double lat, double lon, int value)
                 bzero(tmp.mask, dem.ippd * dem.ippd);
                 tmp.signal = new unsigned char[dem.ippd * dem.ippd];
                 bzero(tmp.signal, dem.ippd * dem.ippd);
-                v->push_back(tmp);
-                out = &v->back();
-                found = 1;
+                out->dem_out.push_back(tmp);
+                found = &out->dem_out.back();
                 break;
             }
         }
     }
 
     if (found) {
-        out->mask[DEM_INDEX(out->dem->ippd, x, y)] |= value;
-        return ((int)out->mask[DEM_INDEX(out->dem->ippd, x, y)]);
+        found->mask[DEM_INDEX(found->dem->ippd, x, y)] |= value;
+        return ((int)found->mask[DEM_INDEX(found->dem->ippd, x, y)]);
     }
 
     else
         return -1;
 }
 
-int GetMask(std::vector<dem_output> *v, double lat, double lon)
+int GetMask(struct output *out, double lat, double lon)
 {
     /* This function returns the mask bits based on the latitude
        and longitude given. */
     int x = 0, y = 0;
-    struct dem_output *out;
-    char found = 0;
+    struct dem_output *found;
 
-    for (auto &i : *v) {
+    for (auto &i : out->dem_out) {
         x = (int)rint(G_ppd * (lat - i.min_north));
         y = G_mpi - (int)rint(G_yppd * (LonDiff(i.max_west, lon)));
 
         if (x >= 0 && x <= G_mpi && y >= 0 && y <= G_mpi) {
-            out = &i;
-            found = 1;
+            found = &i;
             break;
         }
     }
 
     if (found) {
-        return ((int)out->mask[DEM_INDEX(out->dem->ippd, x, y)]);
+        return ((int)found->mask[DEM_INDEX(found->dem->ippd, x, y)]);
     }
     else {
         return 0;
     }
 }
 
-void PutSignal(std::vector<dem_output> *v, double lat, double lon, unsigned char signal)
+void PutSignal(struct output *out, double lat, double lon, unsigned char signal)
 {
     int x = 0, y = 0;
-    char found = 0, dotfile[260], basename[255];
-    struct dem_output *out;
+    char dotfile[260], basename[255];
+    struct dem_output *found = NULL;
 
     /* This function writes a signal level (0-255)
        at the specified location for later recall. */
@@ -311,13 +301,12 @@ void PutSignal(std::vector<dem_output> *v, double lat, double lon, unsigned char
         hottest = signal;
 
     // lookup x/y for this co-ord
-    for (auto &i : *v) {
+    for (auto &i : out->dem_out) {
         x = (int)rint(G_ppd * (lat - i.min_north));
         y = G_mpi - (int)rint(G_yppd * (LonDiff(i.max_west, lon)));
 
         if (x >= 0 && x <= G_mpi && y >= 0 && y <= G_mpi) {
-            out = &i;
-            found = 1;
+            found = &i;
             break;
         }
     }
@@ -340,16 +329,15 @@ void PutSignal(std::vector<dem_output> *v, double lat, double lon, unsigned char
                 bzero(tmp.mask, dem.ippd * dem.ippd);
                 tmp.signal = new unsigned char[dem.ippd * dem.ippd];
                 bzero(tmp.signal, dem.ippd * dem.ippd);
-                v->push_back(tmp);
-                out = &v->back();
-                found = 1;
+                out->dem_out.push_back(tmp);
+                found = &out->dem_out.back();
                 break;
             }
         }
     }
 
     if (found) {  // Write values to file
-        out->signal[DEM_INDEX(out->dem->ippd, x, y)] = signal;
+        found->signal[DEM_INDEX(found->dem->ippd, x, y)] = signal;
         // return (dem[indx].signal[x][y]);
         return;
     }
@@ -358,30 +346,28 @@ void PutSignal(std::vector<dem_output> *v, double lat, double lon, unsigned char
         return;
 }
 
-unsigned char GetSignal(std::vector<dem_output> *v, double lat, double lon)
+unsigned char GetSignal(struct output *out, double lat, double lon)
 {
     /* This function reads the signal level (0-255) at the
        specified location that was previously written by the
        complimentary PutSignal() function. */
 
     int x = 0, y = 0;
-    char found = 0;
-    struct dem_output *out = NULL;
+    struct dem_output *found = NULL;
 
     // lookup x/y for this co-ord
-    for (auto &i : *v) {
+    for (auto &i : out->dem_out) {
         x = (int)rint(G_ppd * (lat - i.min_north));
         y = G_mpi - (int)rint(G_yppd * (LonDiff(i.max_west, lon)));
 
         if (x >= 0 && x <= G_mpi && y >= 0 && y <= G_mpi) {
-            out = &i;
-            found = 1;
+            found = &i;
             break;
         }
     }
 
     if (found)
-        return (out->signal[DEM_INDEX(out->dem->ippd, x, y)]);
+        return (found->signal[DEM_INDEX(found->dem->ippd, x, y)]);
     else
         return 0;
 }
@@ -551,7 +537,7 @@ double ElevationAngle(struct site source, struct site destination)
     return ((180.0 * (acos(((b * b) + (dx * dx) - (a * a)) / (2.0 * b * dx))) / PI) - 90.0);
 }
 
-void ReadPath(struct site source, struct site destination)
+void ReadPath(struct site source, struct site destination, struct output *out)
 {
     /* This function generates a sequence of latitude and
        longitude positions between source and destination
@@ -570,6 +556,9 @@ void ReadPath(struct site source, struct site destination)
     lon2 = destination.lon * DEG2RAD;
     samples_per_radian = G_ppd * 57.295833;
     azimuth = Azimuth(source, destination) * DEG2RAD;
+
+
+    //printf("reading path  %f,%f - %f,%f\n", source.lat, source.lon, destination.lat, destination.lon);
 
     total_distance = Distance(source, destination);
 
@@ -591,10 +580,10 @@ void ReadPath(struct site source, struct site destination)
         lat1 = lat1 / DEG2RAD;
         lon1 = lon1 / DEG2RAD;
 
-        G_path.lat[c] = lat1;
-        G_path.lon[c] = lon1;
-        G_path.elevation[c] = GetElevation(source);
-        G_path.distance[c] = 0.0;
+        out->path.lat[c] = lat1;
+        out->path.lon[c] = lon1;
+        out->path.elevation[c] = GetElevation(source);
+        out->path.distance[c] = 0.0;
     }
 
     for (distance = 0.0, c = 0; (total_distance != 0.0 && distance <= total_distance && c < ARRAYSIZE);
@@ -627,34 +616,36 @@ void ReadPath(struct site source, struct site destination)
         lat2 = lat2 / DEG2RAD;
         lon2 = lon2 / DEG2RAD;
 
-        G_path.lat[c] = lat2;
-        G_path.lon[c] = lon2;
+        out->path.lat[c] = lat2;
+        out->path.lon[c] = lon2;
         tempsite.lat = lat2;
         tempsite.lon = lon2;
         tempsite.alt = std::numeric_limits<float>::min();
-        G_path.elevation[c] = GetElevation(tempsite);
+        out->path.elevation[c] = GetElevation(tempsite);
         // fix for tile gaps in multi-tile LIDAR plots
-        if (G_path.elevation[c] == 0 && G_path.elevation[c - 1] > 10) G_path.elevation[c] = G_path.elevation[c - 1];
-        G_path.distance[c] = distance;
+        if (out->path.elevation[c] == 0 && out->path.elevation[c - 1] > 10) {
+            out->path.elevation[c] = out->path.elevation[c - 1];
+        }
+        out->path.distance[c] = distance;
     }
 
     /* Make sure exact destination point is recorded at path.length-1 */
 
     if (c < ARRAYSIZE) {
-        G_path.lat[c] = destination.lat;
-        G_path.lon[c] = destination.lon;
-        G_path.elevation[c] = GetElevation(destination);
-        G_path.distance[c] = total_distance;
+        out->path.lat[c] = destination.lat;
+        out->path.lon[c] = destination.lon;
+        out->path.elevation[c] = GetElevation(destination);
+        out->path.distance[c] = total_distance;
         c++;
     }
 
     if (c < ARRAYSIZE)
-        G_path.length = c;
+        out->path.length = c;
     else
-        G_path.length = ARRAYSIZE - 1;
+        out->path.length = ARRAYSIZE - 1;
 }
 
-double ElevationAngle2(struct site source, struct site destination, double er)
+double ElevationAngle2(struct site source, struct site destination, double er, struct output *out)
 {
     /* This function returns the angle of elevation (in degrees)
        of the destination as seen from the source location, UNLESS
@@ -668,9 +659,9 @@ double ElevationAngle2(struct site source, struct site destination, double er)
         first_obstruction_angle = 0.0;
     struct path temp;
 
-    temp = G_path;
+    temp = out->path;
 
-    ReadPath(source, destination);
+    ReadPath(source, destination, out);
 
     distance = FEET_PER_MILE * Distance(source, destination);
     source_alt = er + source.alt + GetElevation(source);
@@ -689,10 +680,10 @@ double ElevationAngle2(struct site source, struct site destination, double er)
        at the source since we're interested in identifying the FIRST
        obstruction along the path between source and destination. */
 
-    for (x = 2, block = 0; x < G_path.length && block == 0; x++) {
-        distance = FEET_PER_MILE * G_path.distance[x];
+    for (x = 2, block = 0; x < out->path.length && block == 0; x++) {
+        distance = FEET_PER_MILE * out->path.distance[x];
 
-        test_alt = G_earthradius + (G_path.elevation[x] == 0.0 ? G_path.elevation[x] : G_path.elevation[x] + LR.clutter);
+        test_alt = G_earthradius + (out->path.elevation[x] == 0.0 ? out->path.elevation[x] : out->path.elevation[x] + LR.clutter);
 
         cos_test_angle = ((source_alt2) + (distance * distance) - (test_alt * test_alt)) / (2.0 * source_alt * distance);
 
@@ -716,7 +707,7 @@ double ElevationAngle2(struct site source, struct site destination, double er)
     else
         elevation = ((acos(cos_xmtr_angle)) / DEG2RAD) - 90.0;
 
-    G_path = temp;
+    out->path = temp;
 
     return elevation;
 }
@@ -778,7 +769,7 @@ double ReadBearing(char *input)
     return bearing;
 }
 
-void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f, FILE *outfile)
+void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f, FILE *outfile, struct output *out)
 {
     /* Perform an obstruction analysis along the
        path between receiver and transmitter. */
@@ -789,7 +780,7 @@ void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f, FILE *out
         h_r_fpt6, h_f, h_los, lambda = 0.0;
     char string[255], string_fpt6[255], string_f1[255];
 
-    ReadPath(xmtr, rcvr);
+    ReadPath(xmtr, rcvr, out);
     h_r = GetElevation(rcvr) + rcvr.alt + G_earthradius;
     h_r_f1 = h_r;
     h_r_fpt6 = h_r;
@@ -827,9 +818,9 @@ void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f, FILE *out
        acos().  However, note the inverted comparison: if
        acos(A) > acos(B), then B > A. */
 
-    for (x = G_path.length - 1; x > 0; x--) {
-        site_x.lat = G_path.lat[x];
-        site_x.lon = G_path.lon[x];
+    for (x = out->path.length - 1; x > 0; x--) {
+        site_x.lat = out->path.lat[x];
+        site_x.lon = out->path.lon[x];
         site_x.alt = 0.0;
 
         h_x = GetElevation(site_x) + G_earthradius + LR.clutter;
@@ -954,30 +945,25 @@ void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f, FILE *out
     }
 }
 
-void free_elev(void) { delete[] G_elev; }
+void free_elev(struct output *out) { delete[] out->elev; }
 
-void free_path(void)
+void free_path(struct path *path)
 {
-    delete[] G_path.lat;
-    delete[] G_path.lon;
-    delete[] G_path.elevation;
-    delete[] G_path.distance;
+    delete[] path->lat;
+    delete[] path->lon;
+    delete[] path->elevation;
+    delete[] path->distance;
 }
 
-void alloc_elev(void) { G_elev = new double[ARRAYSIZE + 10]; }
+void alloc_elev(struct output *out) { out->elev = new double[ARRAYSIZE + 10]; }
 
-void alloc_path(void)
+void alloc_path(struct path *path)
 {
-    G_path.lat = new double[ARRAYSIZE];
-    G_path.lon = new double[ARRAYSIZE];
-    G_path.elevation = new double[ARRAYSIZE];
-    G_path.distance = new double[ARRAYSIZE];
-}
-
-void do_allocs(void)
-{
-    alloc_elev();
-    alloc_path();
+    path->length = 0;
+    path->lat = new double[ARRAYSIZE];
+    path->lon = new double[ARRAYSIZE];
+    path->elevation = new double[ARRAYSIZE];
+    path->distance = new double[ARRAYSIZE];
 }
 
 int handle_args(int argc, char *argv[])
@@ -1046,6 +1032,21 @@ int handle_args(int argc, char *argv[])
     tx_site[1].lon = 361.0;
 
     y = argc - 1;
+
+
+    struct output out;
+
+    out.max_elevation = -32768;
+    out.min_elevation = 32767;
+
+    out.min_west = 360;
+    out.max_west = 0;
+
+    out.min_north = 90;
+    out.max_north = -90;
+
+    alloc_path(&out.path);
+    alloc_elev(&out);
 
     for (x = 0; x <= y; x++) {
         if (strcmp(argv[x], "-R") == 0) {
@@ -1585,7 +1586,7 @@ int handle_args(int argc, char *argv[])
 
     /* Load the required tiles */
     if (lidar) {
-        if ((result = loadLIDAR(lidar_tiles, resample)) != 0) {
+        if ((result = loadLIDAR(lidar_tiles, resample, &out)) != 0) {
             fprintf(stderr,
                     "Couldn't find one or more of the "
                     "lidar files. Please ensure their paths are "
@@ -1594,12 +1595,12 @@ int handle_args(int argc, char *argv[])
             exit(result);
         }
 
-        G_ppd = ((double)G_height / (G_max_north - G_min_north));
+        G_ppd = ((double)out.height / (out.max_north - out.min_north));
         G_yppd = G_ppd;
 
         if (G_debug) {
-            fprintf(stderr, "ppd %lf, yppd %lf, %.4lf,%.4lf,%.4lf,%.4lf,%d x %d\n", G_ppd, G_yppd, G_max_north, G_min_west,
-                    G_min_north, G_max_west, G_width, G_height);
+            fprintf(stderr, "ppd %lf, yppd %lf, %.4lf,%.4lf,%.4lf,%.4lf,%d x %d\n", G_ppd, G_yppd, out.max_north, out.min_west,
+                    out.min_north, out.max_west, out.width, out.height);
             fflush(stderr);
         }
 
@@ -1616,13 +1617,13 @@ int handle_args(int argc, char *argv[])
     else {
         // DEM first
         if (G_debug) {
-            fprintf(stderr, "%.4lf,%.4lf,%.4lf,%.4lf,%.4lf,%.4lf\n", G_max_north, G_min_west, G_min_north, G_max_west, max_lon,
+            fprintf(stderr, "%.4lf,%.4lf,%.4lf,%.4lf,%.4lf,%.4lf\n", out.max_north, out.min_west, out.min_north, out.max_west, max_lon,
                     min_lon);
         }
 
         // max_lon-=3;
 
-        if ((result = LoadTopoData(max_lon, min_lon, max_lat, min_lat)) != 0) {
+        if ((result = LoadTopoData(max_lon, min_lon, max_lat, min_lat, &out)) != 0) {
             // This only fails on errors loading SDF tiles
             fprintf(stderr, "Error loading topo data\n");
             return result;
@@ -1697,7 +1698,7 @@ int handle_args(int argc, char *argv[])
 
             /* Load any additional SDF files, if required */
 
-            if ((result = LoadTopoData(max_lon, min_lon, max_lat, min_lat)) != 0) {
+            if ((result = LoadTopoData(max_lon, min_lon, max_lat, min_lat, &out)) != 0) {
                 // This only fails on errors loading SDF tiles
                 fprintf(stderr, "Error loading topo data\n");
                 return result;
@@ -1706,8 +1707,8 @@ int handle_args(int argc, char *argv[])
         G_ppd = (double)G_ippd;
         G_yppd = G_ppd;
 
-        G_width = (unsigned)(G_ippd * ReduceAngle(G_max_west - G_min_west));
-        G_height = (unsigned)(G_ippd * ReduceAngle(G_max_north - G_min_north));
+        out.width = (unsigned)(G_ippd * ReduceAngle(out.max_west - out.min_west));
+        out.height = (unsigned)(G_ippd * ReduceAngle(out.max_north - out.min_north));
     }
 
     G_dpp = 1 / G_ppd;
@@ -1731,18 +1732,17 @@ int handle_args(int argc, char *argv[])
         }
     }
 
-    std::vector<struct dem_output> v;
 
     if (ppa == 0) {
         if (propmodel == 2) {  // Model 2 = LOS
             cropping = false;  // TODO: File is written in DoLOS() so this needs moving to PlotPropagation() to allow styling,
                                // cropping etc
-            PlotLOSMap(&v, tx_site[0], altitudeLR, ano_filename, use_threads, LR);
-            DoLOS(&v, mapfile, kml, ngs, tx_site);
+            PlotLOSMap(&out, tx_site[0], altitudeLR, ano_filename, use_threads, LR);
+            DoLOS(&out, mapfile, kml, ngs, tx_site);
         }
         else {
             // 90% of effort here
-            PlotPropagation(&v, tx_site[0], altitudeLR, ano_filename, propmodel, knifeedge, haf, pmenv, use_threads, LR);
+            PlotPropagation(&out, tx_site[0], altitudeLR, ano_filename, propmodel, knifeedge, haf, pmenv, use_threads, LR);
 
             if (G_debug) {
                 fprintf(stderr, "Finished PlotPropagation()\n");
@@ -1753,25 +1753,25 @@ int handle_args(int argc, char *argv[])
                 // CROPPING Factor determined in propPathLoss().
                 // cropLon is the circle radius in pixels at it's widest (east/west)
                 G_cropLon *= G_dpp;                       // pixels to degrees
-                G_max_north = G_cropLat;                  // degrees
-                G_max_west = G_cropLon + tx_site[0].lon;  // degrees west (positive)
+                out.max_north = G_cropLat;                  // degrees
+                out.max_west = G_cropLon + tx_site[0].lon;  // degrees west (positive)
                 G_cropLat -= tx_site[0].lat;              // angle from tx to edge
 
                 if (G_debug) {
                     fprintf(stderr, "Cropping 1: max_west: %.4f cropLat: %.4f cropLon: %.4f longitude: %.5f dpp %.7f\n",
-                            G_max_west, G_cropLat, G_cropLon, tx_site[0].lon, G_dpp);
+                            out.max_west, G_cropLat, G_cropLon, tx_site[0].lon, G_dpp);
                     fflush(stderr);
                 }
-                G_width = (int)((G_cropLon * G_ppd) * 2);
-                G_height = (int)((G_cropLat * G_ppd) * 2);
+                out.width = (int)((G_cropLon * G_ppd) * 2);
+                out.height = (int)((G_cropLat * G_ppd) * 2);
 
                 if (G_debug) {
                     fprintf(stderr, "Cropping 2: max_west: %.4f cropLat: %.4f cropLon: %.7f longitude: %.5f width %d\n",
-                            G_max_west, G_cropLat, G_cropLon, tx_site[0].lon, G_width);
+                            out.max_west, G_cropLat, G_cropLon, tx_site[0].lon, out.width);
                     fflush(stderr);
                 }
-                if (G_width > 3600 * 10 || G_cropLon < 0) {
-                    fprintf(stderr, "FATAL BOUNDS! max_west: %.4f cropLat: %.4f cropLon: %.7f longitude: %.5f\n", G_max_west,
+                if (out.width > 3600 * 10 || G_cropLon < 0) {
+                    fprintf(stderr, "FATAL BOUNDS! max_west: %.4f cropLat: %.4f cropLon: %.7f longitude: %.5f\n", out.max_west,
                             G_cropLat, G_cropLon, tx_site[0].lon);
                     return 0;
                 }
@@ -1779,10 +1779,10 @@ int handle_args(int argc, char *argv[])
 
             // Write bitmap
             if (LR.erp == 0.0)
-                DoPathLoss(&v, mapfile, geo, kml, ngs, tx_site, LR);
+                DoPathLoss(&out, mapfile, geo, kml, ngs, tx_site, LR);
             else if (LR.dbm)
-                DoRxdPwr(&v, (to_stdout == true ? NULL : mapfile), kml, ngs, tx_site, LR);
-            else if ((result = DoSigStr(&v, mapfile, kml, ngs, tx_site, LR)) != 0)
+                DoRxdPwr(&out, (to_stdout == true ? NULL : mapfile), kml, ngs, tx_site, LR);
+            else if ((result = DoSigStr(&out, mapfile, kml, ngs, tx_site, LR)) != 0)
                 return result;
         }
         /*if(lidar){
@@ -1801,9 +1801,9 @@ int handle_args(int argc, char *argv[])
             fprintf(stderr, "|%.6f|", tx_site[0].lon - G_cropLon);
         }
         else {
-            fprintf(stderr, "|%.6f", G_max_north);
+            fprintf(stderr, "|%.6f", out.max_north);
             fprintf(stderr, "|%.6f", G_east);
-            fprintf(stderr, "|%.6f", G_min_north);
+            fprintf(stderr, "|%.6f", out.min_north);
             fprintf(stderr, "|%.6f|", G_west);
         }
         fprintf(stderr, "\n");
@@ -1811,10 +1811,10 @@ int handle_args(int argc, char *argv[])
     else {
         strncpy(tx_site[0].name, "Tx", 3);
         strncpy(tx_site[1].name, "Rx", 3);
-        PlotPath(&v, tx_site[0], tx_site[1], 1, LR);
-        PathReport(tx_site[0], tx_site[1], tx_site[0].filename, 0, propmodel, pmenv, rxGain, LR);
+        PlotPath(&out, tx_site[0], tx_site[1], 1, LR);
+        PathReport(tx_site[0], tx_site[1], tx_site[0].filename, 0, propmodel, pmenv, rxGain, &out, LR);
         // Order flipped for benefit of graph. Makes no difference to data.
-        SeriesData(tx_site[1], tx_site[0], tx_site[0].filename, 1, normalise, LR);
+        SeriesData(tx_site[1], tx_site[0], tx_site[0].filename, 1, normalise, &out, LR);
     }
     fflush(stderr);
 
@@ -1922,17 +1922,9 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    /*
-     * If we're not called as signalserverLIDAR we can allocate various
-     * memory now. For LIDAR we need to wait until we've parsed
-     * the headers in the .asc file to know how much memory to allocate...
-     */
-    if (!lidar) do_allocs();
-
     // these can stay globals
     G_gpsav = 0;
     G_sdf_path[0] = 0;
-    G_path.length = 0;
     G_fzone_clearance = 0.6;
     G_earthradius = EARTHRADIUS;
     G_ippd = IPPD;  // default resolution

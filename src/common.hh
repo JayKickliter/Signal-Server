@@ -67,6 +67,8 @@ struct path {
 };
 
 // TODO what does LR mean
+// essentially this struct holds the
+// read-only configuration options
 struct LR {
     double max_range;
     double clutter;
@@ -85,6 +87,20 @@ struct LR {
     float antenna_pattern[361][1001];
 };
 
+struct output {
+    std::vector<dem_output> dem_out;
+    int width;
+    int height;
+    int min_elevation;
+    int max_elevation;
+    struct path path;
+    double min_north;
+    double max_north;
+    double min_west;
+    double max_west;
+    double *elev;
+};
+
 struct region {
     unsigned char color[128][3];
     int level[128];
@@ -95,19 +111,9 @@ extern int MAXPAGES;
 extern int ARRAYSIZE;
 extern int IPPD;
 
-extern double G_min_north;
-extern double G_max_north;
-extern double G_min_west;
-extern double G_max_west;
 extern int G_ippd;
 extern int G_MAXRAD;
 extern int G_mpi;
-extern int G_max_elevation;
-extern int G_min_elevation;
-extern int G_loops;
-extern int G_jgets;
-extern int G_width;
-extern int G_height;
 
 extern double G_earthradius;
 extern double G_north;
@@ -121,7 +127,6 @@ extern double G_fzone_clearance;
 extern double G_dBm;
 extern double G_loss;
 extern double G_field_strength;
-extern __thread double *G_elev;
 extern double G_westoffset;
 extern double G_eastoffset;
 extern double G_delta;
@@ -136,8 +141,6 @@ extern unsigned char G_got_elevation_pattern;
 extern unsigned char G_got_azimuth_pattern;
 
 extern std::vector<struct dem> G_dem;
-extern __thread struct path G_path;
-extern struct LR G_LR;
 extern struct region G_region;
 
 extern int G_debug;

@@ -176,7 +176,7 @@ int averageHeight(int x, int y){
         }
 }*/
 
-int loadLIDAR(char *filenames, int resample)
+int loadLIDAR(char *filenames, int resample, struct output *out)
 {
     char *filename;
     char *files[900];  // 20x20=400, 16x16=256 tiles
@@ -185,8 +185,8 @@ int loadLIDAR(char *filenames, int resample)
     tile_t *tiles;
 
     // Initialize global variables before processing files
-    G_min_west = 361;  // any value will be lower than this
-    G_max_west = 0;    // any value will be higher than this
+    out->min_west = 361;  // any value will be lower than this
+    out->max_west = 0;    // any value will be higher than this
 
     // test for multiple files
     filename = strtok(filenames, " ,");
@@ -225,28 +225,28 @@ int loadLIDAR(char *filenames, int resample)
         }
 
         // Update a bunch of globals
-        if (tiles[indx].max_el > G_max_elevation) G_max_elevation = tiles[indx].max_el;
-        if (tiles[indx].min_el < G_min_elevation) G_min_elevation = tiles[indx].min_el;
+        if (tiles[indx].max_el > out->max_elevation) out->max_elevation = tiles[indx].max_el;
+        if (tiles[indx].min_el < out->min_elevation) out->min_elevation = tiles[indx].min_el;
 
-        if (G_max_north == -90 || tiles[indx].max_north > G_max_north) G_max_north = tiles[indx].max_north;
+        if (out->max_north == -90 || tiles[indx].max_north > out->max_north) out->max_north = tiles[indx].max_north;
 
-        if (G_min_north == 90 || tiles[indx].min_north < G_min_north) G_min_north = tiles[indx].min_north;
+        if (out->min_north == 90 || tiles[indx].min_north < out->min_north) out->min_north = tiles[indx].min_north;
 
         // Meridian switch. max_west=0
-        if (abs(tiles[indx].max_west - G_max_west) < 180 || tiles[indx].max_west < 360) {
-            if (tiles[indx].max_west > G_max_west) G_max_west = tiles[indx].max_west;  // update highest value
+        if (abs(tiles[indx].max_west - out->max_west) < 180 || tiles[indx].max_west < 360) {
+            if (tiles[indx].max_west > out->max_west) out->max_west = tiles[indx].max_west;  // update highest value
         }
         else {
-            if (tiles[indx].max_west < G_max_west) G_max_west = tiles[indx].max_west;
+            if (tiles[indx].max_west < out->max_west) out->max_west = tiles[indx].max_west;
         }
-        if (fabs(tiles[indx].min_west - G_min_west) < 180.0 || tiles[indx].min_west <= 360) {
-            if (tiles[indx].min_west < G_min_west) G_min_west = tiles[indx].min_west;
+        if (fabs(tiles[indx].min_west - out->min_west) < 180.0 || tiles[indx].min_west <= 360) {
+            if (tiles[indx].min_west < out->min_west) out->min_west = tiles[indx].min_west;
         }
         else {
-            if (tiles[indx].min_west > G_min_west) G_min_west = tiles[indx].min_west;
+            if (tiles[indx].min_west > out->min_west) out->min_west = tiles[indx].min_west;
         }
         // Handle tile with 360 XUR
-        if (G_min_west > 359) G_min_west = 0.0;
+        if (out->min_west > 359) out->min_west = 0.0;
     }
 
     /* Iterate through all of the tiles to find the smallest resolution. We will
@@ -286,24 +286,24 @@ int loadLIDAR(char *filenames, int resample)
 
     /* Now we work out the size of the giant lidar tile. */
     if (G_debug) {
-        fprintf(stderr, "mw:%lf Mnw:%lf\n", G_max_west, G_min_west);
+        fprintf(stderr, "mw:%lf Mnw:%lf\n", out->max_west, out->min_west);
     }
-    double total_width = G_max_west - G_min_west >= 0 ? G_max_west - G_min_west : G_max_west + (360 - G_min_west);
-    double total_height = G_max_north - G_min_north;
+    double total_width = out->max_west - out->min_west >= 0 ? out->max_west - out->min_west : out->max_west + (360 - out->min_west);
+    double total_height = out->max_north - out->min_north;
     if (G_debug) {
-        fprintf(stderr, "totalh: %.7f - %.7f = %.7f totalw: %.7f - %.7f = %.7f fc: %d\n", G_max_north, G_min_north,
-                total_height, G_max_west, G_min_west, total_width, fc);
+        fprintf(stderr, "totalh: %.7f - %.7f = %.7f totalw: %.7f - %.7f = %.7f fc: %d\n", out->max_north, out->min_north,
+                total_height, out->max_west, out->min_west, total_width, fc);
     }
 
     // detect problematic layouts eg. vertical rectangles
     //  1x2
     if (fc >= 2 && desired_resolution < 28 && total_height > total_width * 1.5) {
-        tiles[fc].max_north = G_max_north;
-        tiles[fc].min_north = G_min_north;
+        tiles[fc].max_north = out->max_north;
+        tiles[fc].min_north = out->min_north;
         G_westoffset = G_westoffset - (total_height - total_width);  // WGS84 for stdout only
-        G_max_west = G_max_west + (total_height - total_width);      // Positive westing
-        tiles[fc].max_west = G_max_west;                             // Positive westing
-        tiles[fc].min_west = G_max_west;
+        out->max_west = out->max_west + (total_height - total_width);      // Positive westing
+        tiles[fc].max_west = out->max_west;                             // Positive westing
+        tiles[fc].min_west = out->max_west;
         tiles[fc].ppdy = tiles[fc - 1].ppdy;
         tiles[fc].ppdy = tiles[fc - 1].ppdx;
         tiles[fc].width = (total_height - total_width);
@@ -322,11 +322,11 @@ int loadLIDAR(char *filenames, int resample)
     }
     // 2x1
     if (fc >= 2 && desired_resolution < 28 && total_width > total_height * 1.5) {
-        tiles[fc].max_north = G_max_north + (total_width - total_height);
-        tiles[fc].min_north = G_max_north;
-        tiles[fc].max_west = G_max_west;                           // Positive westing
-        G_max_north = G_max_north + (total_width - total_height);  // Positive westing
-        tiles[fc].min_west = G_min_west;
+        tiles[fc].max_north = out->max_north + (total_width - total_height);
+        tiles[fc].min_north = out->max_north;
+        tiles[fc].max_west = out->max_west;                           // Positive westing
+        out->max_north = out->max_north + (total_width - total_height);  // Positive westing
+        tiles[fc].min_west = out->min_west;
         tiles[fc].ppdy = tiles[fc - 1].ppdy;
         tiles[fc].ppdy = tiles[fc - 1].ppdx;
         tiles[fc].width = total_width;
@@ -345,9 +345,9 @@ int loadLIDAR(char *filenames, int resample)
     size_t new_height = 0;
     size_t new_width = 0;
     for (size_t i = 0; i < (unsigned)fc; i++) {
-        double north_offset = G_max_north - tiles[i].max_north;
+        double north_offset = out->max_north - tiles[i].max_north;
         double west_offset =
-            G_max_west - tiles[i].max_west >= 0 ? G_max_west - tiles[i].max_west : G_max_west + (360 - tiles[i].max_west);
+            out->max_west - tiles[i].max_west >= 0 ? out->max_west - tiles[i].max_west : out->max_west + (360 - tiles[i].max_west);
         size_t north_pixel_offset = north_offset * tiles[i].ppdy;
         size_t west_pixel_offset = west_offset * tiles[i].ppdx;
 
@@ -385,15 +385,15 @@ int loadLIDAR(char *filenames, int resample)
 
     /* Fill out the array one tile at a time */
     for (size_t i = 0; i < (unsigned)fc; i++) {
-        double north_offset = G_max_north - tiles[i].max_north;
+        double north_offset = out->max_north - tiles[i].max_north;
         double west_offset =
-            G_max_west - tiles[i].max_west >= 0 ? G_max_west - tiles[i].max_west : G_max_west + (360 - tiles[i].max_west);
+            out->max_west - tiles[i].max_west >= 0 ? out->max_west - tiles[i].max_west : out->max_west + (360 - tiles[i].max_west);
         size_t north_pixel_offset = north_offset * tiles[i].ppdy;
         size_t west_pixel_offset = west_offset * tiles[i].ppdx;
 
         if (G_debug) {
-            fprintf(stderr, "mn: %lf mw:%lf globals: %lf %lf\n", tiles[i].max_north, tiles[i].max_west, G_max_north,
-                    G_max_west);
+            fprintf(stderr, "mn: %lf mw:%lf globals: %lf %lf\n", tiles[i].max_north, tiles[i].max_west, out->max_north,
+                    out->max_west);
             fprintf(stderr, "Offset n:%zu(%lf) w:%zu(%lf)\n", north_pixel_offset, north_offset, west_pixel_offset, west_offset);
             fprintf(stderr, "Height: %d\n", tiles[i].height);
             fflush(stderr);
@@ -421,23 +421,22 @@ int loadLIDAR(char *filenames, int resample)
     G_ippd = IPPD;
 
     ARRAYSIZE = (MAXPAGES * IPPD) + 10;
-    do_allocs();
 
-    G_height = new_height;
-    G_width = new_width;
+    out->height = new_height;
+    out->width = new_width;
 
     if (G_debug) {
-        fprintf(stderr, "Setting IPPD to %d height %d width %d\n", IPPD, G_height, G_width);
+        fprintf(stderr, "Setting IPPD to %d height %d width %d\n", IPPD, out->height, out->width);
         fflush(stderr);
     }
 
     /* Load the data into the global dem array */
-    G_dem[0].max_north = G_max_north;
-    G_dem[0].min_west = G_min_west;
-    G_dem[0].min_north = G_min_north;
-    G_dem[0].max_west = G_max_west;
-    G_dem[0].max_el = G_max_elevation;
-    G_dem[0].min_el = G_min_elevation;
+    G_dem[0].max_north = out->max_north;
+    G_dem[0].min_west = out->min_west;
+    G_dem[0].min_north = out->min_north;
+    G_dem[0].max_west = out->max_west;
+    G_dem[0].max_el = out->max_elevation;
+    G_dem[0].min_el = out->min_elevation;
 
     /*
      * Copy the lidar tile data into the dem array. The dem array is then rotated
@@ -461,16 +460,16 @@ int loadLIDAR(char *filenames, int resample)
             }*/
         }
     }
-    if (G_width > 3600 * 8) {
-        fprintf(stdout, "DEM fault. Contact system administrator: %d\n", G_width);
+    if (out->width > 3600 * 8) {
+        fprintf(stdout, "DEM fault. Contact system administrator: %d\n", out->width);
         fflush(stderr);
         exit(1);
     }
 
     if (G_debug) {
-        fprintf(stderr, "LIDAR LOADED %d x %d\n", G_width, G_height);
+        fprintf(stderr, "LIDAR LOADED %d x %d\n", out->width, out->height);
         fprintf(stderr, "fc %d WIDTH %d HEIGHT %d ippd %d minN %.5f maxN %.5f minW %.5f maxW %.5f avgCellsize %.5f\n", fc,
-                G_width, G_height, G_ippd, G_min_north, G_max_north, G_min_west, G_max_west, avgCellsize);
+                out->width, out->height, G_ippd, out->min_north, out->max_north, out->min_west, out->max_west, avgCellsize);
         fflush(stderr);
     }
 
@@ -481,7 +480,7 @@ int loadLIDAR(char *filenames, int resample)
     return 0;
 }
 
-int LoadSDF_BSDF(char *name)
+int LoadSDF_BSDF(char *name, struct output *out)
 {
     /* This function reads uncompressed ss Data Files (.sdf)
        containing digital elevation model data into memory.
@@ -558,45 +557,45 @@ int LoadSDF_BSDF(char *name)
 
         close(fd);
 
-        if (dem.min_el < G_min_elevation) G_min_elevation = dem.min_el;
+        if (dem.min_el < out->min_elevation) out->min_elevation = dem.min_el;
 
-        if (dem.max_el > G_max_elevation) G_max_elevation = dem.max_el;
+        if (dem.max_el > out->max_elevation) out->max_elevation = dem.max_el;
 
-        if (G_max_north == -90)
-            G_max_north = dem.max_north;
+        if (out->max_north == -90)
+            out->max_north = dem.max_north;
 
-        else if (dem.max_north > G_max_north)
-            G_max_north = dem.max_north;
+        else if (dem.max_north > out->max_north)
+            out->max_north = dem.max_north;
 
-        if (G_min_north == 90)
-            G_min_north = dem.min_north;
+        if (out->min_north == 90)
+            out->min_north = dem.min_north;
 
-        else if (dem.min_north < G_min_north)
-            G_min_north = dem.min_north;
+        else if (dem.min_north < out->min_north)
+            out->min_north = dem.min_north;
 
-        if (G_max_west == -1)
-            G_max_west = dem.max_west;
+        if (out->max_west == -1)
+            out->max_west = dem.max_west;
 
         else {
-            if (abs(dem.max_west - G_max_west) < 180) {
-                if (dem.max_west > G_max_west) G_max_west = dem.max_west;
+            if (abs(dem.max_west - out->max_west) < 180) {
+                if (dem.max_west > out->max_west) out->max_west = dem.max_west;
             }
 
             else {
-                if (dem.max_west < G_max_west) G_max_west = dem.max_west;
+                if (dem.max_west < out->max_west) out->max_west = dem.max_west;
             }
         }
 
-        if (G_min_west == 360)
-            G_min_west = dem.min_west;
+        if (out->min_west == 360)
+            out->min_west = dem.min_west;
 
         else {
-            if (fabs(dem.min_west - G_min_west) < 180.0) {
-                if (dem.min_west < G_min_west) G_min_west = dem.min_west;
+            if (fabs(dem.min_west - out->min_west) < 180.0) {
+                if (dem.min_west < out->min_west) out->min_west = dem.min_west;
             }
 
             else {
-                if (dem.min_west > G_min_west) G_min_west = dem.min_west;
+                if (dem.min_west > out->min_west) out->min_west = dem.min_west;
             }
         }
 
@@ -609,7 +608,7 @@ int LoadSDF_BSDF(char *name)
         return found;
 }
 
-int LoadSDF_SDF(char *name)
+int LoadSDF_SDF(char *name, struct output *out)
 {
     /* This function reads uncompressed ss Data Files (.sdf)
        containing digital elevation model data into memory.
@@ -699,9 +698,9 @@ int LoadSDF_SDF(char *name)
          */
         for (x = 0; x < G_ippd; x++) {
             for (y = 0; y < G_ippd; y++) {
-                for (j = 0; j < G_jgets; j++) {
+                /*for (j = 0; j < G_jgets; j++) {
                     if (fgets(jline, sizeof(jline), fd) == NULL) return -EIO;
-                }
+                }*/
 
                 if (fgets(line, sizeof(line), fd) != NULL) {
                     data = atoi(line);
@@ -730,45 +729,45 @@ int LoadSDF_SDF(char *name)
 
         fclose(fd);
 
-        if (G_dem[indx].min_el < G_min_elevation) G_min_elevation = G_dem[indx].min_el;
+        if (G_dem[indx].min_el < out->min_elevation) out->min_elevation = G_dem[indx].min_el;
 
-        if (G_dem[indx].max_el > G_max_elevation) G_max_elevation = G_dem[indx].max_el;
+        if (G_dem[indx].max_el > out->max_elevation) out->max_elevation = G_dem[indx].max_el;
 
-        if (G_max_north == -90)
-            G_max_north = G_dem[indx].max_north;
+        if (out->max_north == -90)
+            out->max_north = G_dem[indx].max_north;
 
-        else if (G_dem[indx].max_north > G_max_north)
-            G_max_north = G_dem[indx].max_north;
+        else if (G_dem[indx].max_north > out->max_north)
+            out->max_north = G_dem[indx].max_north;
 
-        if (G_min_north == 90)
-            G_min_north = G_dem[indx].min_north;
+        if (out->min_north == 90)
+            out->min_north = G_dem[indx].min_north;
 
-        else if (G_dem[indx].min_north < G_min_north)
-            G_min_north = G_dem[indx].min_north;
+        else if (G_dem[indx].min_north < out->min_north)
+            out->min_north = G_dem[indx].min_north;
 
-        if (G_max_west == -1)
-            G_max_west = G_dem[indx].max_west;
+        if (out->max_west == -1)
+            out->max_west = G_dem[indx].max_west;
 
         else {
-            if (abs(G_dem[indx].max_west - G_max_west) < 180) {
-                if (G_dem[indx].max_west > G_max_west) G_max_west = G_dem[indx].max_west;
+            if (abs(G_dem[indx].max_west - out->max_west) < 180) {
+                if (G_dem[indx].max_west > out->max_west) out->max_west = G_dem[indx].max_west;
             }
 
             else {
-                if (G_dem[indx].max_west < G_max_west) G_max_west = G_dem[indx].max_west;
+                if (G_dem[indx].max_west < out->max_west) out->max_west = G_dem[indx].max_west;
             }
         }
 
-        if (G_min_west == 360)
-            G_min_west = G_dem[indx].min_west;
+        if (out->min_west == 360)
+            out->min_west = G_dem[indx].min_west;
 
         else {
-            if (fabs(G_dem[indx].min_west - G_min_west) < 180.0) {
-                if (G_dem[indx].min_west < G_min_west) G_min_west = G_dem[indx].min_west;
+            if (fabs(G_dem[indx].min_west - out->min_west) < 180.0) {
+                if (G_dem[indx].min_west < out->min_west) out->min_west = G_dem[indx].min_west;
             }
 
             else {
-                if (G_dem[indx].min_west > G_min_west) G_min_west = G_dem[indx].min_west;
+                if (G_dem[indx].min_west > out->min_west) out->min_west = G_dem[indx].min_west;
             }
         }
 
@@ -816,7 +815,7 @@ char *BZfgets(char *output, BZFILE *bzfd, unsigned length)
     return (output);
 }
 
-int LoadSDF_BZ(char *name)
+int LoadSDF_BZ(char *name, struct output *out)
 {
     /* This function reads Bzip2 ncompressed ss Data Files (.sdf.bz2)
        containing digital elevation model data into memory.
@@ -919,10 +918,10 @@ int LoadSDF_BZ(char *name)
         posn = NULL;
         for (x = 0; x < G_ippd; x++) {
             for (y = 0; y < G_ippd; y++) {
-                for (j = 0; j < G_jgets; j++) {
+                /*for (j = 0; j < G_jgets; j++) {
                     posn = BZfgets(jline, bzfd, 19);
                     if ((bzerror != BZ_STREAM_END && bzerror != BZ_OK) || posn == NULL) return -EIO;
-                }
+                }*/
 
                 posn = BZfgets(line, bzfd, 19);
                 if ((bzerror != BZ_STREAM_END && bzerror != BZ_OK) || posn == NULL) return -EIO;
@@ -956,45 +955,45 @@ int LoadSDF_BZ(char *name)
         BZ2_bzReadClose(&bzerror, bzfd);
         fclose(fd);
 
-        if (G_dem[indx].min_el < G_min_elevation) G_min_elevation = G_dem[indx].min_el;
+        if (G_dem[indx].min_el < out->min_elevation) out->min_elevation = G_dem[indx].min_el;
 
-        if (G_dem[indx].max_el > G_max_elevation) G_max_elevation = G_dem[indx].max_el;
+        if (G_dem[indx].max_el > out->max_elevation) out->max_elevation = G_dem[indx].max_el;
 
-        if (G_max_north == -90)
-            G_max_north = G_dem[indx].max_north;
+        if (out->max_north == -90)
+            out->max_north = G_dem[indx].max_north;
 
-        else if (G_dem[indx].max_north > G_max_north)
-            G_max_north = G_dem[indx].max_north;
+        else if (G_dem[indx].max_north > out->max_north)
+            out->max_north = G_dem[indx].max_north;
 
-        if (G_min_north == 90)
-            G_min_north = G_dem[indx].min_north;
+        if (out->min_north == 90)
+            out->min_north = G_dem[indx].min_north;
 
-        else if (G_dem[indx].min_north < G_min_north)
-            G_min_north = G_dem[indx].min_north;
+        else if (G_dem[indx].min_north < out->min_north)
+            out->min_north = G_dem[indx].min_north;
 
-        if (G_max_west == -1)
-            G_max_west = G_dem[indx].max_west;
+        if (out->max_west == -1)
+            out->max_west = G_dem[indx].max_west;
 
         else {
-            if (abs(G_dem[indx].max_west - G_max_west) < 180) {
-                if (G_dem[indx].max_west > G_max_west) G_max_west = G_dem[indx].max_west;
+            if (abs(G_dem[indx].max_west - out->max_west) < 180) {
+                if (G_dem[indx].max_west > out->max_west) out->max_west = G_dem[indx].max_west;
             }
 
             else {
-                if (G_dem[indx].max_west < G_max_west) G_max_west = G_dem[indx].max_west;
+                if (G_dem[indx].max_west < out->max_west) out->max_west = G_dem[indx].max_west;
             }
         }
 
-        if (G_min_west == 360)
-            G_min_west = G_dem[indx].min_west;
+        if (out->min_west == 360)
+            out->min_west = G_dem[indx].min_west;
 
         else {
-            if (fabs(G_dem[indx].min_west - G_min_west) < 180.0) {
-                if (G_dem[indx].min_west < G_min_west) G_min_west = G_dem[indx].min_west;
+            if (fabs(G_dem[indx].min_west - out->min_west) < 180.0) {
+                if (G_dem[indx].min_west < out->min_west) out->min_west = G_dem[indx].min_west;
             }
 
             else {
-                if (G_dem[indx].min_west > G_min_west) G_min_west = G_dem[indx].min_west;
+                if (G_dem[indx].min_west > out->min_west) out->min_west = G_dem[indx].min_west;
             }
         }
 
@@ -1055,7 +1054,7 @@ char *GZfgets(char *output, gzFile gzfd, unsigned length)
     return (output);
 }
 
-int LoadSDF_GZ(char *name)
+int LoadSDF_GZ(char *name, struct output *out)
 {
     /* This function reads Gzip compressed ss Data Files (.sdf.gz)
        containing digital elevation model data into memory.
@@ -1168,11 +1167,11 @@ int LoadSDF_GZ(char *name)
         posn = NULL;
         for (x = 0; x < G_ippd; x++) {
             for (y = 0; y < G_ippd; y++) {
-                for (j = 0; j < G_jgets; j++) {
+                /*for (j = 0; j < G_jgets; j++) {
                     posn = GZfgets(jline, gzfd, 19);
                     errmsg = gzerror(gzfd, &gzerr);
                     if ((gzerr != Z_STREAM_END && gzerr != Z_OK) || posn == NULL) return -EIO;
-                }
+                }*/
 
                 posn = GZfgets(line, gzfd, 19);
                 errmsg = gzerror(gzfd, &gzerr);
@@ -1211,45 +1210,45 @@ int LoadSDF_GZ(char *name)
 
         gzclose_r(gzfd);  // close for reading (avoids write code)
 
-        if (G_dem[indx].min_el < G_min_elevation) G_min_elevation = G_dem[indx].min_el;
+        if (G_dem[indx].min_el < out->min_elevation) out->min_elevation = G_dem[indx].min_el;
 
-        if (G_dem[indx].max_el > G_max_elevation) G_max_elevation = G_dem[indx].max_el;
+        if (G_dem[indx].max_el > out->max_elevation) out->max_elevation = G_dem[indx].max_el;
 
-        if (G_max_north == -90)
-            G_max_north = G_dem[indx].max_north;
+        if (out->max_north == -90)
+            out->max_north = G_dem[indx].max_north;
 
-        else if (G_dem[indx].max_north > G_max_north)
-            G_max_north = G_dem[indx].max_north;
+        else if (G_dem[indx].max_north > out->max_north)
+            out->max_north = G_dem[indx].max_north;
 
-        if (G_min_north == 90)
-            G_min_north = G_dem[indx].min_north;
+        if (out->min_north == 90)
+            out->min_north = G_dem[indx].min_north;
 
-        else if (G_dem[indx].min_north < G_min_north)
-            G_min_north = G_dem[indx].min_north;
+        else if (G_dem[indx].min_north < out->min_north)
+            out->min_north = G_dem[indx].min_north;
 
-        if (G_max_west == -1)
-            G_max_west = G_dem[indx].max_west;
+        if (out->max_west == -1)
+            out->max_west = G_dem[indx].max_west;
 
         else {
-            if (abs(G_dem[indx].max_west - G_max_west) < 180) {
-                if (G_dem[indx].max_west > G_max_west) G_max_west = G_dem[indx].max_west;
+            if (abs(G_dem[indx].max_west - out->max_west) < 180) {
+                if (G_dem[indx].max_west > out->max_west) out->max_west = G_dem[indx].max_west;
             }
 
             else {
-                if (G_dem[indx].max_west < G_max_west) G_max_west = G_dem[indx].max_west;
+                if (G_dem[indx].max_west < out->max_west) out->max_west = G_dem[indx].max_west;
             }
         }
 
-        if (G_min_west == 360)
-            G_min_west = G_dem[indx].min_west;
+        if (out->min_west == 360)
+            out->min_west = G_dem[indx].min_west;
 
         else {
-            if (fabs(G_dem[indx].min_west - G_min_west) < 180.0) {
-                if (G_dem[indx].min_west < G_min_west) G_min_west = G_dem[indx].min_west;
+            if (fabs(G_dem[indx].min_west - out->min_west) < 180.0) {
+                if (G_dem[indx].min_west < out->min_west) out->min_west = G_dem[indx].min_west;
             }
 
             else {
-                if (G_dem[indx].min_west > G_min_west) G_min_west = G_dem[indx].min_west;
+                if (G_dem[indx].min_west > out->min_west) out->min_west = G_dem[indx].min_west;
             }
         }
 
@@ -1260,7 +1259,7 @@ int LoadSDF_GZ(char *name)
         return 0;
 }
 
-int LoadSDF(char *name)
+int LoadSDF(char *name, struct output *out)
 {
     /* This function loads the requested SDF file from the filesystem.
        It first tries to invoke the LoadSDF_SDF() function to load an
@@ -1277,7 +1276,7 @@ int LoadSDF(char *name)
     char found = 0;
     int return_value = -1;
 
-    return_value = LoadSDF_BSDF(name);
+    return_value = LoadSDF_BSDF(name, out);
 
     /* Try to load an uncompressed SDF first. */
 
@@ -1328,45 +1327,45 @@ int LoadSDF(char *name)
 
             if (dem.min_el > 0) dem.min_el = 0;
 
-            if (dem.min_el < G_min_elevation) G_min_elevation = dem.min_el;
+            if (dem.min_el < out->min_elevation) out->min_elevation = dem.min_el;
 
-            if (dem.max_el > G_max_elevation) G_max_elevation = dem.max_el;
+            if (dem.max_el > out->max_elevation) out->max_elevation = dem.max_el;
 
-            if (G_max_north == -90)
-                G_max_north = dem.max_north;
+            if (out->max_north == -90)
+                out->max_north = dem.max_north;
 
-            else if (dem.max_north > G_max_north)
-                G_max_north = dem.max_north;
+            else if (dem.max_north > out->max_north)
+                out->max_north = dem.max_north;
 
-            if (G_min_north == 90)
-                G_min_north = dem.min_north;
+            if (out->min_north == 90)
+                out->min_north = dem.min_north;
 
-            else if (dem.min_north < G_min_north)
-                G_min_north = dem.min_north;
+            else if (dem.min_north < out->min_north)
+                out->min_north = dem.min_north;
 
-            if (G_max_west == -1)
-                G_max_west = dem.max_west;
+            if (out->max_west == -1)
+                out->max_west = dem.max_west;
 
             else {
-                if (abs(dem.max_west - G_max_west) < 180) {
-                    if (dem.max_west > G_max_west) G_max_west = dem.max_west;
+                if (abs(dem.max_west - out->max_west) < 180) {
+                    if (dem.max_west > out->max_west) out->max_west = dem.max_west;
                 }
 
                 else {
-                    if (dem.max_west < G_max_west) G_max_west = dem.max_west;
+                    if (dem.max_west < out->max_west) out->max_west = dem.max_west;
                 }
             }
 
-            if (G_min_west == 360)
-                G_min_west = dem.min_west;
+            if (out->min_west == 360)
+                out->min_west = dem.min_west;
 
             else {
-                if (abs(dem.min_west - G_min_west) < 180) {
-                    if (dem.min_west < G_min_west) G_min_west = dem.min_west;
+                if (abs(dem.min_west - out->min_west) < 180) {
+                    if (dem.min_west < out->min_west) out->min_west = dem.min_west;
                 }
 
                 else {
-                    if (dem.min_west > G_min_west) G_min_west = dem.min_west;
+                    if (dem.min_west > out->min_west) out->min_west = dem.min_west;
                 }
             }
 
@@ -2203,7 +2202,7 @@ int LoadDBMColors(struct site xmtr)
     return 0;
 }
 
-int LoadTopoData(double max_lon, double min_lon, double max_lat, double min_lat)
+int LoadTopoData(double max_lon, double min_lon, double max_lat, double min_lat, struct output *out)
 {
     /* This function loads the SDF files required
        to cover the limits of the region specified. */
@@ -2235,7 +2234,7 @@ int LoadTopoData(double max_lon, double min_lon, double max_lat, double min_lat)
 
                 if (G_ippd == 3600) strcat(string, "-hd");
 
-                if ((success = LoadSDF(string)) < 0) return -success;
+                if ((success = LoadSDF(string, out)) < 0) return -success;
             }
     }
     else {
@@ -2258,7 +2257,7 @@ int LoadTopoData(double max_lon, double min_lon, double max_lat, double min_lat)
 
                 if (G_ippd == 3600) strcat(string, "-hd");
 
-                if ((success = LoadSDF(string)) < 0) return -success;
+                if ((success = LoadSDF(string, out)) < 0) return -success;
             }
     }
     return 0;
