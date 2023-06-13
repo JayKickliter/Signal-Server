@@ -7,7 +7,7 @@
 #include <limits>
 #include <vector>
 
-#include "../main.hh"
+#include "../signal-server.hh"
 #include "cost.hh"
 #include "ecc33.hh"
 #include "egli.hh"

@@ -12,7 +12,6 @@
 #include "common.hh"
 #include "image.hh"
 #include "inputs.hh"
-#include "main.hh"
 #include "models/cost.hh"
 #include "models/ecc33.hh"
 #include "models/ericsson.hh"
@@ -20,6 +19,7 @@
 #include "models/hata.hh"
 #include "models/itwom3.0.hh"
 #include "models/sui.hh"
+#include "signal-server.hh"
 
 void DoPathLoss(struct output *out, char *filename, unsigned char geo, unsigned char kml, unsigned char ngs, struct site *xmtr,
                 const struct LR LR)
