@@ -20,8 +20,8 @@
 #include "models/itwom3.0.hh"
 #include "models/sui.hh"
 
-void DoPathLoss(struct output *out, char *filename, unsigned char geo, unsigned char kml, unsigned char ngs,
-                struct site *xmtr, const struct LR LR)
+void DoPathLoss(struct output *out, char *filename, unsigned char geo, unsigned char kml, unsigned char ngs, struct site *xmtr,
+                const struct LR LR)
 {
     /* This function generates a topographic map in Portable Pix Map
        (PPM) format based on the content of flags held in the mask[][]
@@ -74,15 +74,15 @@ void DoPathLoss(struct output *out, char *filename, unsigned char geo, unsigned 
 
     if (minwest > 360.0) minwest -= 360.0;
 
-    G_north = (double)out->max_north - G_dpp;
+    out->north = (double)out->max_north - G_dpp;
 
     if (kml || geo)
-        G_south = (double)out->min_north; /* No bottom legend */
+        out->south = (double)out->min_north; /* No bottom legend */
     else
-        G_south = (double)out->min_north - (30.0 / G_ppd); /* 30 pixels for bottom legend */
+        out->south = (double)out->min_north - (30.0 / G_ppd); /* 30 pixels for bottom legend */
 
-    G_east = (minwest < 180.0 ? -minwest : 360.0 - out->min_west);
-    G_west = (double)(out->max_west < 180 ? -out->max_west : 360 - out->max_west);
+    out->east = (minwest < 180.0 ? -minwest : 360.0 - out->min_west);
+    out->west = (double)(out->max_west < 180 ? -out->max_west : 360 - out->max_west);
 
     if (G_debug) {
         fprintf(stderr, "\nWriting \"%s\" (%ux%u pixmap image)...\n", filename != NULL ? mapfile : "to stdout", out->width,
@@ -90,7 +90,7 @@ void DoPathLoss(struct output *out, char *filename, unsigned char geo, unsigned 
         fflush(stderr);
     }
 
-    for (y = 0, lat = G_north; y < (int)out->height; y++, lat = G_north - (G_dpp * (double)y)) {
+    for (y = 0, lat = out->north; y < (int)out->height; y++, lat = out->north - (G_dpp * (double)y)) {
         for (x = 0, lon = out->max_west; x < (int)out->width; x++, lon = out->max_west - (G_dpp * (double)x)) {
             if (lon < 0.0) lon += 360.0;
 
@@ -214,8 +214,7 @@ void DoPathLoss(struct output *out, char *filename, unsigned char geo, unsigned 
     }
 }
 
-int DoSigStr(struct output *out, char *filename, unsigned char kml, unsigned char ngs, struct site *xmtr,
-             const struct LR LR)
+int DoSigStr(struct output *out, char *filename, unsigned char kml, unsigned char ngs, struct site *xmtr, const struct LR LR)
 {
     /* This function generates a topographic map in Portable Pix Map
        (PPM) format based on the signal strength values held in the
@@ -268,12 +267,12 @@ int DoSigStr(struct output *out, char *filename, unsigned char kml, unsigned cha
 
     if (minwest > 360.0) minwest -= 360.0;
 
-    G_north = (double)out->max_north - G_dpp;
+    out->north = (double)out->max_north - G_dpp;
 
-    G_south = (double)out->min_north; /* No bottom legend */
+    out->south = (double)out->min_north; /* No bottom legend */
 
-    G_east = (minwest < 180.0 ? -minwest : 360.0 - out->min_west);
-    G_west = (double)(out->max_west < 180 ? -out->max_west : 360 - out->max_west);
+    out->east = (minwest < 180.0 ? -minwest : 360.0 - out->min_west);
+    out->west = (double)(out->max_west < 180 ? -out->max_west : 360 - out->max_west);
 
     if (G_debug) {
         fprintf(stderr, "\nWriting \"%s\" (%ux%u pixmap image)...\n", filename != NULL ? mapfile : "to stdout", out->width,
@@ -281,7 +280,7 @@ int DoSigStr(struct output *out, char *filename, unsigned char kml, unsigned cha
         fflush(stderr);
     }
 
-    for (y = 0, lat = G_north; y < (int)out->height; y++, lat = G_north - (G_dpp * (double)y)) {
+    for (y = 0, lat = out->north; y < (int)out->height; y++, lat = out->north - (G_dpp * (double)y)) {
         for (x = 0, lon = out->max_west; x < (int)out->width; x++, lon = out->max_west - (G_dpp * (double)x)) {
             if (lon < 0.0) lon += 360.0;
 
@@ -409,8 +408,7 @@ int DoSigStr(struct output *out, char *filename, unsigned char kml, unsigned cha
     return 0;
 }
 
-void DoRxdPwr(struct output *out, char *filename, unsigned char kml, unsigned char ngs, struct site *xmtr,
-              const struct LR LR)
+void DoRxdPwr(struct output *out, char *filename, unsigned char kml, unsigned char ngs, struct site *xmtr, const struct LR LR)
 {
     /* This function generates a topographic map in Portable Pix Map
        (PPM) format based on the signal power level values held in the
@@ -463,12 +461,12 @@ void DoRxdPwr(struct output *out, char *filename, unsigned char kml, unsigned ch
 
     if (minwest > 360.0) minwest -= 360.0;
 
-    G_north = (double)out->max_north - G_dpp;
+    out->north = (double)out->max_north - G_dpp;
 
-    G_south = (double)out->min_north; /* No bottom legend */
+    out->south = (double)out->min_north; /* No bottom legend */
 
-    G_east = (minwest < 180.0 ? -minwest : 360.0 - out->min_west);
-    G_west = (double)(out->max_west < 180 ? -out->max_west : 360 - out->max_west);
+    out->east = (minwest < 180.0 ? -minwest : 360.0 - out->min_west);
+    out->west = (double)(out->max_west < 180 ? -out->max_west : 360 - out->max_west);
 
     if (G_debug) {
         fprintf(stderr, "\nWriting \"%s\" (%ux%u pixmap image)...\n", (filename != NULL ? mapfile : "to stdout"), out->width,
@@ -477,7 +475,7 @@ void DoRxdPwr(struct output *out, char *filename, unsigned char kml, unsigned ch
     }
 
     // Draw image of x by y pixels
-    for (y = 0, lat = G_north; y < (int)out->height; y++, lat = G_north - (G_dpp * (double)y)) {
+    for (y = 0, lat = out->north; y < (int)out->height; y++, lat = out->north - (G_dpp * (double)y)) {
         for (x = 0, lon = out->max_west; x < (int)out->width; x++, lon = out->max_west - (G_dpp * (double)x)) {
             if (lon < 0.0) lon += 360.0;
 
@@ -654,12 +652,12 @@ void DoLOS(struct output *out, char *filename, unsigned char kml, unsigned char 
 
     if (minwest > 360.0) minwest -= 360.0;
 
-    G_north = (double)out->max_north - G_dpp;
+    out->north = (double)out->max_north - G_dpp;
 
-    G_south = (double)out->min_north; /* No bottom legend */
+    out->south = (double)out->min_north; /* No bottom legend */
 
-    G_east = (minwest < 180.0 ? -minwest : 360.0 - out->min_west);
-    G_west = (double)(out->max_west < 180 ? -out->max_west : 360 - out->max_west);
+    out->east = (minwest < 180.0 ? -minwest : 360.0 - out->min_west);
+    out->west = (double)(out->max_west < 180 ? -out->max_west : 360 - out->max_west);
 
     if (G_debug) {
         fprintf(stderr, "\nWriting \"%s\" (%ux%u pixmap image)...\n", filename != NULL ? mapfile : "to stdout", out->width,
@@ -667,7 +665,7 @@ void DoLOS(struct output *out, char *filename, unsigned char kml, unsigned char 
         fflush(stderr);
     }
 
-    for (y = 0, lat = G_north; y < (int)out->height; y++, lat = G_north - (G_dpp * (double)y)) {
+    for (y = 0, lat = out->north; y < (int)out->height; y++, lat = out->north - (G_dpp * (double)y)) {
         for (x = 0, lon = out->max_west; x < (int)out->width; x++, lon = out->max_west - (G_dpp * (double)x)) {
             if (lon < 0.0) lon += 360.0;
 
@@ -869,7 +867,7 @@ void PathReport(struct site source, struct site destination, char *name, char gr
 
     azimuth = Azimuth(source, destination);
     angle1 = ElevationAngle(source, destination);
-    angle2 = ElevationAngle2(source, destination, G_earthradius, out);
+    angle2 = ElevationAngle2(source, destination, G_earthradius, out, LR);
 
     if (G_got_azimuth_pattern || G_got_elevation_pattern) {
         x = (int)rint(10.0 * (10.0 - angle2));
@@ -932,7 +930,7 @@ void PathReport(struct site source, struct site destination, char *name, char gr
     azimuth = Azimuth(destination, source);
 
     angle1 = ElevationAngle(destination, source);
-    angle2 = ElevationAngle2(destination, source, G_earthradius, out);
+    angle2 = ElevationAngle2(destination, source, G_earthradius, out, LR);
 
     fprintf(fd2, "Azimuth to %s: %.2f degrees grid\n", source.name, azimuth);
 
@@ -1044,9 +1042,9 @@ void PathReport(struct site source, struct site destination, char *name, char gr
 
             if (LR.erp >= 10.0e3) fprintf(fd2, "%.3lf kilowatts", LR.erp / 1.0e3);
 
-            G_dBm = 10.0 * (log10(LR.erp * 1000.0));
-            fprintf(fd2, " (%+.2f dBm)\n", G_dBm);
-            fprintf(fd2, "Transmitter ERP minus Receiver gain: %.2f dBm\n", G_dBm - rxGain);
+            out->dBm = 10.0 * (log10(LR.erp * 1000.0));
+            fprintf(fd2, " (%+.2f dBm)\n", out->dBm);
+            fprintf(fd2, "Transmitter ERP minus Receiver gain: %.2f dBm\n", out->dBm - rxGain);
 
             /* EIRP = ERP + 2.14 dB */
 
@@ -1062,11 +1060,11 @@ void PathReport(struct site source, struct site destination, char *name, char gr
 
             if (eirp >= 10.0e3) fprintf(fd2, "%.3lf kilowatts", eirp / 1.0e3);
 
-            G_dBm = 10.0 * (log10(eirp * 1000.0));
-            fprintf(fd2, " (%+.2f dBm)\n", G_dBm);
+            out->dBm = 10.0 * (log10(eirp * 1000.0));
+            fprintf(fd2, " (%+.2f dBm)\n", out->dBm);
 
             // Rx gain
-            fprintf(fd2, "Transmitter EIRP minus Receiver gain: %.2f dBm\n", G_dBm - rxGain);
+            fprintf(fd2, "Transmitter EIRP minus Receiver gain: %.2f dBm\n", out->dBm - rxGain);
         }
 
         fprintf(fd2, "\nSummary for the link between %s and %s:\n\n", source.name, destination.name);
@@ -1080,8 +1078,8 @@ void PathReport(struct site source, struct site destination, char *name, char gr
            path into the elev[] array. */
 
         for (x = 1; x < out->path.length - 1; x++)
-            out->elev[x + 2] =
-                METERS_PER_FOOT * (out->path.elevation[x] == 0.0 ? out->path.elevation[x] : (LR.clutter + out->path.elevation[x]));
+            out->elev[x + 2] = METERS_PER_FOOT *
+                               (out->path.elevation[x] == 0.0 ? out->path.elevation[x] : (LR.clutter + out->path.elevation[x]));
 
         /* Copy ending points without clutter */
 
@@ -1160,52 +1158,52 @@ void PathReport(struct site source, struct site destination, char *name, char gr
                     // Longley Rice ITM
                     point_to_point_ITM(source.alt * METERS_PER_FOOT, destination.alt * METERS_PER_FOOT, LR.eps_dielect,
                                        LR.sgm_conductivity, LR.eno_ns_surfref, LR.frq_mhz, LR.radio_climate, LR.pol, LR.conf,
-                                       LR.rel, G_loss, strmode, out->elev, errnum);
+                                       LR.rel, out->loss, strmode, out->elev, errnum);
                     break;
                 case 3:
                     // HATA 1, 2 & 3
-                    G_loss =
-                        HATApathLoss(LR.frq_mhz, source.alt * METERS_PER_FOOT,
-                                     (out->path.elevation[y] * METERS_PER_FOOT) + (destination.alt * METERS_PER_FOOT), dkm, pmenv);
+                    out->loss = HATApathLoss(LR.frq_mhz, source.alt * METERS_PER_FOOT,
+                                             (out->path.elevation[y] * METERS_PER_FOOT) + (destination.alt * METERS_PER_FOOT),
+                                             dkm, pmenv);
                     break;
                 case 4:
                     // COST231-HATA
-                    G_loss = ECC33pathLoss(LR.frq_mhz, source.alt * METERS_PER_FOOT,
-                                           (out->path.elevation[y] * METERS_PER_FOOT) + (destination.alt * METERS_PER_FOOT), dkm,
-                                           pmenv);
+                    out->loss = ECC33pathLoss(LR.frq_mhz, source.alt * METERS_PER_FOOT,
+                                              (out->path.elevation[y] * METERS_PER_FOOT) + (destination.alt * METERS_PER_FOOT),
+                                              dkm, pmenv);
                     break;
                 case 5:
                     // SUI
-                    G_loss =
-                        SUIpathLoss(LR.frq_mhz, source.alt * METERS_PER_FOOT,
-                                    (out->path.elevation[y] * METERS_PER_FOOT) + (destination.alt * METERS_PER_FOOT), dkm, pmenv);
+                    out->loss = SUIpathLoss(LR.frq_mhz, source.alt * METERS_PER_FOOT,
+                                            (out->path.elevation[y] * METERS_PER_FOOT) + (destination.alt * METERS_PER_FOOT),
+                                            dkm, pmenv);
                     break;
                 case 6:
-                    G_loss = COST231pathLoss(LR.frq_mhz, source.alt * METERS_PER_FOOT,
-                                             (out->path.elevation[y] * METERS_PER_FOOT) + (destination.alt * METERS_PER_FOOT), dkm,
-                                             pmenv);
+                    out->loss = COST231pathLoss(
+                        LR.frq_mhz, source.alt * METERS_PER_FOOT,
+                        (out->path.elevation[y] * METERS_PER_FOOT) + (destination.alt * METERS_PER_FOOT), dkm, pmenv);
                     break;
                 case 7:
                     // ITU-R P.525 Free space path loss
-                    G_loss = FSPLpathLoss(LR.frq_mhz, dkm, false);
+                    out->loss = FSPLpathLoss(LR.frq_mhz, dkm, false);
                     break;
                 case 8:
                     // ITWOM 3.0
                     point_to_point(source.alt * METERS_PER_FOOT, destination.alt * METERS_PER_FOOT, LR.eps_dielect,
                                    LR.sgm_conductivity, LR.eno_ns_surfref, LR.frq_mhz, LR.radio_climate, LR.pol, LR.conf,
-                                   LR.rel, G_loss, strmode, out->elev, errnum);
+                                   LR.rel, out->loss, strmode, out->elev, errnum);
                     break;
                 case 9:
                     // Ericsson
-                    G_loss = EricssonpathLoss(LR.frq_mhz, source.alt * METERS_PER_FOOT,
-                                              (out->path.elevation[y] * METERS_PER_FOOT) + (destination.alt * METERS_PER_FOOT),
-                                              dkm, pmenv);
+                    out->loss = EricssonpathLoss(
+                        LR.frq_mhz, source.alt * METERS_PER_FOOT,
+                        (out->path.elevation[y] * METERS_PER_FOOT) + (destination.alt * METERS_PER_FOOT), dkm, pmenv);
                     break;
 
                 default:
                     point_to_point_ITM(source.alt * METERS_PER_FOOT, destination.alt * METERS_PER_FOOT, LR.eps_dielect,
                                        LR.sgm_conductivity, LR.eno_ns_surfref, LR.frq_mhz, LR.radio_climate, LR.pol, LR.conf,
-                                       LR.rel, G_loss, strmode, out->elev, errnum);
+                                       LR.rel, out->loss, strmode, out->elev, errnum);
             }
 
             if (block)
@@ -1232,7 +1230,7 @@ void PathReport(struct site source, struct site destination, char *name, char gr
             else
                 patterndB = 0.0;
 
-            total_loss = G_loss - patterndB;
+            total_loss = out->loss - patterndB;
 
             if (total_loss > maxloss) maxloss = total_loss;
 
@@ -1246,37 +1244,38 @@ void PathReport(struct site source, struct site destination, char *name, char gr
             fprintf(fd2, "Free space path loss: %.2f dB\n", free_space_loss);
         }
 
-        fprintf(fd2, "Computed path loss: %.2f dB\n", G_loss);
+        fprintf(fd2, "Computed path loss: %.2f dB\n", out->loss);
 
-        if ((G_loss * 1.5) < free_space_loss) {
+        if ((out->loss * 1.5) < free_space_loss) {
             fprintf(fd2,
                     "Model error! Computed loss of %.1fdB is greater than free space loss of %.1fdB. Check your inuts for "
                     "model %d\n",
-                    G_loss, free_space_loss, propmodel);
+                    out->loss, free_space_loss, propmodel);
             fprintf(stderr,
                     "Model error! Computed loss of %.1fdB is greater than free space loss of %.1fdB. Check your inuts for "
                     "model %d\n",
-                    G_loss, free_space_loss, propmodel);
+                    out->loss, free_space_loss, propmodel);
             return;
         }
 
-        if (free_space_loss != 0.0) fprintf(fd2, "Attenuation due to terrain shielding: %.2f dB\n", G_loss - free_space_loss);
+        if (free_space_loss != 0.0)
+            fprintf(fd2, "Attenuation due to terrain shielding: %.2f dB\n", out->loss - free_space_loss);
 
         if (patterndB != 0.0) fprintf(fd2, "Total path loss including %s antenna pattern: %.2f dB\n", source.name, total_loss);
 
         if (LR.erp != 0.0) {
-            G_field_strength = (139.4 + (20.0 * log10(LR.frq_mhz)) - total_loss) + (10.0 * log10(LR.erp / 1000.0));
+            out->field_strength = (139.4 + (20.0 * log10(LR.frq_mhz)) - total_loss) + (10.0 * log10(LR.erp / 1000.0));
 
             /* dBm is referenced to EIRP */
 
             rxp = eirp / (pow(10.0, (total_loss / 10.0)));
-            G_dBm = 10.0 * (log10(rxp * 1000.0));
+            out->dBm = 10.0 * (log10(rxp * 1000.0));
             power_density = (eirp / (pow(10.0, (total_loss - free_space_loss) / 10.0)));
             /* divide by 4*PI*distance_in_meters squared */
             power_density /= (4.0 * PI * distance * distance * 2589988.11);
 
-            fprintf(fd2, "Field strength at %s: %.2f dBuV/meter\n", destination.name, G_field_strength);
-            fprintf(fd2, "Signal power level at %s: %+.2f dBm\n", destination.name, G_dBm);
+            fprintf(fd2, "Field strength at %s: %.2f dBuV/meter\n", destination.name, out->field_strength);
+            fprintf(fd2, "Signal power level at %s: %+.2f dBm\n", destination.name, out->dBm);
             fprintf(fd2, "Signal power density at %s: %+.2f dBW per square meter\n", destination.name,
                     10.0 * log10(power_density));
             voltage = 1.0e6 * sqrt(50.0 * (eirp / (pow(10.0, (total_loss - 2.14) / 10.0))));
@@ -1317,13 +1316,13 @@ void PathReport(struct site source, struct site destination, char *name, char gr
         }
     }
 
-    ObstructionAnalysis(source, destination, LR.frq_mhz, fd2, out);
+    ObstructionAnalysis(source, destination, LR.frq_mhz, fd2, out, LR);
     fclose(fd2);
 
     /*fprintf(stderr,
             "Path loss (dB), Received Power (dBm), Field strength (dBuV):\n%.1f\n%.1f\n%.1f",
-            G_loss, G_dBm, G_field_strength);*/
-    printf("%.1f %.1f %.1f\n", G_loss, G_dBm, G_field_strength);
+            out->loss, out->dBm, out->field_strength);*/
+    printf("%.1f %.1f %.1f\n", out->loss, out->dBm, out->field_strength);
 
     /* Skip plotting the graph if ONLY a path-loss report is needed. */
 

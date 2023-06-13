@@ -85,6 +85,9 @@ struct LR {
     int radio_climate;
     int pol;
     float antenna_pattern[361][1001];
+    double antenna_downtilt;
+    double antenna_dt_direction;
+    double antenna_rotation;
 };
 
 struct output {
@@ -99,6 +102,19 @@ struct output {
     double min_west;
     double max_west;
     double *elev;
+    double north;
+    double east;
+    double south;
+    double west;
+    double westoffset;
+    double eastoffset;
+    double cropLat;
+    double cropLon;
+    double dBm;
+    double loss;
+    double field_strength;
+    int hottest;
+    struct site tx_site[2];
 };
 
 struct region {
@@ -112,26 +128,14 @@ extern int ARRAYSIZE;
 extern int IPPD;
 
 extern int G_ippd;
-extern int G_MAXRAD;
 extern int G_mpi;
 
 extern double G_earthradius;
-extern double G_north;
-extern double G_east;
-extern double G_south;
-extern double G_west;
 extern double G_dpp;
 extern double G_ppd;
 extern double G_yppd;
 extern double G_fzone_clearance;
-extern double G_dBm;
-extern double G_loss;
-extern double G_field_strength;
-extern double G_westoffset;
-extern double G_eastoffset;
 extern double G_delta;
-extern double G_cropLat;
-extern double G_cropLon;
 
 extern char G_string[];
 extern char G_sdf_path[];

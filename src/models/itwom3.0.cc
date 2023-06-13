@@ -449,7 +449,7 @@ double adiff2(double d, prop_type &prop, propa_type &propa)
 {
     complex<double> prop_zgnd(prop.zgndreal, prop.zgndimag);
     static __thread double wd1, xd1, qk, aht, xht, toh, toho, roh, roho, dto, dto1, dtro, dro, dro2, drto, dtr, dhh1, dhh2,
-        /* dhec, */ dtof, dto1f, drof, dro2f;
+        /* dhec, */ dtof, /*dto1f,*/ drof;            //, dro2f;
     double a, q, pk, rd, ds, dsl, /* dfdh, */ th, wa, /* ar, wd, sf1, */
         sf2, /* ec, */ vv, kedr = 0.0, arp = 0.0, sdr = 0.0, pd = 0.0, srp = 0.0, kem = 0.0, csd = 0.0, sdl = 0.0,
                            adiffv2 = 0.0, closs = 0.0;
@@ -533,12 +533,12 @@ double adiff2(double d, prop_type &prop, propa_type &propa)
         /* for 1 obst tree base path */
         dtof = sqrt(prop.dl[0] * prop.dl[0] + (toh - prop.cch) * (toh - prop.cch));
         dtof += prop.gme * prop.dl[0];
-        dto1f = sqrt(prop.dl[0] * prop.dl[0] + (toho - prop.cch) * (toho - prop.cch));
-        dto1f += prop.gme * prop.dl[0];
+        // dto1f = sqrt(prop.dl[0] * prop.dl[0] + (toho - prop.cch) * (toho - prop.cch));
+        // dto1f += prop.gme * prop.dl[0];
         drof = sqrt(prop.dl[1] * prop.dl[1] + (roh - prop.cch) * (roh - prop.cch));
         drof += prop.gme * (prop.dl[1]);
-        dro2f = sqrt(prop.dl[1] * prop.dl[1] + (roho - prop.cch) * (roho - prop.cch));
-        dro2f += prop.gme * (prop.dl[1]);
+        // dro2f = sqrt(prop.dl[1] * prop.dl[1] + (roho - prop.cch) * (roho - prop.cch));
+        // dro2f += prop.gme * (prop.dl[1]);
 
         /* saalos coefficients preset for post-obstacle receive path */
         prop.tgh = prop.cch + 1.0;
@@ -2416,7 +2416,8 @@ void point_to_pointMDH_two(double tht_m, double rht_m, double eps_dielect, doubl
 
 void point_to_pointDH(double tht_m, double rht_m, double eps_dielect, double sgm_conductivity, double eno_ns_surfref,
                       double enc_ncc_clcref, double clutter_height, double clutter_density, double delta_h_diff, double frq_mhz,
-                      int radio_climate, int pol, double conf, double rel, double &dbloss, double &deltaH, double *elev, int &errnum)
+                      int radio_climate, int pol, double conf, double rel, double &dbloss, double &deltaH, double *elev,
+                      int &errnum)
 /*************************************************************************************************
          pol: 0-Horizontal, 1-Vertical
          radio_climate: 1-Equatorial, 2-Continental Subtropical, 3-Maritime Tropical,

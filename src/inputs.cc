@@ -17,15 +17,7 @@
 #define BZBUFFER 65536
 #define GZBUFFER 32768
 
-static char buffer[BZBUFFER + 1];
-
 extern char *color_file;
-
-extern int bzerror, bzbuf_empty, gzerr, gzbuf_empty;
-
-extern long bzbuf_pointer, bzbytes_read, gzbuf_pointer, gzbytes_read;
-
-extern double antenna_rotation, antenna_downtilt, antenna_dt_direction;
 
 int loadClutter(char *filename, double radius, struct site tx)
 {
@@ -205,7 +197,7 @@ int loadLIDAR(char *filenames, int resample, struct output *out)
     /* Load each tile in turn */
     for (indx = 0; indx < fc; indx++) {
         /* Grab the tile metadata */
-        if ((success = tile_load_lidar(&tiles[indx], files[indx])) != 0) {
+        if ((success = tile_load_lidar(&tiles[indx], files[indx], out)) != 0) {
             fprintf(stderr, "Failed to load LIDAR tile %s\n", files[indx]);
             fflush(stderr);
             free(tiles);
@@ -288,7 +280,8 @@ int loadLIDAR(char *filenames, int resample, struct output *out)
     if (G_debug) {
         fprintf(stderr, "mw:%lf Mnw:%lf\n", out->max_west, out->min_west);
     }
-    double total_width = out->max_west - out->min_west >= 0 ? out->max_west - out->min_west : out->max_west + (360 - out->min_west);
+    double total_width =
+        out->max_west - out->min_west >= 0 ? out->max_west - out->min_west : out->max_west + (360 - out->min_west);
     double total_height = out->max_north - out->min_north;
     if (G_debug) {
         fprintf(stderr, "totalh: %.7f - %.7f = %.7f totalw: %.7f - %.7f = %.7f fc: %d\n", out->max_north, out->min_north,
@@ -300,9 +293,9 @@ int loadLIDAR(char *filenames, int resample, struct output *out)
     if (fc >= 2 && desired_resolution < 28 && total_height > total_width * 1.5) {
         tiles[fc].max_north = out->max_north;
         tiles[fc].min_north = out->min_north;
-        G_westoffset = G_westoffset - (total_height - total_width);  // WGS84 for stdout only
+        out->westoffset = out->westoffset - (total_height - total_width);  // WGS84 for stdout only
         out->max_west = out->max_west + (total_height - total_width);      // Positive westing
-        tiles[fc].max_west = out->max_west;                             // Positive westing
+        tiles[fc].max_west = out->max_west;                                // Positive westing
         tiles[fc].min_west = out->max_west;
         tiles[fc].ppdy = tiles[fc - 1].ppdy;
         tiles[fc].ppdy = tiles[fc - 1].ppdx;
@@ -324,7 +317,7 @@ int loadLIDAR(char *filenames, int resample, struct output *out)
     if (fc >= 2 && desired_resolution < 28 && total_width > total_height * 1.5) {
         tiles[fc].max_north = out->max_north + (total_width - total_height);
         tiles[fc].min_north = out->max_north;
-        tiles[fc].max_west = out->max_west;                           // Positive westing
+        tiles[fc].max_west = out->max_west;                              // Positive westing
         out->max_north = out->max_north + (total_width - total_height);  // Positive westing
         tiles[fc].min_west = out->min_west;
         tiles[fc].ppdy = tiles[fc - 1].ppdy;
@@ -346,8 +339,8 @@ int loadLIDAR(char *filenames, int resample, struct output *out)
     size_t new_width = 0;
     for (size_t i = 0; i < (unsigned)fc; i++) {
         double north_offset = out->max_north - tiles[i].max_north;
-        double west_offset =
-            out->max_west - tiles[i].max_west >= 0 ? out->max_west - tiles[i].max_west : out->max_west + (360 - tiles[i].max_west);
+        double west_offset = out->max_west - tiles[i].max_west >= 0 ? out->max_west - tiles[i].max_west
+                                                                    : out->max_west + (360 - tiles[i].max_west);
         size_t north_pixel_offset = north_offset * tiles[i].ppdy;
         size_t west_pixel_offset = west_offset * tiles[i].ppdx;
 
@@ -386,8 +379,8 @@ int loadLIDAR(char *filenames, int resample, struct output *out)
     /* Fill out the array one tile at a time */
     for (size_t i = 0; i < (unsigned)fc; i++) {
         double north_offset = out->max_north - tiles[i].max_north;
-        double west_offset =
-            out->max_west - tiles[i].max_west >= 0 ? out->max_west - tiles[i].max_west : out->max_west + (360 - tiles[i].max_west);
+        double west_offset = out->max_west - tiles[i].max_west >= 0 ? out->max_west - tiles[i].max_west
+                                                                    : out->max_west + (360 - tiles[i].max_west);
         size_t north_pixel_offset = north_offset * tiles[i].ppdy;
         size_t west_pixel_offset = west_offset * tiles[i].ppdx;
 
@@ -608,657 +601,6 @@ int LoadSDF_BSDF(char *name, struct output *out)
         return found;
 }
 
-int LoadSDF_SDF(char *name, struct output *out)
-{
-    /* This function reads uncompressed ss Data Files (.sdf)
-       containing digital elevation model data into memory.
-       Elevation data, maximum and minimum elevations, and
-       quadrangle limits are stored in the first available
-       dem[] structure.
-       NOTE: On error, this function returns a negative errno */
-
-    int x, y, data = 0, indx, minlat, minlon, maxlat, maxlon, j;
-    char found, free_page = 0, line[20], jline[20], sdf_file[255], path_plus_name[PATH_MAX];
-
-    FILE *fd;
-
-    for (x = 0; name[x] != '.' && name[x] != 0 && x < 250; x++) sdf_file[x] = name[x];
-
-    sdf_file[x] = 0;
-
-    /* Parse filename for minimum latitude and longitude values */
-
-    if (sscanf(sdf_file, "%d:%d:%d:%d", &minlat, &maxlat, &minlon, &maxlon) != 4) return -EINVAL;
-
-    sdf_file[x] = '.';
-    sdf_file[x + 1] = 's';
-    sdf_file[x + 2] = 'd';
-    sdf_file[x + 3] = 'f';
-    sdf_file[x + 4] = 0;
-
-    /* Is it already in memory? */
-
-    for (indx = 0, found = 0; indx < MAXPAGES && found == 0; indx++) {
-        if (minlat == G_dem[indx].min_north && minlon == G_dem[indx].min_west && maxlat == G_dem[indx].max_north &&
-            maxlon == G_dem[indx].max_west)
-            found = 1;
-    }
-
-    /* Is room available to load it? */
-
-    if (found == 0) {
-        for (indx = 0, free_page = 0; indx < MAXPAGES && free_page == 0; indx++)
-            if (G_dem[indx].max_north == -90) free_page = 1;
-    }
-
-    indx--;
-
-    if (free_page && found == 0 && indx >= 0 && indx < MAXPAGES) {
-        /* Search for SDF file in current working directory first */
-
-        strncpy(path_plus_name, sdf_file, sizeof(path_plus_name) - 1);
-
-        if ((fd = fopen(path_plus_name, "rb")) == NULL) {
-            /* Next, try loading SDF file from path specified
-               in $HOME/.ss_path file or by -d argument */
-
-            strncpy(path_plus_name, G_sdf_path, sizeof(path_plus_name) - 1);
-            strncat(path_plus_name, sdf_file, sizeof(path_plus_name) - 1);
-            if ((fd = fopen(path_plus_name, "rb")) == NULL) {
-                return -errno;
-            }
-        }
-
-        if (G_debug == 1) {
-            fprintf(stderr, "Loading \"%s\" into page %d...\n", path_plus_name, indx + 1);
-            fflush(stderr);
-        }
-
-        if (fgets(line, 19, fd) != NULL) {
-            if (sscanf(line, "%f", &G_dem[indx].max_west) == EOF) return -errno;
-        }
-
-        if (fgets(line, 19, fd) != NULL) {
-            if (sscanf(line, "%f", &G_dem[indx].min_north) == EOF) return -errno;
-        }
-
-        if (fgets(line, 19, fd) != NULL) {
-            if (sscanf(line, "%f", &G_dem[indx].min_west) == EOF) return -errno;
-        }
-
-        if (fgets(line, 19, fd) != NULL) {
-            if (sscanf(line, "%f", &G_dem[indx].max_north) == EOF) return -errno;
-        }
-
-        G_dem[indx].data = new short[IPPD * IPPD];
-        /*
-           Here X lines of DEM will be read until IPPD is reached.
-           Each .sdf tile contains 1200x1200 = 1.44M 'points'
-           Each point is sampled for 1200 resolution!
-         */
-        for (x = 0; x < G_ippd; x++) {
-            for (y = 0; y < G_ippd; y++) {
-                /*for (j = 0; j < G_jgets; j++) {
-                    if (fgets(jline, sizeof(jline), fd) == NULL) return -EIO;
-                }*/
-
-                if (fgets(line, sizeof(line), fd) != NULL) {
-                    data = atoi(line);
-                }
-
-                G_dem[indx].data[DEM_INDEX(G_dem[indx].ippd, x, y)] = data;
-
-                if (data > G_dem[indx].max_el) G_dem[indx].max_el = data;
-
-                if (data < G_dem[indx].min_el) G_dem[indx].min_el = data;
-            }
-
-            if (G_ippd == 600) {
-                for (j = 0; j < IPPD; j++) {
-                    if (fgets(jline, sizeof(jline), fd) == NULL) return -EIO;
-                }
-            }
-            if (G_ippd == 300) {
-                for (j = 0; j < IPPD; j++) {
-                    if (fgets(jline, sizeof(jline), fd) == NULL) return -EIO;
-                    if (fgets(jline, sizeof(jline), fd) == NULL) return -EIO;
-                    if (fgets(jline, sizeof(jline), fd) == NULL) return -EIO;
-                }
-            }
-        }
-
-        fclose(fd);
-
-        if (G_dem[indx].min_el < out->min_elevation) out->min_elevation = G_dem[indx].min_el;
-
-        if (G_dem[indx].max_el > out->max_elevation) out->max_elevation = G_dem[indx].max_el;
-
-        if (out->max_north == -90)
-            out->max_north = G_dem[indx].max_north;
-
-        else if (G_dem[indx].max_north > out->max_north)
-            out->max_north = G_dem[indx].max_north;
-
-        if (out->min_north == 90)
-            out->min_north = G_dem[indx].min_north;
-
-        else if (G_dem[indx].min_north < out->min_north)
-            out->min_north = G_dem[indx].min_north;
-
-        if (out->max_west == -1)
-            out->max_west = G_dem[indx].max_west;
-
-        else {
-            if (abs(G_dem[indx].max_west - out->max_west) < 180) {
-                if (G_dem[indx].max_west > out->max_west) out->max_west = G_dem[indx].max_west;
-            }
-
-            else {
-                if (G_dem[indx].max_west < out->max_west) out->max_west = G_dem[indx].max_west;
-            }
-        }
-
-        if (out->min_west == 360)
-            out->min_west = G_dem[indx].min_west;
-
-        else {
-            if (fabs(G_dem[indx].min_west - out->min_west) < 180.0) {
-                if (G_dem[indx].min_west < out->min_west) out->min_west = G_dem[indx].min_west;
-            }
-
-            else {
-                if (G_dem[indx].min_west > out->min_west) out->min_west = G_dem[indx].min_west;
-            }
-        }
-
-        return 1;
-    }
-
-    else
-        return found;
-}
-
-char *BZfgets(char *output, BZFILE *bzfd, unsigned length)
-{
-    /* This function returns at most one less than 'length' number
-       of characters from a bz2 compressed file whose file descriptor
-       is pointed to by *bzfd.   A NULL string return indicates an
-       error condition. */
-
-    if (length > BZBUFFER) return NULL;
-    for (size_t i = 0; (unsigned)i < length; i++) {
-        if (bzbuf_empty) {  // Uncompress data into buffer if empty */
-
-            bzbytes_read = (long)BZ2_bzRead(&bzerror, bzfd, buffer, BZBUFFER);
-            buffer[bzbytes_read] = 0;
-            bzbuf_empty = 0;
-            /*
-            if (bzbytes_read < BZBUFFER)
-                      if (bzerror == BZ_STREAM_END)   // if we got EOF during last read
-                            BZ2_bzReadGetUnused (&bzerror, bzfd,void** unused, int* nUnused );
-              */
-            if (bzerror != BZ_OK && bzerror != BZ_STREAM_END) return (NULL);
-        }
-        if (!bzbuf_empty) {  // Build string from buffer if not empty
-            output[i] = buffer[bzbuf_pointer++];
-
-            if (bzbuf_pointer >= bzbytes_read) {
-                bzbuf_pointer = 0L;
-                bzbuf_empty = 1;
-            }
-
-            if (output[i] == '\n') output[++i] = 0;
-
-            if (output[i] == 0) break;
-        }
-    }
-    return (output);
-}
-
-int LoadSDF_BZ(char *name, struct output *out)
-{
-    /* This function reads Bzip2 ncompressed ss Data Files (.sdf.bz2)
-       containing digital elevation model data into memory.
-       Elevation data, maximum and minimum elevations, and
-       quadrangle limits are stored in the first available
-       dem[] structure.
-       NOTE: On error, this function returns a negative errno */
-
-    int x, y, found, data = 0, indx, minlat, minlon, maxlat, maxlon, j, success, pos;
-    char free_page = 0, line[20], jline[20], sdf_file[255], path_plus_name[PATH_MAX], bzline[20], *posn;
-
-    FILE *fd;
-    BZFILE *bzfd;
-
-    for (x = 0; name[x] != '.' && name[x] != 0 && x < 246; x++) sdf_file[x] = name[x];
-
-    sdf_file[x] = 0;
-
-    /* Parse filename for minimum latitude and longitude values */
-
-    if (sscanf(sdf_file, "%d:%d:%d:%d", &minlat, &maxlat, &minlon, &maxlon) != 4) return -EINVAL;
-
-    sdf_file[x] = '.';
-    sdf_file[x + 1] = 's';
-    sdf_file[x + 2] = 'd';
-    sdf_file[x + 3] = 'f';
-    sdf_file[x + 4] = '.';
-    sdf_file[x + 5] = 'b';
-    sdf_file[x + 6] = 'z';
-    sdf_file[x + 7] = '2';
-    sdf_file[x + 8] = 0;
-
-    /* Is it already in memory? */
-
-    for (indx = 0, found = 0; indx < MAXPAGES && found == 0; indx++) {
-        if (minlat == G_dem[indx].min_north && minlon == G_dem[indx].min_west && maxlat == G_dem[indx].max_north &&
-            maxlon == G_dem[indx].max_west)
-            found = 1;
-    }
-
-    /* Is room available to load it? */
-
-    if (found == 0) {
-        for (indx = 0, free_page = 0; indx < MAXPAGES && free_page == 0; indx++)
-            if (G_dem[indx].max_north == -90) free_page = 1;
-    }
-
-    indx--;
-
-    if (free_page && found == 0 && indx >= 0 && indx < MAXPAGES) {
-        /* Search for SDF file in current working directory first */
-
-        strncpy(path_plus_name, sdf_file, sizeof(path_plus_name) - 1);
-
-        success = 0;
-        fd = fopen(path_plus_name, "rb");
-        bzfd = BZ2_bzReadOpen(&bzerror, fd, 0, 0, NULL, 0);
-
-        if (fd != NULL && bzerror == BZ_OK)
-            success = 1;
-        else {
-            /* Next, try loading SDF file from path specified
-               in $HOME/.ss_path file or by -d argument */
-
-            strncpy(path_plus_name, G_sdf_path, sizeof(path_plus_name) - 1);
-            strncat(path_plus_name, sdf_file, sizeof(path_plus_name) - 1);
-            fd = fopen(path_plus_name, "rb");
-            bzfd = BZ2_bzReadOpen(&bzerror, fd, 0, 0, NULL, 0);
-            if (fd != NULL && bzerror == BZ_OK) success = 1;
-        }
-        if (!success) return -errno;
-
-        if (G_debug == 1) {
-            fprintf(stderr, "Decompressing \"%s\" into page %d...\n", path_plus_name, indx + 1);
-            fflush(stderr);
-        }
-
-        pos = EOF;
-        bzbuf_empty = 1;
-        bzbuf_pointer = bzbytes_read = 0L;
-
-        pos = sscanf(BZfgets(bzline, bzfd, 19), "%f", &G_dem[indx].max_west);
-        if (bzerror != BZ_OK || pos == EOF) return -errno;
-
-        pos = sscanf(BZfgets(bzline, bzfd, 19), "%f", &G_dem[indx].min_north);
-        if (bzerror != BZ_OK || pos == EOF) return -errno;
-
-        pos = sscanf(BZfgets(bzline, bzfd, 19), "%f", &G_dem[indx].min_west);
-        if (bzerror != BZ_OK || pos == EOF) return -errno;
-
-        pos = sscanf(BZfgets(bzline, bzfd, 19), "%f", &G_dem[indx].max_north);
-        if (bzerror != BZ_OK || pos == EOF) return -errno;
-
-        G_dem[indx].data = new short[IPPD * IPPD];
-        /*
-           Here X lines of DEM will be read until IPPD is reached.
-           Each .sdf tile contains 1200x1200 = 1.44M 'points'
-           Each point is sampled for 1200 resolution!
-         */
-        posn = NULL;
-        for (x = 0; x < G_ippd; x++) {
-            for (y = 0; y < G_ippd; y++) {
-                /*for (j = 0; j < G_jgets; j++) {
-                    posn = BZfgets(jline, bzfd, 19);
-                    if ((bzerror != BZ_STREAM_END && bzerror != BZ_OK) || posn == NULL) return -EIO;
-                }*/
-
-                posn = BZfgets(line, bzfd, 19);
-                if ((bzerror != BZ_STREAM_END && bzerror != BZ_OK) || posn == NULL) return -EIO;
-                data = atoi(line);
-
-                G_dem[indx].data[DEM_INDEX(G_dem[indx].ippd, x, y)] = data;
-
-                if (data > G_dem[indx].max_el) G_dem[indx].max_el = data;
-
-                if (data < G_dem[indx].min_el) G_dem[indx].min_el = data;
-            }
-
-            if (G_ippd == 600) {
-                for (j = 0; j < IPPD; j++) {
-                    posn = BZfgets(jline, bzfd, 19);
-                    if ((bzerror != BZ_STREAM_END && bzerror != BZ_OK) || posn == NULL) return -EIO;
-                }
-            }
-            if (G_ippd == 300) {
-                for (j = 0; j < IPPD; j++) {
-                    posn = BZfgets(jline, bzfd, 19);
-                    if ((bzerror != BZ_STREAM_END && bzerror != BZ_OK) || posn == NULL) return -EIO;
-                    posn = BZfgets(jline, bzfd, 19);
-                    if ((bzerror != BZ_STREAM_END && bzerror != BZ_OK) || posn == NULL) return -EIO;
-                    posn = BZfgets(jline, bzfd, 19);
-                    if ((bzerror != BZ_STREAM_END && bzerror != BZ_OK) || posn == NULL) return -EIO;
-                }
-            }
-        }
-
-        BZ2_bzReadClose(&bzerror, bzfd);
-        fclose(fd);
-
-        if (G_dem[indx].min_el < out->min_elevation) out->min_elevation = G_dem[indx].min_el;
-
-        if (G_dem[indx].max_el > out->max_elevation) out->max_elevation = G_dem[indx].max_el;
-
-        if (out->max_north == -90)
-            out->max_north = G_dem[indx].max_north;
-
-        else if (G_dem[indx].max_north > out->max_north)
-            out->max_north = G_dem[indx].max_north;
-
-        if (out->min_north == 90)
-            out->min_north = G_dem[indx].min_north;
-
-        else if (G_dem[indx].min_north < out->min_north)
-            out->min_north = G_dem[indx].min_north;
-
-        if (out->max_west == -1)
-            out->max_west = G_dem[indx].max_west;
-
-        else {
-            if (abs(G_dem[indx].max_west - out->max_west) < 180) {
-                if (G_dem[indx].max_west > out->max_west) out->max_west = G_dem[indx].max_west;
-            }
-
-            else {
-                if (G_dem[indx].max_west < out->max_west) out->max_west = G_dem[indx].max_west;
-            }
-        }
-
-        if (out->min_west == 360)
-            out->min_west = G_dem[indx].min_west;
-
-        else {
-            if (fabs(G_dem[indx].min_west - out->min_west) < 180.0) {
-                if (G_dem[indx].min_west < out->min_west) out->min_west = G_dem[indx].min_west;
-            }
-
-            else {
-                if (G_dem[indx].min_west > out->min_west) out->min_west = G_dem[indx].min_west;
-            }
-        }
-
-        return 1;
-    }
-
-    else
-        return 0;
-}
-
-char *GZfgets(char *output, gzFile gzfd, unsigned length)
-{
-    /* This function returns at most one less than 'length' number
-       of characters from a Gzip compressed file whose file descriptor
-       is pointed to by gzfd.   A NULL string return indicates an
-       error condition. */
-
-    const char *errmsg;
-
-    if (length > GZBUFFER - 2) return NULL;
-
-    for (size_t i = 0; (unsigned)i < length; i++) {
-        if (gzbuf_empty) {  // Uncompress data into buffer if empty */
-
-            gzbytes_read = (long)gzread(gzfd, buffer, (unsigned)GZBUFFER - 2);
-            errmsg = gzerror(gzfd, &gzerr);
-
-            buffer[gzbytes_read] = 0;
-            gzbuf_empty = 0;
-
-            if (gzerr != Z_OK && gzerr != Z_STREAM_END) return (NULL);
-
-            if (gzbytes_read < GZBUFFER - 2) {
-                if (gzeof(gzfd))
-                    gzclearerr(gzfd);
-                else
-                    return (NULL);
-            }
-        }
-        if (!gzbuf_empty) {  // Build string from buffer if not empty
-            output[i] = buffer[gzbuf_pointer++];
-
-            if (gzbuf_pointer >= gzbytes_read) {
-                errmsg = gzerror(gzfd, &gzerr);
-                gzbuf_pointer = 0L;
-                gzbuf_empty = 1;
-            }
-
-            if (output[i] == '\n') output[++i] = 0;
-
-            if (output[i] == 0) break;
-        }
-    }
-    if (G_debug && (errmsg != NULL) && (gzerr != Z_OK && gzerr != Z_STREAM_END)) {
-        fprintf(stderr, "GZfgets: gzerr = %d, errmsg = [%s]\n", gzerr, errmsg);
-        fflush(stderr);
-    }
-    return (output);
-}
-
-int LoadSDF_GZ(char *name, struct output *out)
-{
-    /* This function reads Gzip compressed ss Data Files (.sdf.gz)
-       containing digital elevation model data into memory.
-       Elevation data, maximum and minimum elevations, and
-       quadrangle limits are stored in the first available
-       dem[] structure.
-       NOTE: On error, this function returns a negative errno */
-
-    int x, y, found, data = 0, indx, minlat, minlon, maxlat, maxlon, j, success, pos;
-    char free_page = 0, line[20], jline[20], sdf_file[255], path_plus_name[PATH_MAX], gzline[20], *posn;
-    const char *errmsg;
-
-    gzFile gzfd;
-
-    for (x = 0; name[x] != '.' && name[x] != 0 && x < 247; x++) sdf_file[x] = name[x];
-
-    sdf_file[x] = 0;
-
-    /* Parse filename for minimum latitude and longitude values */
-
-    if (sscanf(sdf_file, "%d:%d:%d:%d", &minlat, &maxlat, &minlon, &maxlon) != 4) return -EINVAL;
-
-    sdf_file[x] = '.';
-    sdf_file[x + 1] = 's';
-    sdf_file[x + 2] = 'd';
-    sdf_file[x + 3] = 'f';
-    sdf_file[x + 4] = '.';
-    sdf_file[x + 5] = 'g';
-    sdf_file[x + 6] = 'z';
-    sdf_file[x + 7] = 0;
-
-    /* Is it already in memory? */
-
-    for (indx = 0, found = 0; indx < MAXPAGES && found == 0; indx++) {
-        if (minlat == G_dem[indx].min_north && minlon == G_dem[indx].min_west && maxlat == G_dem[indx].max_north &&
-            maxlon == G_dem[indx].max_west)
-            found = 1;
-    }
-
-    /* Is room available to load it? */
-
-    if (found == 0) {
-        for (indx = 0, free_page = 0; indx < MAXPAGES && free_page == 0; indx++)
-            if (G_dem[indx].max_north == -90) free_page = 1;
-    }
-
-    indx--;
-
-    if (free_page && found == 0 && indx >= 0 && indx < MAXPAGES) {
-        /* Search for SDF file in current working directory first */
-
-        strncpy(path_plus_name, sdf_file, sizeof(path_plus_name) - 1);
-
-        success = 0;
-        gzfd = gzopen(path_plus_name, "rb");
-
-        if (gzfd != NULL)
-            success = 1;
-        else {
-            /* Next, try loading SDF file from path specified
-               in $HOME/.ss_path file or by -d argument */
-
-            strncpy(path_plus_name, G_sdf_path, sizeof(path_plus_name) - 1);
-            strncat(path_plus_name, sdf_file, sizeof(path_plus_name) - 1);
-            gzfd = gzopen(path_plus_name, "rb");
-
-            if (gzfd != NULL) success = 1;
-        }
-        if (!success) return -errno;
-
-        if (gzbuffer(gzfd, GZBUFFER))  // Allocate 32K buffer
-            return -EIO;
-
-        if (G_debug == 1) {
-            fprintf(stderr, "Decompressing \"%s\" into page %d...\n", path_plus_name, indx + 1);
-            fflush(stderr);
-        }
-
-        pos = EOF;
-        gzbuf_empty = 1;
-        gzbuf_pointer = gzbytes_read = 0L;
-
-        pos = sscanf(GZfgets(gzline, gzfd, 19), "%f", &G_dem[indx].max_west);
-        errmsg = gzerror(gzfd, &gzerr);
-        if (gzerr != Z_OK || pos == EOF) return -errno;
-
-        pos = sscanf(GZfgets(gzline, gzfd, 19), "%f", &G_dem[indx].min_north);
-        errmsg = gzerror(gzfd, &gzerr);
-        if (gzerr != Z_OK || pos == EOF) return -errno;
-
-        pos = sscanf(GZfgets(gzline, gzfd, 19), "%f", &G_dem[indx].min_west);
-        errmsg = gzerror(gzfd, &gzerr);
-        if (gzerr != Z_OK || pos == EOF) return -errno;
-
-        pos = sscanf(GZfgets(gzline, gzfd, 19), "%f", &G_dem[indx].max_north);
-        errmsg = gzerror(gzfd, &gzerr);
-        if (gzerr != Z_OK || pos == EOF) return -errno;
-
-        if (G_debug && (errmsg != NULL) && (gzerr != Z_OK && gzerr != Z_STREAM_END)) {
-            fprintf(stderr, "LoadSDF_GZ: gzerr = %d, errmsg = [%s]\n", gzerr, errmsg);
-            fflush(stderr);
-        }
-
-        G_dem[indx].data = new short[IPPD * IPPD];
-        /*
-           Here X lines of DEM will be read until IPPD is reached.
-           Each .sdf tile contains 1200x1200 = 1.44M 'points'
-           Each point is sampled for 1200 resolution!
-         */
-        posn = NULL;
-        for (x = 0; x < G_ippd; x++) {
-            for (y = 0; y < G_ippd; y++) {
-                /*for (j = 0; j < G_jgets; j++) {
-                    posn = GZfgets(jline, gzfd, 19);
-                    errmsg = gzerror(gzfd, &gzerr);
-                    if ((gzerr != Z_STREAM_END && gzerr != Z_OK) || posn == NULL) return -EIO;
-                }*/
-
-                posn = GZfgets(line, gzfd, 19);
-                errmsg = gzerror(gzfd, &gzerr);
-                if ((gzerr != Z_STREAM_END && gzerr != Z_OK) || posn == NULL) return -EIO;
-
-                data = atoi(line);
-
-                G_dem[indx].data[DEM_INDEX(G_dem[indx].ippd, x, y)] = data;
-
-                if (data > G_dem[indx].max_el) G_dem[indx].max_el = data;
-
-                if (data < G_dem[indx].min_el) G_dem[indx].min_el = data;
-            }
-
-            if (G_ippd == 600) {
-                for (j = 0; j < IPPD; j++) {
-                    posn = GZfgets(jline, gzfd, 19);
-                    errmsg = gzerror(gzfd, &gzerr);
-                    if ((gzerr != Z_STREAM_END && gzerr != Z_OK) || posn == NULL) return -EIO;
-                }
-            }
-            if (G_ippd == 300) {
-                for (j = 0; j < IPPD; j++) {
-                    posn = GZfgets(jline, gzfd, 19);
-                    errmsg = gzerror(gzfd, &gzerr);
-                    if ((gzerr != Z_STREAM_END && gzerr != Z_OK) || posn == NULL) return -EIO;
-                    posn = GZfgets(jline, gzfd, 19);
-                    errmsg = gzerror(gzfd, &gzerr);
-                    if ((gzerr != Z_STREAM_END && gzerr != Z_OK) || posn == NULL) return -EIO;
-                    posn = GZfgets(jline, gzfd, 19);
-                    errmsg = gzerror(gzfd, &gzerr);
-                    if ((gzerr != Z_STREAM_END && gzerr != Z_OK) || posn == NULL) return -EIO;
-                }
-            }
-        }
-
-        gzclose_r(gzfd);  // close for reading (avoids write code)
-
-        if (G_dem[indx].min_el < out->min_elevation) out->min_elevation = G_dem[indx].min_el;
-
-        if (G_dem[indx].max_el > out->max_elevation) out->max_elevation = G_dem[indx].max_el;
-
-        if (out->max_north == -90)
-            out->max_north = G_dem[indx].max_north;
-
-        else if (G_dem[indx].max_north > out->max_north)
-            out->max_north = G_dem[indx].max_north;
-
-        if (out->min_north == 90)
-            out->min_north = G_dem[indx].min_north;
-
-        else if (G_dem[indx].min_north < out->min_north)
-            out->min_north = G_dem[indx].min_north;
-
-        if (out->max_west == -1)
-            out->max_west = G_dem[indx].max_west;
-
-        else {
-            if (abs(G_dem[indx].max_west - out->max_west) < 180) {
-                if (G_dem[indx].max_west > out->max_west) out->max_west = G_dem[indx].max_west;
-            }
-
-            else {
-                if (G_dem[indx].max_west < out->max_west) out->max_west = G_dem[indx].max_west;
-            }
-        }
-
-        if (out->min_west == 360)
-            out->min_west = G_dem[indx].min_west;
-
-        else {
-            if (fabs(G_dem[indx].min_west - out->min_west) < 180.0) {
-                if (G_dem[indx].min_west < out->min_west) out->min_west = G_dem[indx].min_west;
-            }
-
-            else {
-                if (G_dem[indx].min_west > out->min_west) out->min_west = G_dem[indx].min_west;
-            }
-        }
-
-        return 1;
-    }
-
-    else
-        return 0;
-}
-
 int LoadSDF(char *name, struct output *out)
 {
     /* This function loads the requested SDF file from the filesystem.
@@ -1426,8 +768,8 @@ int LoadPAT(char *az_filename, char *el_filename, struct LR *LR)
 
         if (pointer != NULL) *pointer = 0;
 
-        if (antenna_rotation != -1)  // If cmdline override
-            rotation = (float)antenna_rotation;
+        if (LR->antenna_rotation != -1)  // If cmdline override
+            rotation = (float)LR->antenna_rotation;
         else
             sscanf(string, "%f", &rotation);
 
@@ -1569,14 +911,14 @@ int LoadPAT(char *az_filename, char *el_filename, struct LR *LR)
 
         sscanf(string, "%f %f", &mechanical_tilt, &tilt_azimuth);
 
-        if (antenna_downtilt != 99.0) {      // If Cmdline override
-            if (antenna_dt_direction == -1)  // dt_dir not specified
-                tilt_azimuth = rotation;     // use rotation value
-            mechanical_tilt = (float)antenna_downtilt;
+        if (LR->antenna_downtilt != 99.0) {      // If Cmdline override
+            if (LR->antenna_dt_direction == -1)  // dt_dir not specified
+                tilt_azimuth = rotation;         // use rotation value
+            mechanical_tilt = (float)LR->antenna_downtilt;
         }
 
-        if (antenna_dt_direction != -1)  // If Cmdline override
-            tilt_azimuth = (float)antenna_dt_direction;
+        if (LR->antenna_dt_direction != -1)  // If Cmdline override
+            tilt_azimuth = (float)LR->antenna_dt_direction;
 
         if (G_debug) {
             fprintf(stderr, "Antenna Pattern Mechamical Downtilt = %f\n", mechanical_tilt);
