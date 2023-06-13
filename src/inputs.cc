@@ -64,6 +64,7 @@ int loadClutter(char *filename, double radius, struct site tx)
         if (G_debug) {
             fprintf(stderr, "\nError Loading clutter file, unsupported resolution %d x %d.\n", w, h);
             fflush(stderr);
+            fclose(fd);
         }
         return 0;  // can't work with this yet
     }
@@ -494,7 +495,7 @@ int LoadSDF_BSDF(char *name)
 
     int fd;
 
-    for (x = 0; name[x] != '.' && name[x] != 0 && x < 250; x++) sdf_file[x] = name[x];
+    for (x = 0; name[x] != '.' && name[x] != 0 && x < 249; x++) sdf_file[x] = name[x];
 
     sdf_file[x] = 0;
 
@@ -830,7 +831,7 @@ int LoadSDF_BZ(char *name)
     FILE *fd;
     BZFILE *bzfd;
 
-    for (x = 0; name[x] != '.' && name[x] != 0 && x < 247; x++) sdf_file[x] = name[x];
+    for (x = 0; name[x] != '.' && name[x] != 0 && x < 246; x++) sdf_file[x] = name[x];
 
     sdf_file[x] = 0;
 
@@ -2279,7 +2280,10 @@ int LoadUDT(char *filename)
 
     if ((fd1 = fopen(filename, "r")) == NULL) return errno;
 
-    if ((fd = mkstemp(tempname)) == -1) return errno;
+    if ((fd = mkstemp(tempname)) == -1) {
+        fclose(fd1);
+        return errno;
+    };
 
     if ((fd2 = fdopen(fd, "w")) == NULL) {
         fclose(fd1);
