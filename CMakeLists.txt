@@ -25,6 +25,14 @@ add_custom_target(
   ${ALL_SOURCE_FILES}
 )
 
+add_custom_target(
+  check-format
+  COMMAND clang-format
+  --dry-run
+  --Werror
+  ${ALL_SOURCE_FILES}
+)
+
 ##########################################################################
 # Common external libraries                                              #
 ##########################################################################

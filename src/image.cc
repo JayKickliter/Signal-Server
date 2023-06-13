@@ -133,7 +133,7 @@ void image_free(image_ctx_t *ctx)
         DISPATCH_TABLE(ctx)->free(ctx);
     }
     if (ctx->canvas != NULL) free(ctx->canvas);
-    if(ctx->_dt != NULL) free(ctx->_dt);
+    if (ctx->_dt != NULL) free(ctx->_dt);
 }
 
 /*

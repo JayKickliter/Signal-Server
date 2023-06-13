@@ -40,3 +40,5 @@ jobs:
           -o cleveland             \
           -R 20                    \
           -pm 4
+      - name: Check formatting
+        run: make -C ${{github.workspace}}/build check-format
