@@ -2210,7 +2210,8 @@ int LoadTopoData(double max_lon, double min_lon, double max_lat, double min_lat)
 
     int x, y, width, ymin, ymax;
     int success;
-    char basename[255], string[258];
+    char basename[255] = {0};
+    char string[258] = {0};
 
     width = ReduceAngle(max_lon - min_lon);
 
