@@ -125,6 +125,7 @@ int image_write(image_ctx_t *ctx, FILE *fd)
     if (ctx->initialized != 1) return EINVAL;
     return DISPATCH_TABLE(ctx)->write(ctx, fd);
 }
+
 void image_free(image_ctx_t *ctx)
 {
     if (ctx->initialized != 1) return;
@@ -132,6 +133,7 @@ void image_free(image_ctx_t *ctx)
         DISPATCH_TABLE(ctx)->free(ctx);
     }
     if (ctx->canvas != NULL) free(ctx->canvas);
+    if(ctx->_dt != NULL) free(ctx->_dt);
 }
 
 /*
