@@ -4,6 +4,7 @@
 #include <pthread.h>
 #include <stdio.h>
 
+#include <limits>
 #include <vector>
 
 #include "../main.hh"
@@ -527,7 +528,7 @@ void PlotPropPath(std::vector<dem_output> *v, struct site source, struct site de
 
             temp.lat = G_path.lat[y];
             temp.lon = G_path.lon[y];
-            temp.alt = std::numeric_limits::min<float>();
+            temp.alt = std::numeric_limits<float>::min();
 
             azimuth = (Azimuth(source, temp));
 
