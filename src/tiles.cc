@@ -24,7 +24,7 @@ double haversine_formula(double th1, double ph1, double th2, double ph2)
     return asin(sqrt(dx * dx + dy * dy + dz * dz) / 2) * 2 * R;
 }
 
-int tile_load_lidar(tile_t *tile, char *filename)
+int tile_load_lidar(tile_t *tile, char *filename, struct output *out)
 {
     FILE *fd;
     char line[MAX_LINE];
@@ -65,8 +65,8 @@ int tile_load_lidar(tile_t *tile, char *filename)
     tile->xur = tile->xll + (tile->cellsize * tile->width);
     tile->yur = tile->yll + (tile->cellsize * tile->height);
 
-    if (tile->xur > G_eastoffset) G_eastoffset = tile->xur;
-    if (tile->xll < G_westoffset) G_westoffset = tile->xll;
+    if (tile->xur > out->eastoffset) out->eastoffset = tile->xur;
+    if (tile->xll < out->westoffset) out->westoffset = tile->xll;
 
     if (G_debug)
         fprintf(stderr, "%d, %d, %.7f, %.7f, %.7f, %.7f, %.7f\n", tile->width, tile->height, tile->xll, tile->yll,

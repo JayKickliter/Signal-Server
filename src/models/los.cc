@@ -278,7 +278,8 @@ void PlotLOSPath(struct output *out, struct site source, struct site destination
                 cos_angle = -1.0;
             }
 
-            test_alt = G_earthradius + (out->path.elevation[x] == 0.0 ? out->path.elevation[x] : out->path.elevation[x] + LR.clutter);
+            test_alt =
+                G_earthradius + (out->path.elevation[x] == 0.0 ? out->path.elevation[x] : out->path.elevation[x] + LR.clutter);
             test_alt2 = test_alt * test_alt;
 
             /* Calculate the cosine of the elevation between
@@ -351,7 +352,7 @@ void PlotPropPath(struct output *out, struct site source, struct site destinatio
 
     for (x = 1; x < out->path.length - 1; x++)
         out->elev[x + 2] = (out->path.elevation[x] == 0.0 ? out->path.elevation[x] * METERS_PER_FOOT
-                                                    : (LR.clutter + out->path.elevation[x]) * METERS_PER_FOOT);
+                                                          : (LR.clutter + out->path.elevation[x]) * METERS_PER_FOOT);
 
     /* Copy ending points without clutter */
 
@@ -460,9 +461,9 @@ void PlotPropPath(struct output *out, struct site source, struct site destinatio
                     break;
                 case 3:
                     // HATA 1, 2 & 3
-                    loss =
-                        HATApathLoss(LR.frq_mhz, source.alt * METERS_PER_FOOT,
-                                     (out->path.elevation[y] * METERS_PER_FOOT) + (destination.alt * METERS_PER_FOOT), dkm, pmenv);
+                    loss = HATApathLoss(LR.frq_mhz, source.alt * METERS_PER_FOOT,
+                                        (out->path.elevation[y] * METERS_PER_FOOT) + (destination.alt * METERS_PER_FOOT), dkm,
+                                        pmenv);
                     break;
                 case 4:
                     // ECC33
@@ -472,15 +473,15 @@ void PlotPropPath(struct output *out, struct site source, struct site destinatio
                     break;
                 case 5:
                     // SUI
-                    loss =
-                        SUIpathLoss(LR.frq_mhz, source.alt * METERS_PER_FOOT,
-                                    (out->path.elevation[y] * METERS_PER_FOOT) + (destination.alt * METERS_PER_FOOT), dkm, pmenv);
+                    loss = SUIpathLoss(LR.frq_mhz, source.alt * METERS_PER_FOOT,
+                                       (out->path.elevation[y] * METERS_PER_FOOT) + (destination.alt * METERS_PER_FOOT), dkm,
+                                       pmenv);
                     break;
                 case 6:
                     // COST231-Hata
                     loss = COST231pathLoss(LR.frq_mhz, source.alt * METERS_PER_FOOT,
-                                           (out->path.elevation[y] * METERS_PER_FOOT) + (destination.alt * METERS_PER_FOOT), dkm,
-                                           pmenv);
+                                           (out->path.elevation[y] * METERS_PER_FOOT) + (destination.alt * METERS_PER_FOOT),
+                                           dkm, pmenv);
                     break;
                 case 7:
                     // ITU-R P.525 Free space path loss
@@ -488,16 +489,17 @@ void PlotPropPath(struct output *out, struct site source, struct site destinatio
                     break;
                 case 8:
                     // ITWOM 3.0
-                    point_to_point(
-                        source.alt * METERS_PER_FOOT, destination.alt * METERS_PER_FOOT, LR.eps_dielect, LR.sgm_conductivity,
+                    point_to_point(source.alt * METERS_PER_FOOT, destination.alt * METERS_PER_FOOT, LR.eps_dielect,
+                                   LR.sgm_conductivity,
 
-                        LR.eno_ns_surfref, LR.frq_mhz, LR.radio_climate, LR.pol, LR.conf, LR.rel, loss, strmode, out->elev, errnum);
+                                   LR.eno_ns_surfref, LR.frq_mhz, LR.radio_climate, LR.pol, LR.conf, LR.rel, loss, strmode,
+                                   out->elev, errnum);
                     break;
                 case 9:
                     // Ericsson
                     loss = EricssonpathLoss(LR.frq_mhz, source.alt * METERS_PER_FOOT,
-                                            (out->path.elevation[y] * METERS_PER_FOOT) + (destination.alt * METERS_PER_FOOT), dkm,
-                                            pmenv);
+                                            (out->path.elevation[y] * METERS_PER_FOOT) + (destination.alt * METERS_PER_FOOT),
+                                            dkm, pmenv);
                     break;
                 case 10:
                     // Plane earth
@@ -533,8 +535,8 @@ void PlotPropPath(struct output *out, struct site source, struct site destinatio
             azimuth = (Azimuth(source, temp));
 
             if (fd != NULL)
-                buffer_offset += sprintf(fd_buffer + buffer_offset, "%.7f, %.7f, %.3f, %.3f, ", out->path.lat[y], out->path.lon[y],
-                                         azimuth, elevation);
+                buffer_offset += sprintf(fd_buffer + buffer_offset, "%.7f, %.7f, %.3f, %.3f, ", out->path.lat[y],
+                                         out->path.lon[y], azimuth, elevation);
 
             /* If ERP==0, write path loss to alphanumeric
                output file.  Otherwise, write field strength
@@ -622,19 +624,21 @@ void PlotPropPath(struct output *out, struct site source, struct site destinatio
 
             /* Mark this point as having been analyzed */
 
-            PutMask(out, out->path.lat[y], out->path.lon[y], (GetMask(out, out->path.lat[y], out->path.lon[y]) & 7) + (mask_value << 3));
+            PutMask(out, out->path.lat[y], out->path.lon[y],
+                    (GetMask(out, out->path.lat[y], out->path.lon[y]) & 7) + (mask_value << 3));
         }
     }
 
-    if (out->path.lat[y] > G_cropLat) G_cropLat = out->path.lat[y];
+    if (out->path.lat[y] > out->cropLat) out->cropLat = out->path.lat[y];
 
-    if (y > G_cropLon) G_cropLon = y;
+    if (y > out->cropLon) out->cropLon = y;
 
     // if(cropLon>180)
     //	cropLon-=360;
 }
 
-void PlotLOSMap(struct output *out, struct site source, double altitude, char *plo_filename, bool use_threads, const struct LR LR)
+void PlotLOSMap(struct output *out, struct site source, double altitude, char *plo_filename, bool use_threads,
+                const struct LR LR)
 {
     /* This function performs a 360 degree sweep around the
        transmitter site (source location), and plots the
@@ -711,8 +715,8 @@ void PlotLOSMap(struct output *out, struct site source, double altitude, char *p
     }
 }
 
-void PlotPropagation(struct output *out, struct site source, double altitude, char *plo_filename, int propmodel,
-                     int knifeedge, int haf, int pmenv, bool use_threads, const struct LR LR)
+void PlotPropagation(struct output *out, struct site source, double altitude, char *plo_filename, int propmodel, int knifeedge,
+                     int haf, int pmenv, bool use_threads, const struct LR LR)
 {
     static __thread unsigned char mask_value = 1;
     FILE *fd = NULL;
@@ -832,8 +836,8 @@ void PlotPath(struct output *out, struct site source, struct site destination, c
 
             for (x = y, block = 0; x >= 0 && block == 0; x--) {
                 distance = FEET_PER_MILE * (out->path.distance[y] - out->path.distance[x]);
-                test_alt =
-                    G_earthradius + (out->path.elevation[x] == 0.0 ? out->path.elevation[x] : out->path.elevation[x] + LR.clutter);
+                test_alt = G_earthradius +
+                           (out->path.elevation[x] == 0.0 ? out->path.elevation[x] : out->path.elevation[x] + LR.clutter);
 
                 cos_test_angle =
                     ((rx_alt * rx_alt) + (distance * distance) - (test_alt * test_alt)) / (2.0 * rx_alt * distance);
