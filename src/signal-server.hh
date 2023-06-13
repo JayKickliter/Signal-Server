@@ -28,7 +28,8 @@ void free_elev(void);
 void free_path(void);
 void alloc_elev(void);
 void alloc_path(void);
-void alloc_dem(void);
-void do_allocs(void);
+int handle_args(int argc, char *argv[]);
+int scan_stdin();
+const char *version();
 
 #endif /* _MAIN_HH_ */

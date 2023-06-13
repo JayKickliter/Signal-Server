@@ -1,8 +1,7 @@
-add_executable(signalserver
+add_library(sigserve
   image-ppm.cc
   image.cc
   inputs.cc
-  main.cc
   models/cost.cc
   models/ecc33.cc
   models/egli.cc
@@ -15,14 +14,16 @@ add_executable(signalserver
   models/soil.cc
   models/sui.cc
   outputs.cc
+  signal-server.cc
   tiles.cc
 )
 
+add_executable(signalserver
+  main.cc
+)
+
 target_link_libraries(signalserver
-  bz2
-  dl
-  pthread
-  z
+  sigserve
 )
 
 # INSTALL target (make install)

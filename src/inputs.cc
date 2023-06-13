@@ -11,7 +11,7 @@
 #include <zlib.h>
 
 #include "common.hh"
-#include "main.hh"
+#include "signal-server.hh"
 #include "tiles.hh"
 
 #define BZBUFFER 65536
