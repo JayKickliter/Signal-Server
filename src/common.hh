@@ -1,6 +1,7 @@
 #ifndef _COMMON_HH_
 #define _COMMON_HH_
 
+#include <tuple>
 #include <vector>
 
 #define GAMMA 2.5
@@ -115,6 +116,12 @@ struct output {
     double field_strength;
     int hottest;
     struct site tx_site[2];
+    std::vector<std::tuple<double, double>> cluttervec;
+    std::vector<std::tuple<double, double>> referencevec;
+    std::vector<std::tuple<double, double>> fresnelvec;
+    std::vector<std::tuple<double, double>> fresnel60vec;
+    std::vector<std::tuple<double, double>> curvaturevec;
+    std::vector<std::tuple<double, double>> profilevec;
 };
 
 struct region {

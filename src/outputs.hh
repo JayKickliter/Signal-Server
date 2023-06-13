@@ -8,7 +8,7 @@ void DoRxdPwr(struct output *out, char *filename, unsigned char kml, unsigned ch
 void DoLOS(struct output *out, char *filename, unsigned char kml, unsigned char ngs, struct site *xmtr);
 void PathReport(struct site source, struct site destination, char *name, char graph_it, int propmodel, int pmenv, double rxGain,
                 struct output *out, const struct LR LR);
-void SeriesData(struct site source, struct site destination, char *name, unsigned char fresnel_plot, unsigned char normalised,
+void SeriesData(struct site source, struct site destination, unsigned char fresnel_plot, unsigned char normalised,
                 struct output *out, const struct LR LR);
 
 #endif /* _OUTPUT_HH_ */
