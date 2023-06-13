@@ -31,6 +31,7 @@ double version = 3.3;
 #include <unistd.h>
 #include <zlib.h>
 
+#include <limits>
 #include <vector>
 
 #include "common.hh"
@@ -420,7 +421,7 @@ int AddElevation(double lat, double lon, double height, int size)
        in memory.  Does nothing and returns 0 for locations
        not found in memory. */
 
-    struct dem *found;
+    struct dem *found = NULL;
     int i, j, x = 0, y = 0;
 
     for (auto &dem : G_dem) {
@@ -630,6 +631,7 @@ void ReadPath(struct site source, struct site destination)
         G_path.lon[c] = lon2;
         tempsite.lat = lat2;
         tempsite.lon = lon2;
+        tempsite.alt = std::numeric_limits<float>::min();
         G_path.elevation[c] = GetElevation(tempsite);
         // fix for tile gaps in multi-tile LIDAR plots
         if (G_path.elevation[c] == 0 && G_path.elevation[c - 1] > 10) G_path.elevation[c] = G_path.elevation[c - 1];

@@ -527,6 +527,7 @@ void PlotPropPath(std::vector<dem_output> *v, struct site source, struct site de
 
             temp.lat = G_path.lat[y];
             temp.lon = G_path.lon[y];
+            temp.alt = std::numeric_limits::min<float>();
 
             azimuth = (Azimuth(source, temp));
 
