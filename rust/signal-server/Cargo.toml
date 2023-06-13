@@ -1,0 +1,12 @@
+[package]
+name = "signal-server"
+version = "0.1.0"
+edition = "2021"
+build = "build.rs"
+
+[dependencies]
+anyhow = "*"
+thiserror = "*"
+
+[build-dependencies]
+cmake = "0.1"

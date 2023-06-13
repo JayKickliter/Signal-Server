@@ -951,7 +951,7 @@ void alloc_path(struct path *path)
     path->distance = new double[ARRAYSIZE];
 }
 
-int handle_args(int argc, char *argv[])
+extern "C" int handle_args(int argc, char *argv[])
 {
     /* Scan for command line arguments */
     int x, y, z = 0, propmodel, knifeedge = 0, ppa = 0, normalise = 0, haf = 0, pmenv = 1, result;

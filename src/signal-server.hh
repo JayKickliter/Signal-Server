@@ -3,8 +3,6 @@
 
 #include <stdio.h>
 
-#include <vector>
-
 #include "common.hh"
 
 int ReduceAngle(double angle);
@@ -28,7 +26,7 @@ void free_elev(void);
 void free_path(void);
 void alloc_elev(void);
 void alloc_path(void);
-int handle_args(int argc, char *argv[]);
+extern "C" int handle_args(int argc, char *argv[]);
 int scan_stdin();
 const char *version();
 

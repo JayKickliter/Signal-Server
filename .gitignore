@@ -1,3 +1,4 @@
 *.ppm
 *.hgt
 *.dcf
+target/

@@ -28,5 +28,5 @@ target_link_libraries(signalserver
   png
 )
 
-# INSTALL target (make install)
+install(TARGETS sigserve)
 install(TARGETS signalserver)
