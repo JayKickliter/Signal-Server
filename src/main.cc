@@ -1809,6 +1809,14 @@ int handle_args(int argc, char *argv[])
     }
     fflush(stderr);
 
+    free_path(&out.path);
+    free_elev(&out);
+
+    for (auto &i : out.dem_out) {
+        delete[] i.mask;
+        delete[] i.signal;
+    }
+
     return 0;
 }
 
