@@ -1319,6 +1319,8 @@ int LoadSDF(char *name)
             dem.min_north = minlat;
             dem.min_west = minlon;
             dem.max_north = maxlat;
+            dem.min_el = 0;
+            dem.max_el = 0;
 
             /* Fill DEM with sea-level topography */
             dem.data = new short[IPPD * IPPD];

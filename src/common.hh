@@ -35,7 +35,6 @@ struct dem {
     float max_north;
     float min_west;
     float max_west;
-    long min_x, max_x, min_y, max_y;
     short max_el;
     short min_el;
     short *data;
