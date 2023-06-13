@@ -264,7 +264,7 @@ int GetMask(struct output *out, double lat, double lon)
     /* This function returns the mask bits based on the latitude
        and longitude given. */
     int x = 0, y = 0;
-    struct dem_output *found;
+    struct dem_output *found = NULL;
 
     for (auto &i : out->dem_out) {
         x = (int)rint(G_ppd * (lat - i.min_north));
