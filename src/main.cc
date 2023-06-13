@@ -1737,7 +1737,7 @@ int handle_args(int argc, char *argv[])
         if (propmodel == 2) {  // Model 2 = LOS
             cropping = false;  // TODO: File is written in DoLOS() so this needs moving to PlotPropagation() to allow styling,
                                // cropping etc
-            PlotLOSMap(&v, tx_site[0], altitudeLR, ano_filename, use_threads);
+            PlotLOSMap(&v, tx_site[0], altitudeLR, ano_filename, use_threads, LR);
             DoLOS(&v, mapfile, kml, ngs, tx_site);
         }
         else {

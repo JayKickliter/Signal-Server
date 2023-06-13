@@ -634,7 +634,7 @@ void PlotPropPath(std::vector<dem_output> *v, struct site source, struct site de
     //	cropLon-=360;
 }
 
-void PlotLOSMap(std::vector<dem_output> *v, struct site source, double altitude, char *plo_filename, bool use_threads)
+void PlotLOSMap(std::vector<dem_output> *v, struct site source, double altitude, char *plo_filename, bool use_threads, const struct LR LR)
 {
     /* This function performs a 360 degree sweep around the
        transmitter site (source location), and plots the
@@ -681,6 +681,7 @@ void PlotLOSMap(std::vector<dem_output> *v, struct site source, double altitude,
         range->mask_value = mask_value;
         range->fd = fd;
         range->out = v;
+        range->LR = LR;
 
         if (use_threads)
             beginThread(range);
@@ -776,6 +777,7 @@ void PlotPropagation(std::vector<dem_output> *v, struct site source, double alti
         range->knifeedge = knifeedge;
         range->pmenv = pmenv;
         range->out = v;
+        range->LR = LR;
 
         if (use_threads)
             beginThread(range);
