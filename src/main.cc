@@ -1805,7 +1805,7 @@ int handle_args(int argc, char *argv[])
         PlotPath(&out, out.tx_site[0], out.tx_site[1], 1, LR);
         PathReport(out.tx_site[0], out.tx_site[1], out.tx_site[0].filename, 0, propmodel, pmenv, rxGain, &out, LR);
         // Order flipped for benefit of graph. Makes no difference to data.
-        SeriesData(out.tx_site[1], out.tx_site[0], out.tx_site[0].filename, 1, normalise, &out, LR);
+        SeriesData(out.tx_site[1], out.tx_site[0], 1, normalise, &out, LR);
     }
     fflush(stderr);
 

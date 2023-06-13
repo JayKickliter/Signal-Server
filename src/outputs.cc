@@ -6,6 +6,7 @@
 #include <string.h>
 #include <zlib.h>
 
+#include <tuple>
 #include <vector>
 
 #include "common.hh"
@@ -1412,17 +1413,16 @@ void PathReport(struct site source, struct site destination, char *name, char gr
     }
 }
 
-void SeriesData(struct site source, struct site destination, char *name, unsigned char fresnel_plot, unsigned char normalised,
+void SeriesData(struct site source, struct site destination, unsigned char fresnel_plot, unsigned char normalised,
                 struct output *out, const struct LR LR)
 {
-    int x, y, z;
-    char basename[255], term[30], ext[15], profilename[255], referencename[255], cluttername[255], curvaturename[255],
-        fresnelname[255], fresnel60name[255];
+    int x;
     double a, b, c, height = 0.0, refangle, cangle, maxheight = -100000.0, minheight = 100000.0, lambda = 0.0, f_zone = 0.0,
                     fpt6_zone = 0.0, nm = 0.0, nb = 0.0, ed = 0.0, es = 0.0, r = 0.0, d = 0.0, d1 = 0.0, terrain, azimuth,
                     distance, minterrain = 100000.0, minearth = 100000.0;
     struct site remote;
-    FILE *fd = NULL, *fd1 = NULL, *fd2 = NULL, *fd3 = NULL, *fd4 = NULL, *fd5 = NULL;
+
+    bool has_clutter = false, has_fresnel = false;
 
     ReadPath(destination, source, out);
     azimuth = Azimuth(destination, source);
@@ -1447,27 +1447,12 @@ void SeriesData(struct site source, struct site destination, char *name, unsigne
         nm = (-source.alt - es - nb) / (out->path.distance[out->path.length - 1]);
     }
 
-    strcpy(profilename, name);
-    strcat(profilename, "_profile\0");
-    strcpy(referencename, name);
-    strcat(referencename, "_reference\0");
-    strcpy(cluttername, name);
-    strcat(cluttername, "_clutter\0");
-    strcpy(curvaturename, name);
-    strcat(curvaturename, "_curvature\0");
-    strcpy(fresnelname, name);
-    strcat(fresnelname, "_fresnel\0");
-    strcpy(fresnel60name, name);
-    strcat(fresnel60name, "_fresnel60\0");
-
-    fd = fopen(profilename, "wb");
-    if (LR.clutter > 0.0) fd1 = fopen(cluttername, "wb");
-    fd2 = fopen(referencename, "wb");
-    fd5 = fopen(curvaturename, "wb");
+    if (LR.clutter > 0.0) {
+        has_clutter = true;
+    }
 
     if ((LR.frq_mhz >= 20.0) && (LR.frq_mhz <= 100000.0) && fresnel_plot) {
-        fd3 = fopen(fresnelname, "wb");
-        fd4 = fopen(fresnel60name, "wb");
+        has_fresnel = true;
     }
 
     for (x = 0; x < out->path.length - 1; x++) {
@@ -1512,36 +1497,40 @@ void SeriesData(struct site source, struct site destination, char *name, unsigne
 
         if (LR.metric) {
             if (METERS_PER_FOOT * height > 0) {
-                fprintf(fd, "%.3f %.3f\n", KM_PER_MILE * out->path.distance[x], METERS_PER_FOOT * height);
+                out->profilevec.push_back(std::make_tuple(KM_PER_MILE * out->path.distance[x], METERS_PER_FOOT * height));
             }
 
-            if (fd1 != NULL && x > 0 && x < out->path.length - 2)
-                fprintf(fd1, "%.3f %.3f\n", KM_PER_MILE * out->path.distance[x],
-                        METERS_PER_FOOT * (terrain == 0.0 ? height : (height + LR.clutter)));
+            if (has_clutter && x > 0 && x < out->path.length - 2) {
+                out->cluttervec.push_back(std::make_tuple(KM_PER_MILE * out->path.distance[x],
+                                                          METERS_PER_FOOT * (terrain == 0.0 ? height : (height + LR.clutter))));
+            }
 
-            fprintf(fd2, "%.3f %.3f\n", KM_PER_MILE * out->path.distance[x], METERS_PER_FOOT * r);
-            fprintf(fd5, "%.3f %.3f\n", KM_PER_MILE * out->path.distance[x], METERS_PER_FOOT * (height - terrain));
+            out->referencevec.push_back(std::make_tuple(KM_PER_MILE * out->path.distance[x], METERS_PER_FOOT * r));
+            out->curvaturevec.push_back(
+                std::make_tuple(KM_PER_MILE * out->path.distance[x], METERS_PER_FOOT * (height - terrain)));
         }
 
         else {
-            fprintf(fd, "%.3f %.3f\n", out->path.distance[x], height);
+            out->profilevec.push_back(std::make_tuple(out->path.distance[x], height));
 
-            if (fd1 != NULL && x > 0 && x < out->path.length - 2)
-                fprintf(fd1, "%.3f %.3f\n", out->path.distance[x], (terrain == 0.0 ? height : (height + LR.clutter)));
+            if (has_clutter && x > 0 && x < out->path.length - 2) {
+                out->cluttervec.push_back(
+                    std::make_tuple(out->path.distance[x], (terrain == 0.0 ? height : (height + LR.clutter))));
+            }
 
-            fprintf(fd2, "%.3f %.3f\n", out->path.distance[x], r);
-            fprintf(fd5, "%.3f %.3f\n", out->path.distance[x], height - terrain);
+            out->referencevec.push_back(std::make_tuple(out->path.distance[x], r));
+            out->curvaturevec.push_back(std::make_tuple(out->path.distance[x], height - terrain));
         }
 
-        if ((LR.frq_mhz >= 20.0) && (LR.frq_mhz <= 100000.0) && fresnel_plot) {
+        if (has_fresnel) {
             if (LR.metric) {
-                fprintf(fd3, "%.3f %.3f\n", KM_PER_MILE * out->path.distance[x], METERS_PER_FOOT * f_zone);
-                fprintf(fd4, "%.3f %.3f\n", KM_PER_MILE * out->path.distance[x], METERS_PER_FOOT * fpt6_zone);
+                out->fresnelvec.push_back(std::make_tuple(KM_PER_MILE * out->path.distance[x], METERS_PER_FOOT * f_zone));
+                out->fresnel60vec.push_back(std::make_tuple(KM_PER_MILE * out->path.distance[x], METERS_PER_FOOT * fpt6_zone));
             }
 
             else {
-                fprintf(fd3, "%.3f %.3f\n", out->path.distance[x], f_zone);
-                fprintf(fd4, "%.3f %.3f\n", out->path.distance[x], fpt6_zone);
+                out->fresnelvec.push_back(std::make_tuple(out->path.distance[x], f_zone));
+                out->fresnel60vec.push_back(std::make_tuple(out->path.distance[x], fpt6_zone));
             }
 
             if (f_zone < minheight) minheight = f_zone;
@@ -1564,73 +1553,33 @@ void SeriesData(struct site source, struct site destination, char *name, unsigne
         r = 0.0;
 
     if (LR.metric) {
-        fprintf(fd, "%.3f %.3f", KM_PER_MILE * out->path.distance[out->path.length - 1], METERS_PER_FOOT * r);
-        fprintf(fd2, "%.3f %.3f", KM_PER_MILE * out->path.distance[out->path.length - 1], METERS_PER_FOOT * r);
+        out->profilevec.push_back(std::make_tuple(KM_PER_MILE * out->path.distance[out->path.length - 1], METERS_PER_FOOT * r));
+        out->referencevec.push_back(
+            std::make_tuple(KM_PER_MILE * out->path.distance[out->path.length - 1], METERS_PER_FOOT * r));
     }
 
     else {
-        fprintf(fd, "%.3f %.3f", out->path.distance[out->path.length - 1], r);
-        fprintf(fd2, "%.3f %.3f", out->path.distance[out->path.length - 1], r);
+        out->profilevec.push_back(std::make_tuple(out->path.distance[out->path.length - 1], r));
+        out->referencevec.push_back(std::make_tuple(out->path.distance[out->path.length - 1], r));
     }
 
-    if ((LR.frq_mhz >= 20.0) && (LR.frq_mhz <= 100000.0) && fresnel_plot) {
+    if (has_fresnel) {
         if (LR.metric) {
-            fprintf(fd3, "%.3f %.3f", KM_PER_MILE * out->path.distance[out->path.length - 1], METERS_PER_FOOT * r);
-            fprintf(fd4, "%.3f %.3f", KM_PER_MILE * out->path.distance[out->path.length - 1], METERS_PER_FOOT * r);
+            out->fresnelvec.push_back(
+                std::make_tuple(KM_PER_MILE * out->path.distance[out->path.length - 1], METERS_PER_FOOT * r));
+            out->fresnel60vec.push_back(
+                std::make_tuple(KM_PER_MILE * out->path.distance[out->path.length - 1], METERS_PER_FOOT * r));
         }
 
         else {
-            fprintf(fd3, "%.3f %.3f", out->path.distance[out->path.length - 1], r);
-            fprintf(fd4, "%.3f %.3f", out->path.distance[out->path.length - 1], r);
+            out->fresnelvec.push_back(std::make_tuple(out->path.distance[out->path.length - 1], r));
+            out->fresnel60vec.push_back(std::make_tuple(out->path.distance[out->path.length - 1], r));
         }
     }
 
     if (r > maxheight) maxheight = r;
 
     if (r < minheight) minheight = r;
-
-    fclose(fd);
-
-    if (fd1 != NULL) fclose(fd1);
-
-    fclose(fd2);
-    fclose(fd5);
-
-    if ((LR.frq_mhz >= 20.0) && (LR.frq_mhz <= 100000.0) && fresnel_plot) {
-        fclose(fd3);
-        fclose(fd4);
-    }
-
-    if (name[0] == '.') {
-        strncpy(basename, "profile\0", 8);
-        strncpy(term, "png\0", 4);
-        strncpy(ext, "png\0", 4);
-    }
-
-    else {
-        ext[0] = 0;
-        y = strlen(name);
-        strncpy(basename, name, 254);
-
-        for (x = y - 1; x > 0 && name[x] != '.'; x--)
-            ;
-
-        if (x > 0) {
-            for (z = x + 1; z <= y && (z - (x + 1)) < 10; z++) {
-                ext[z - (x + 1)] = tolower(name[z]);
-                term[z - (x + 1)] = name[z];
-            }
-
-            ext[z - (x + 1)] = 0;
-            term[z - (x + 1)] = 0;
-            basename[x] = 0;
-        }
-
-        if (ext[0] == 0) {
-            strncpy(term, "png\0", 4);
-            strncpy(ext, "png\0", 4);
-        }
-    }
 
     // fprintf(stderr, "\n");
     fflush(stdout);
