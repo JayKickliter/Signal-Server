@@ -1,4 +1,5 @@
 [workspace]
 members = [
-  "rust/signal-server"
+  "rust/app",
+  "rust/signal-server",
 ]

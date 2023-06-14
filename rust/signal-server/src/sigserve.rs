@@ -40,7 +40,7 @@ pub fn call_sigserve(args: &str) -> Result<ffi::Report, SigserveError> {
 }
 
 #[cxx::bridge(namespace = "sigserve_wrapper")]
-mod ffi {
+pub(crate) mod ffi {
     #[derive(Default, Debug)]
     struct Report {
         // common return code
