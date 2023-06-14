@@ -57,6 +57,11 @@ Report handle_args(int argc, char *argv[])
         report.profilevec.push_back(b);
     }
 
+    report.image_data.reserve(out.imagedata.size());
+    for (auto &pixel : out.imagedata) {
+        report.image_data.push_back(pixel);
+    }
+
     return report;
 }
 

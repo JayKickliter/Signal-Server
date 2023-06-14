@@ -1,6 +1,7 @@
 fn main() {
     cxx_build::bridge("src/sigserve.rs")
         .file("src/sigserve.cc")
+        .file("../../src/image-png.cc")
         .file("../../src/image-ppm.cc")
         .file("../../src/image.cc")
         .file("../../src/inputs.cc")
@@ -21,7 +22,11 @@ fn main() {
         .flag_if_supported("-std=c++17")
         .compile("sigserve_wrapper");
 
+    println!("cargo:rustc-link-lib=png");
+
     println!("cargo:rerun-if-changed=../../src/common.hh");
+    println!("cargo:rerun-if-changed=../../src/image-png.cc");
+    println!("cargo:rerun-if-changed=../../src/image-png.hh");
     println!("cargo:rerun-if-changed=../../src/image-ppm.cc");
     println!("cargo:rerun-if-changed=../../src/image-ppm.hh");
     println!("cargo:rerun-if-changed=../../src/image.cc");
