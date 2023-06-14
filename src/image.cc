@@ -14,8 +14,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "image-ppm.hh"
 #include "image-png.hh"
+#include "image-ppm.hh"
 
 int get_dt(image_dispatch_table_t *dt, int format);
 int load_library(image_dispatch_table_t *dt);
@@ -121,10 +121,10 @@ int image_get_pixel(image_ctx_t *ctx, const size_t x, const size_t y, const uint
     if (DISPATCH_TABLE(ctx)->get_pixel != NULL) return DISPATCH_TABLE(ctx)->get_pixel(ctx, x, y, r, g, b, a);
     return ENOSYS;
 }
-int image_write(image_ctx_t *ctx, FILE *fd)
+int image_write(image_ctx_t *ctx, std::vector<char> *out)
 {
     if (ctx->initialized != 1) return EINVAL;
-    return DISPATCH_TABLE(ctx)->write(ctx, fd);
+    return DISPATCH_TABLE(ctx)->write(ctx, out);
 }
 
 void image_free(image_ctx_t *ctx)

@@ -122,6 +122,7 @@ struct output {
     std::vector<std::tuple<double, double>> fresnel60vec;
     std::vector<std::tuple<double, double>> curvaturevec;
     std::vector<std::tuple<double, double>> profilevec;
+    std::vector<char> imagedata;
 };
 
 struct region {

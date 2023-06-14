@@ -40,16 +40,14 @@ int ppm_add_pixel(image_ctx_t *ctx, const uint8_t r, const uint8_t g, const uint
     return 0;
 }
 
-int ppm_write(image_ctx_t *ctx, FILE *fd)
+int ppm_write(image_ctx_t *ctx, std::vector<char> *out)
 {
     size_t written;
     size_t count;
 
     count = ctx->width * ctx->height * RGB_SIZE;
 
-    fprintf(fd, "P6\n%zu %zu\n255\n", ctx->width, ctx->height);
-    written = fwrite(ctx->canvas, sizeof(uint8_t), count, fd);
-    if (written < count) return EPIPE;
+    out->insert(out->begin(), ctx->canvas, ctx->canvas + count);
 
     return 0;
 }

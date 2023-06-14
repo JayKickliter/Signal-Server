@@ -967,7 +967,7 @@ int handle_args(int argc, char *argv[])
 
     unsigned char LRmap = 0, txsites = 0, topomap = 0, geo = 0, kml = 0, area_mode = 0, max_txsites, ngs = 0;
 
-    char mapfile[255], ano_filename[255], clutter_file[255], antenna_file[255];
+    char ano_filename[255], clutter_file[255], antenna_file[255];
     char *az_filename, *el_filename, *udt_file = NULL;
 
     double altitude = 0.0, altitudeLR = 0.0, tx_range = 0.0, rx_range = 0.0, deg_range = 0.0, deg_limit = 0.0, deg_range_lon;
@@ -980,7 +980,6 @@ int handle_args(int argc, char *argv[])
 
     kml = 0;
     geo = 0;
-    mapfile[0] = 0;
     clutter_file[0] = 0;
     udt_file = NULL;
     color_file = NULL;
@@ -1117,7 +1116,6 @@ int handle_args(int argc, char *argv[])
             z = x + 1;
 
             if (z <= y && argv[z][0] && argv[z][0] != '-') {
-                strncpy(mapfile, argv[z], 253);
                 strncpy(out.tx_site[0].name, "Tx", 2);
                 strncpy(out.tx_site[0].filename, argv[z], 253);
                 /* Antenna pattern files have the same basic name as the output file
@@ -1148,14 +1146,6 @@ int handle_args(int argc, char *argv[])
                 }
                 free(az_filename);
                 free(el_filename);
-            }
-            else if (z <= y && argv[z][0] && argv[z][0] == '-' && argv[z][1] == '\0') {
-                /* Handle writing image data to stdout */
-                to_stdout = true;
-                mapfile[0] = '\0';
-                strncpy(out.tx_site[0].name, "Tx", 2);
-                out.tx_site[0].filename[0] = '\0';
-                fprintf(stderr, "Writing to stdout\n");
             }
         }
 
@@ -1730,7 +1720,7 @@ int handle_args(int argc, char *argv[])
             cropping = false;  // TODO: File is written in DoLOS() so this needs moving to PlotPropagation() to allow styling,
                                // cropping etc
             PlotLOSMap(&out, out.tx_site[0], altitudeLR, ano_filename, use_threads, LR);
-            DoLOS(&out, mapfile, kml, ngs, out.tx_site);
+            DoLOS(&out, kml, ngs, out.tx_site);
         }
         else {
             // 90% of effort here
@@ -1771,10 +1761,10 @@ int handle_args(int argc, char *argv[])
 
             // Write bitmap
             if (LR.erp == 0.0)
-                DoPathLoss(&out, mapfile, geo, kml, ngs, out.tx_site, LR);
+                DoPathLoss(&out, geo, kml, ngs, out.tx_site, LR);
             else if (LR.dbm)
-                DoRxdPwr(&out, (to_stdout == true ? NULL : mapfile), kml, ngs, out.tx_site, LR);
-            else if ((result = DoSigStr(&out, mapfile, kml, ngs, out.tx_site, LR)) != 0)
+                DoRxdPwr(&out, kml, ngs, out.tx_site, LR);
+            else if ((result = DoSigStr(&out, kml, ngs, out.tx_site, LR)) != 0)
                 return result;
         }
         /*if(lidar){
