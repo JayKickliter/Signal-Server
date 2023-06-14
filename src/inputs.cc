@@ -1391,14 +1391,15 @@ int LoadDBMColors(struct site xmtr)
 
     if (color_file != NULL && color_file[0] != 0)
         for (x = 0; color_file[x] != '.' && color_file[x] != 0 && x < 250; x++) filename[x] = color_file[x];
-    else
+    else if (filename) {
         for (x = 0; xmtr.filename[x] != '.' && xmtr.filename[x] != 0 && x < 250; x++) filename[x] = xmtr.filename[x];
 
-    filename[x] = '.';
-    filename[x + 1] = 'd';
-    filename[x + 2] = 'c';
-    filename[x + 3] = 'f';
-    filename[x + 4] = 0;
+        filename[x] = '.';
+        filename[x + 1] = 'd';
+        filename[x + 2] = 'c';
+        filename[x + 3] = 'f';
+        filename[x + 4] = 0;
+    }
 
     /* Default values */
 
@@ -1485,7 +1486,7 @@ int LoadDBMColors(struct site xmtr)
     G_region.levels = 16;
 
     /* Don't save if we don't have an output file */
-    if ((fd = fopen(filename, "r")) == NULL && xmtr.filename[0] == '\0') return 0;
+    if (filename && (fd = fopen(filename, "r")) == NULL && xmtr.filename[0] == '\0') return 0;
 
     if (fd == NULL) {
         if ((fd = fopen(filename, "w")) == NULL) return errno;
