@@ -18,7 +18,7 @@ fn main() {
         .file("../../src/outputs.cc")
         .file("../../src/signal-server.cc")
         .file("../../src/tiles.cc")
-        .flag_if_supported("-std=c++14")
+        .flag_if_supported("-std=c++17")
         .compile("sigserve_wrapper");
 
     println!("cargo:rerun-if-changed=../../src/common.hh");

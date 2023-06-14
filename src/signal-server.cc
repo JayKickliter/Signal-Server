@@ -951,7 +951,7 @@ void alloc_path(struct path *path)
     path->distance = new double[ARRAYSIZE];
 }
 
-void init(int argc, char *argv[])
+int init(const char *sdf_path, bool debug)
 {
     // these can stay globals
     G_gpsav = 0;
@@ -965,31 +965,19 @@ void init(int argc, char *argv[])
 
     G_dpp = 1 / G_ppd;
     G_mpi = G_ippd - 1;
-    bool daemon = false;
+    G_debug = debug;
 
-    int y = argc - 1;
-
-    // parse all the global flags here
-    for (int x = 1; x <= y; x++) {
-        if (strcmp(argv[x], "-dbg") == 0) {
-            G_debug = 1;
-        }
-        if (strcmp(argv[x], "-sdf") == 0) {
-            int z = x + 1;
-
-            if (z <= y && argv[z][0] && argv[z][0] != '-') strncpy(G_sdf_path, argv[z], 253);
-        }
-
-        if (strcmp(argv[x], "-daemon") == 0) {
-            daemon = true;
-        }
+    if (sdf_path) {
+        strncpy(G_sdf_path, sdf_path, 253);
+        return 0;
+    }
+    else {
+        return 1;
     }
 }
 
-int handle_args(int argc, char *argv[])
+int handle_args(int argc, char *argv[], output *ret_out)
 {
-    init(argc, argv);
-
     /* Scan for command line arguments */
     int x, y, z = 0, propmodel, knifeedge = 0, ppa = 0, normalise = 0, haf = 0, pmenv = 1, result;
 
@@ -1840,6 +1828,10 @@ int handle_args(int argc, char *argv[])
         delete[] i.signal;
     }
 
+    if (ret_out) {
+        *ret_out = out;
+    }
+
     return 0;
 }
 
@@ -1856,7 +1848,7 @@ int scan_stdin()
             p2 = strtok(NULL, " ");
         }
         argv[argc] = NULL;
-        handle_args(argc, argv);
+        handle_args(argc, argv, NULL);
     }
     return 1;
 }

@@ -106,5 +106,5 @@ int main(int argc, char *argv[])
         return scan_stdin();
     }
 
-    return handle_args(argc - 1, argv + 1);
+    return handle_args(argc - 1, argv + 1, NULL);
 }
