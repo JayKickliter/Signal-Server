@@ -951,8 +951,45 @@ void alloc_path(struct path *path)
     path->distance = new double[ARRAYSIZE];
 }
 
-extern "C" int handle_args(int argc, char *argv[])
+void init(int argc, char *argv[])
 {
+    // these can stay globals
+    G_gpsav = 0;
+    G_sdf_path[0] = 0;
+    G_fzone_clearance = 0.6;
+    G_earthradius = EARTHRADIUS;
+    G_ippd = IPPD;  // default resolution
+    // leave these as globals
+    G_ppd = (double)G_ippd;
+    G_yppd = G_ppd;
+
+    G_dpp = 1 / G_ppd;
+    G_mpi = G_ippd - 1;
+    bool daemon = false;
+
+    int y = argc - 1;
+
+    // parse all the global flags here
+    for (int x = 1; x <= y; x++) {
+        if (strcmp(argv[x], "-dbg") == 0) {
+            G_debug = 1;
+        }
+        if (strcmp(argv[x], "-sdf") == 0) {
+            int z = x + 1;
+
+            if (z <= y && argv[z][0] && argv[z][0] != '-') strncpy(G_sdf_path, argv[z], 253);
+        }
+
+        if (strcmp(argv[x], "-daemon") == 0) {
+            daemon = true;
+        }
+    }
+}
+
+int handle_args(int argc, char *argv[])
+{
+    init(argc, argv);
+
     /* Scan for command line arguments */
     int x, y, z = 0, propmodel, knifeedge = 0, ppa = 0, normalise = 0, haf = 0, pmenv = 1, result;
 

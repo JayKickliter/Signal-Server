@@ -26,7 +26,7 @@ void free_elev(void);
 void free_path(void);
 void alloc_elev(void);
 void alloc_path(void);
-extern "C" int handle_args(int argc, char *argv[]);
+int handle_args(int argc, char *argv[]);
 int scan_stdin();
 const char *version();
 
