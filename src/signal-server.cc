@@ -277,15 +277,10 @@ int GetMask(struct output *out, double lat, double lon)
 void PutSignal(struct output *out, double lat, double lon, unsigned char signal)
 {
     int x = 0, y = 0;
-    char dotfile[260], basename[255];
     struct dem_output *found = NULL;
 
     /* This function writes a signal level (0-255)
        at the specified location for later recall. */
-
-    snprintf(basename, 255, "%s", out->tx_site[0].filename);
-    strcpy(dotfile, basename);
-    strcat(dotfile, ".dot");
 
     if (signal > out->hottest)  // dBm, dBuV
         out->hottest = signal;
@@ -1117,7 +1112,7 @@ int handle_args(int argc, char *argv[])
 
             if (z <= y && argv[z][0] && argv[z][0] != '-') {
                 strncpy(out.tx_site[0].name, "Tx", 2);
-                strncpy(out.tx_site[0].filename, argv[z], 253);
+                // strncpy(out.tx_site[0].filename, argv[z], 253);
                 /* Antenna pattern files have the same basic name as the output file
                  * but with a different extension. If they exist, load them now */
                 if ((az_filename = (char *)calloc(strlen(argv[z]) + strlen(AZ_FILE_SUFFIX) + 1, sizeof(char))) == NULL)
@@ -1794,7 +1789,7 @@ int handle_args(int argc, char *argv[])
         strncpy(out.tx_site[0].name, "Tx", 3);
         strncpy(out.tx_site[1].name, "Rx", 3);
         PlotPath(&out, out.tx_site[0], out.tx_site[1], 1, LR);
-        PathReport(out.tx_site[0], out.tx_site[1], out.tx_site[0].filename, 0, propmodel, pmenv, rxGain, &out, LR);
+        PathReport(out.tx_site[0], out.tx_site[1], NULL, 0, propmodel, pmenv, rxGain, &out, LR);
         // Order flipped for benefit of graph. Makes no difference to data.
         SeriesData(out.tx_site[1], out.tx_site[0], 1, normalise, &out, LR);
     }
