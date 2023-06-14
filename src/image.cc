@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "image-png.hh"
 #include "image-ppm.hh"
 
 int get_dt(image_dispatch_table_t *dt, int format);
@@ -21,7 +22,7 @@ int load_library(image_dispatch_table_t *dt);
 
 #define DISPATCH_TABLE(ctx) ((image_dispatch_table_t *)(ctx)->_dt)
 
-static int default_format = IMAGE_PPM;
+static int default_format = IMAGE_PNG;
 char *dynamic_backend = NULL;
 
 /*
@@ -120,10 +121,10 @@ int image_get_pixel(image_ctx_t *ctx, const size_t x, const size_t y, const uint
     if (DISPATCH_TABLE(ctx)->get_pixel != NULL) return DISPATCH_TABLE(ctx)->get_pixel(ctx, x, y, r, g, b, a);
     return ENOSYS;
 }
-int image_write(image_ctx_t *ctx, FILE *fd)
+int image_write(image_ctx_t *ctx, std::vector<char> *out)
 {
     if (ctx->initialized != 1) return EINVAL;
-    return DISPATCH_TABLE(ctx)->write(ctx, fd);
+    return DISPATCH_TABLE(ctx)->write(ctx, out);
 }
 
 void image_free(image_ctx_t *ctx)
@@ -196,6 +197,9 @@ int get_dt(image_dispatch_table_t *dt, int format)
     switch (format) {
         case IMAGE_PPM:
             *dt = ppm_dt;
+            break;
+        case IMAGE_PNG:
+            *dt = png_dt;
             break;
         case IMAGE_LIBRARY:
             success = load_library(dt);

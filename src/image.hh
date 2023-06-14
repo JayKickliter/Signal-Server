@@ -5,10 +5,12 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include <vector>
+
 #define RGB_SIZE 3
 #define RGBA_SIZE 4
 
-enum _image_format { IMAGE_DEFAULT = 0, IMAGE_PPM, IMAGE_LIBRARY, IMAGE_FORMAT_MAX };
+enum _image_format { IMAGE_DEFAULT = 0, IMAGE_PPM, IMAGE_LIBRARY, IMAGE_PNG, IMAGE_FORMAT_MAX };
 
 enum _image_model { IMAGE_RGB, IMAGE_RGBA, IMAGE_MODEL_MAX };
 
@@ -29,7 +31,7 @@ typedef int _add_pixel(image_ctx_t *, const uint8_t, const uint8_t, const uint8_
 typedef int _set_pixel(image_ctx_t *, const size_t, const size_t, const uint8_t, const uint8_t, const uint8_t, const uint8_t);
 typedef int _get_pixel(image_ctx_t *, const size_t, const size_t, const uint8_t *, const uint8_t *, const uint8_t *,
                        const uint8_t *);
-typedef int _write(image_ctx_t *, FILE *);
+typedef int _write(image_ctx_t *, std::vector<char> *out);
 typedef void _free(image_ctx_t *);
 
 typedef struct _image_dispatch_table {
@@ -48,7 +50,7 @@ int image_set_pixel(image_ctx_t *ctx, const size_t, const size_t, const uint8_t,
 int image_get_pixel(image_ctx_t *ctx, const size_t, const size_t, uint8_t const *, uint8_t const *, uint8_t const *,
                     uint8_t const *);
 int image_get_filename(image_ctx_t *, char *, size_t, char *);
-int image_write(image_ctx_t *, FILE *);
+int image_write(image_ctx_t *, std::vector<char> *);
 void image_free(image_ctx_t *);
 int image_set_library(char *);
 

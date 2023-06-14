@@ -21,7 +21,7 @@
 #include "models/sui.hh"
 #include "signal-server.hh"
 
-void DoPathLoss(struct output *out, char *filename, unsigned char geo, unsigned char kml, unsigned char ngs, struct site *xmtr,
+void DoPathLoss(struct output *out, unsigned char geo, unsigned char kml, unsigned char ngs, struct site *xmtr,
                 const struct LR LR)
 {
     /* This function generates a topographic map in Portable Pix Map
@@ -36,7 +36,6 @@ void DoPathLoss(struct output *out, char *filename, unsigned char geo, unsigned 
     struct dem_output *found;
     int x, y, z, x0 = 0, y0 = 0, loss, match;
     double lat, lon, conversion, one_over_gamma, minwest;
-    FILE *fd;
     image_ctx_t ctx;
     int success;
 
@@ -51,24 +50,6 @@ void DoPathLoss(struct output *out, char *filename, unsigned char geo, unsigned 
     if ((success = LoadLossColors(xmtr[0])) != 0) {
         fprintf(stderr, "Error loading loss colors\n");
         exit(success);  // Now a fatal error!
-    }
-
-    if (filename != NULL) {
-        if (filename[0] == 0) {
-            strncpy(filename, xmtr[0].filename, 254);
-            filename[strlen(filename) - 4] = 0; /* Remove .qth */
-        }
-
-        if (image_get_filename(&ctx, mapfile, sizeof(mapfile), filename) != 0) {
-            fprintf(stderr, "Error creating file name\n");
-            exit(1);
-        }
-
-        fd = fopen(mapfile, "wb");
-    }
-    else {
-        fprintf(stderr, "Writing to stdout\n");
-        fd = stdout;
     }
 
     minwest = ((double)out->min_west) + G_dpp;
@@ -86,8 +67,7 @@ void DoPathLoss(struct output *out, char *filename, unsigned char geo, unsigned 
     out->west = (double)(out->max_west < 180 ? -out->max_west : 360 - out->max_west);
 
     if (G_debug) {
-        fprintf(stderr, "\nWriting \"%s\" (%ux%u pixmap image)...\n", filename != NULL ? mapfile : "to stdout", out->width,
-                (kml ? out->height : out->height + 30));
+        fprintf(stderr, "\nWriting (%ux%u pixmap image)...\n", out->width, (kml ? out->height : out->height + 30));
         fflush(stderr);
     }
 
@@ -154,7 +134,7 @@ void DoPathLoss(struct output *out, char *filename, unsigned char geo, unsigned 
                 if (cityorcounty == 0) {
                     if (loss == 0 || (LR.contour_threshold != 0 && loss > abs(LR.contour_threshold))) {
                         if (ngs) /* No terrain */
-                            ADD_PIXEL(&ctx, 255, 255, 255);
+                            ADD_PIXELA(&ctx, 255, 255, 255, 0);
                         else {
                             /* Display land or sea elevation */
 
@@ -202,20 +182,15 @@ void DoPathLoss(struct output *out, char *filename, unsigned char geo, unsigned 
         }
     }
 
-    if ((success = image_write(&ctx, fd)) != 0) {
+    if ((success = image_write(&ctx, &out->imagedata)) != 0) {
         fprintf(stderr, "Error writing image\n");
         exit(success);
     }
 
     image_free(&ctx);
-
-    if (filename != NULL) {
-        fclose(fd);
-        fd = NULL;
-    }
 }
 
-int DoSigStr(struct output *out, char *filename, unsigned char kml, unsigned char ngs, struct site *xmtr, const struct LR LR)
+int DoSigStr(struct output *out, unsigned char kml, unsigned char ngs, struct site *xmtr, const struct LR LR)
 {
     /* This function generates a topographic map in Portable Pix Map
        (PPM) format based on the signal strength values held in the
@@ -229,7 +204,6 @@ int DoSigStr(struct output *out, char *filename, unsigned char kml, unsigned cha
     struct dem_output *found;
     int x, y, z = 1, x0 = 0, y0 = 0, signal, match;
     double conversion, one_over_gamma, lat, lon, minwest;
-    FILE *fd;
     image_ctx_t ctx;
     int success;
 
@@ -246,24 +220,6 @@ int DoSigStr(struct output *out, char *filename, unsigned char kml, unsigned cha
         // exit(success);
     }
 
-    if (filename != NULL) {
-        if (filename[0] == 0) {
-            strncpy(filename, xmtr[0].filename, 254);
-            filename[strlen(filename) - 4] = 0; /* Remove .qth */
-        }
-
-        if (image_get_filename(&ctx, mapfile, sizeof(mapfile), filename) != 0) {
-            fprintf(stderr, "Error creating file name\n");
-            exit(1);
-        }
-
-        fd = fopen(mapfile, "wb");
-    }
-    else {
-        fprintf(stderr, "Writing to stdout\n");
-        fd = stdout;
-    }
-
     minwest = ((double)out->min_west) + G_dpp;
 
     if (minwest > 360.0) minwest -= 360.0;
@@ -276,8 +232,7 @@ int DoSigStr(struct output *out, char *filename, unsigned char kml, unsigned cha
     out->west = (double)(out->max_west < 180 ? -out->max_west : 360 - out->max_west);
 
     if (G_debug) {
-        fprintf(stderr, "\nWriting \"%s\" (%ux%u pixmap image)...\n", filename != NULL ? mapfile : "to stdout", out->width,
-                (kml ? out->height : out->height + 30));
+        fprintf(stderr, "\nWriting (%ux%u pixmap image)...\n", out->width, (kml ? out->height : out->height + 30));
         fflush(stderr);
     }
 
@@ -342,7 +297,7 @@ int DoSigStr(struct output *out, char *filename, unsigned char kml, unsigned cha
                 if (cityorcounty == 0) {
                     if (LR.contour_threshold != 0 && signal < LR.contour_threshold) {
                         if (ngs)
-                            ADD_PIXEL(&ctx, 255, 255, 255);
+                            ADD_PIXELA(&ctx, 255, 255, 255, 0);
                         else {
                             /* Display land or sea elevation */
 
@@ -367,7 +322,7 @@ int DoSigStr(struct output *out, char *filename, unsigned char kml, unsigned cha
                         else { /* terrain / sea-level */
 
                             if (ngs)
-                                ADD_PIXEL(&ctx, 255, 255, 255);
+                                ADD_PIXELA(&ctx, 255, 255, 255, 0);
                             else {
                                 if (found->dem->data[DEM_INDEX(found->dem->ippd, x0, y0)] == 0)
                                     ADD_PIXEL(&ctx, 0, 0, 170);
@@ -395,21 +350,17 @@ int DoSigStr(struct output *out, char *filename, unsigned char kml, unsigned cha
         }
     }
 
-    if ((success = image_write(&ctx, fd)) != 0) {
+    if ((success = image_write(&ctx, &out->imagedata)) != 0) {
         fprintf(stderr, "Error writing image\n");
         exit(success);
     }
 
     image_free(&ctx);
 
-    if (filename != NULL) {
-        fclose(fd);
-        fd = NULL;
-    }
     return 0;
 }
 
-void DoRxdPwr(struct output *out, char *filename, unsigned char kml, unsigned char ngs, struct site *xmtr, const struct LR LR)
+void DoRxdPwr(struct output *out, unsigned char kml, unsigned char ngs, struct site *xmtr, const struct LR LR)
 {
     /* This function generates a topographic map in Portable Pix Map
        (PPM) format based on the signal power level values held in the
@@ -423,7 +374,6 @@ void DoRxdPwr(struct output *out, char *filename, unsigned char kml, unsigned ch
     struct dem_output *found;
     int x, y, z = 1, x0 = 0, y0 = 0, dBm, match;
     double conversion, one_over_gamma, lat, lon, minwest;
-    FILE *fd;
     image_ctx_t ctx;
     int success;
 
@@ -440,24 +390,6 @@ void DoRxdPwr(struct output *out, char *filename, unsigned char kml, unsigned ch
         exit(success);  // Now a fatal error!
     }
 
-    if (filename != NULL) {
-        if (filename[0] == 0) {
-            strncpy(filename, xmtr[0].filename, 254);
-            filename[strlen(filename) - 4] = 0; /* Remove .qth */
-        }
-
-        if (image_get_filename(&ctx, mapfile, sizeof(mapfile), filename) != 0) {
-            fprintf(stderr, "Error creating file name\n");
-            exit(1);
-        }
-
-        fd = fopen(mapfile, "wb");
-    }
-    else {
-        fprintf(stderr, "Writing to stdout\n");
-        fd = stdout;
-    }
-
     minwest = ((double)out->min_west) + G_dpp;
 
     if (minwest > 360.0) minwest -= 360.0;
@@ -470,8 +402,7 @@ void DoRxdPwr(struct output *out, char *filename, unsigned char kml, unsigned ch
     out->west = (double)(out->max_west < 180 ? -out->max_west : 360 - out->max_west);
 
     if (G_debug) {
-        fprintf(stderr, "\nWriting \"%s\" (%ux%u pixmap image)...\n", (filename != NULL ? mapfile : "to stdout"), out->width,
-                (kml ? out->height : out->height));
+        fprintf(stderr, "\nWriting (%ux%u pixmap image)...\n", out->width, (kml ? out->height : out->height));
         fflush(stderr);
     }
 
@@ -535,7 +466,7 @@ void DoRxdPwr(struct output *out, char *filename, unsigned char kml, unsigned ch
                 if (cityorcounty == 0) {
                     if (LR.contour_threshold != 0 && dBm < LR.contour_threshold) {
                         if (ngs) /* No terrain */
-                            ADD_PIXEL(&ctx, 255, 255, 255);
+                            ADD_PIXELA(&ctx, 255, 255, 255, 0);
                         else {
                             /* Display land or sea elevation */
 
@@ -590,22 +521,15 @@ void DoRxdPwr(struct output *out, char *filename, unsigned char kml, unsigned ch
         }
     }
 
-    if ((success = image_write(&ctx, fd)) != 0) {
+    if ((success = image_write(&ctx, &out->imagedata)) != 0) {
         fprintf(stderr, "Error writing image\n");
         exit(success);
     }
 
-    fflush(fd);
-
     image_free(&ctx);
-
-    if (filename != NULL) {
-        fclose(fd);
-        fd = NULL;
-    }
 }
 
-void DoLOS(struct output *out, char *filename, unsigned char kml, unsigned char ngs, struct site *xmtr)
+void DoLOS(struct output *out, unsigned char kml, unsigned char ngs, struct site *xmtr)
 {
     /* This function generates a topographic map in Portable Pix Map
        (PPM) format based on the signal power level values held in the
@@ -619,7 +543,6 @@ void DoLOS(struct output *out, char *filename, unsigned char kml, unsigned char 
     struct dem_output *found;
     int x, y, x0 = 0, y0 = 0;
     double conversion, one_over_gamma, lat, lon, minwest;
-    FILE *fd;
     image_ctx_t ctx;
     int success;
 
@@ -630,24 +553,6 @@ void DoLOS(struct output *out, char *filename, unsigned char kml, unsigned char 
 
     one_over_gamma = 1.0 / GAMMA;
     conversion = 255.0 / pow((double)(out->max_elevation - out->min_elevation), one_over_gamma);
-
-    if (filename != NULL) {
-        if (filename[0] == 0) {
-            strncpy(filename, xmtr[0].filename, 254);
-            filename[strlen(filename) - 4] = 0; /* Remove .qth */
-        }
-
-        if (image_get_filename(&ctx, mapfile, sizeof(mapfile), filename) != 0) {
-            fprintf(stderr, "Error creating file name\n");
-            exit(1);
-        }
-
-        fd = fopen(mapfile, "wb");
-    }
-    else {
-        fprintf(stderr, "Writing to stdout\n");
-        fd = stdout;
-    }
 
     minwest = ((double)out->min_west) + G_dpp;
 
@@ -661,8 +566,7 @@ void DoLOS(struct output *out, char *filename, unsigned char kml, unsigned char 
     out->west = (double)(out->max_west < 180 ? -out->max_west : 360 - out->max_west);
 
     if (G_debug) {
-        fprintf(stderr, "\nWriting \"%s\" (%ux%u pixmap image)...\n", filename != NULL ? mapfile : "to stdout", out->width,
-                (kml ? out->height : out->height + 30));
+        fprintf(stderr, "\nWriting (%ux%u pixmap image)...\n", out->width, (kml ? out->height : out->height + 30));
         fflush(stderr);
     }
 
@@ -770,7 +674,7 @@ void DoLOS(struct output *out, char *filename, unsigned char kml, unsigned char 
 
                         default:
                             if (ngs) /* No terrain */
-                                ADD_PIXEL(&ctx, 255, 255, 255);
+                                ADD_PIXELA(&ctx, 255, 255, 255, 0);
                             else {
                                 /* Sea-level: Medium Blue */
                                 if (found->dem->data[DEM_INDEX(found->dem->ippd, x0, y0)] == 0)
@@ -797,17 +701,12 @@ void DoLOS(struct output *out, char *filename, unsigned char kml, unsigned char 
         }
     }
 
-    if ((success = image_write(&ctx, fd)) != 0) {
+    if ((success = image_write(&ctx, &out->imagedata)) != 0) {
         fprintf(stderr, "Error writing image\n");
         exit(success);
     }
 
     image_free(&ctx);
-
-    if (filename != NULL) {
-        fclose(fd);
-        fd = NULL;
-    }
 }
 
 void PathReport(struct site source, struct site destination, char *name, char graph_it, int propmodel, int pmenv, double rxGain,
@@ -827,7 +726,7 @@ void PathReport(struct site source, struct site destination, char *name, char gr
     double maxloss = -100000.0, minloss = 100000.0, angle1, angle2, azimuth, pattern = 1.0, patterndB = 0.0, total_loss = 0.0,
            cos_xmtr_angle, cos_test_angle = 0.0, source_alt, test_alt, dest_alt, source_alt2, dest_alt2, distance, elevation,
            four_thirds_earth, free_space_loss = 0.0, eirp = 0.0, voltage, rxp, power_density, dkm;
-    FILE *fd = NULL, *fd2 = NULL;
+    FILE *fd2 = NULL;
 
     snprintf(report_name, 80, "%s.txt%c", name, 0);
     four_thirds_earth = FOUR_THIRDS * EARTHRADIUS;
@@ -1324,93 +1223,6 @@ void PathReport(struct site source, struct site destination, char *name, char gr
             "Path loss (dB), Received Power (dBm), Field strength (dBuV):\n%.1f\n%.1f\n%.1f",
             out->loss, out->dBm, out->field_strength);*/
     printf("%.1f %.1f %.1f\n", out->loss, out->dBm, out->field_strength);
-
-    /* Skip plotting the graph if ONLY a path-loss report is needed. */
-
-    if (graph_it) {
-        if (name[0] == '.') {
-            /* Default filename and output file type */
-
-            strncpy(basename, "profile\0", 8);
-            strncpy(term, "png\0", 4);
-            strncpy(ext, "png\0", 4);
-        }
-
-        else {
-            /* Extract extension and terminal type from "name" */
-
-            ext[0] = 0;
-            y = strlen(name);
-            strncpy(basename, name, 254);
-
-            for (x = y - 1; x > 0 && name[x] != '.'; x--)
-                ;
-
-            if (x > 0) { /* Extension found */
-                for (z = x + 1; z <= y && (z - (x + 1)) < 10; z++) {
-                    ext[z - (x + 1)] = tolower(name[z]);
-                    term[z - (x + 1)] = name[z];
-                }
-
-                ext[z - (x + 1)] = 0; /* Ensure an ending 0 */
-                term[z - (x + 1)] = 0;
-                basename[x] = 0;
-            }
-        }
-
-        if (ext[0] == 0) { /* No extension -- Default is png */
-            strncpy(term, "png\0", 4);
-            strncpy(ext, "png\0", 4);
-        }
-
-        /* Either .ps or .postscript may be used
-           as an extension for postscript output. */
-
-        if (strncmp(term, "postscript", 10) == 0)
-            strncpy(ext, "ps\0", 3);
-
-        else if (strncmp(ext, "ps", 2) == 0)
-            strncpy(term, "postscript enhanced color\0", 26);
-
-        fd = fopen("ppa.gp", "w");
-
-        fprintf(fd, "set grid\n");
-        fprintf(fd, "set yrange [%2.3f to %2.3f]\n", minloss, maxloss);
-        fprintf(fd, "set encoding iso_8859_1\n");
-        fprintf(fd, "set term %s\n", term);
-        fprintf(fd, "set title \"Path Loss Profile Along Path Between %s and %s (%.2f%c azimuth)\"\n", destination.name,
-                source.name, Azimuth(destination, source), 176);
-
-        if (LR.metric)
-            fprintf(fd, "set xlabel \"Distance Between %s and %s (%.2f kilometers)\"\n", destination.name, source.name,
-                    KM_PER_MILE * Distance(destination, source));
-        else
-            fprintf(fd, "set xlabel \"Distance Between %s and %s (%.2f miles)\"\n", destination.name, source.name,
-                    Distance(destination, source));
-
-        if (G_got_azimuth_pattern || G_got_elevation_pattern)
-            fprintf(fd, "set ylabel \"Total Path Loss (including TX antenna pattern) (dB)");
-        else
-            fprintf(fd, "set ylabel \"Longley-Rice Path Loss (dB)");
-
-        fprintf(fd, "\"\nset output \"%s.%s\"\n", basename, ext);
-        fprintf(fd, "plot \"profile.gp\" title \"Path Loss\" with lines\n");
-
-        fclose(fd);
-
-        x = system("gnuplot ppa.gp");
-
-        if (x != -1) {
-            if (G_gpsav == 0) {
-                // unlink("ppa.gp");
-                // unlink("profile.gp");
-                // unlink("reference.gp");
-            }
-        }
-
-        else
-            fprintf(stderr, "\n*** ERROR: Error occurred invoking gnuplot!\n");
-    }
 }
 
 void SeriesData(struct site source, struct site destination, unsigned char fresnel_plot, unsigned char normalised,
