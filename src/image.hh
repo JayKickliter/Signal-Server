@@ -8,7 +8,7 @@
 #define RGB_SIZE 3
 #define RGBA_SIZE 4
 
-enum _image_format { IMAGE_DEFAULT = 0, IMAGE_PPM, IMAGE_LIBRARY, IMAGE_FORMAT_MAX };
+enum _image_format { IMAGE_DEFAULT = 0, IMAGE_PPM, IMAGE_LIBRARY, IMAGE_PNG, IMAGE_FORMAT_MAX };
 
 enum _image_model { IMAGE_RGB, IMAGE_RGBA, IMAGE_MODEL_MAX };
 

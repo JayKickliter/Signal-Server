@@ -15,13 +15,14 @@
 #include <string.h>
 
 #include "image-ppm.hh"
+#include "image-png.hh"
 
 int get_dt(image_dispatch_table_t *dt, int format);
 int load_library(image_dispatch_table_t *dt);
 
 #define DISPATCH_TABLE(ctx) ((image_dispatch_table_t *)(ctx)->_dt)
 
-static int default_format = IMAGE_PPM;
+static int default_format = IMAGE_PNG;
 char *dynamic_backend = NULL;
 
 /*
@@ -196,6 +197,9 @@ int get_dt(image_dispatch_table_t *dt, int format)
     switch (format) {
         case IMAGE_PPM:
             *dt = ppm_dt;
+            break;
+        case IMAGE_PNG:
+            *dt = png_dt;
             break;
         case IMAGE_LIBRARY:
             success = load_library(dt);

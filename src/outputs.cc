@@ -154,7 +154,7 @@ void DoPathLoss(struct output *out, char *filename, unsigned char geo, unsigned 
                 if (cityorcounty == 0) {
                     if (loss == 0 || (LR.contour_threshold != 0 && loss > abs(LR.contour_threshold))) {
                         if (ngs) /* No terrain */
-                            ADD_PIXEL(&ctx, 255, 255, 255);
+                            ADD_PIXELA(&ctx, 255, 255, 255, 0);
                         else {
                             /* Display land or sea elevation */
 
@@ -342,7 +342,7 @@ int DoSigStr(struct output *out, char *filename, unsigned char kml, unsigned cha
                 if (cityorcounty == 0) {
                     if (LR.contour_threshold != 0 && signal < LR.contour_threshold) {
                         if (ngs)
-                            ADD_PIXEL(&ctx, 255, 255, 255);
+                            ADD_PIXELA(&ctx, 255, 255, 255, 0);
                         else {
                             /* Display land or sea elevation */
 
@@ -367,7 +367,7 @@ int DoSigStr(struct output *out, char *filename, unsigned char kml, unsigned cha
                         else { /* terrain / sea-level */
 
                             if (ngs)
-                                ADD_PIXEL(&ctx, 255, 255, 255);
+                                ADD_PIXELA(&ctx, 255, 255, 255, 0);
                             else {
                                 if (found->dem->data[DEM_INDEX(found->dem->ippd, x0, y0)] == 0)
                                     ADD_PIXEL(&ctx, 0, 0, 170);
@@ -535,7 +535,7 @@ void DoRxdPwr(struct output *out, char *filename, unsigned char kml, unsigned ch
                 if (cityorcounty == 0) {
                     if (LR.contour_threshold != 0 && dBm < LR.contour_threshold) {
                         if (ngs) /* No terrain */
-                            ADD_PIXEL(&ctx, 255, 255, 255);
+                            ADD_PIXELA(&ctx, 255, 255, 255, 0);
                         else {
                             /* Display land or sea elevation */
 

@@ -1,5 +1,6 @@
 add_library(sigserve
   image-ppm.cc
+  image-png.cc
   image.cc
   inputs.cc
   models/cost.cc
@@ -24,6 +25,7 @@ add_executable(signalserver
 
 target_link_libraries(signalserver
   sigserve
+  png
 )
 
 # INSTALL target (make install)
