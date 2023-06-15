@@ -1304,41 +1304,38 @@ void SeriesData(struct site source, struct site destination, unsigned char fresn
             r = 0.0;
 
         if (LR->metric) {
-            if (METERS_PER_FOOT * height > 0) {
-                out->profilevec.push_back(std::make_tuple(KM_PER_MILE * out->path.distance[x], METERS_PER_FOOT * height));
-            }
+            out->distancevec.push_back(KM_PER_MILE * out->path.distance[x]);
+            out->profilevec.push_back(METERS_PER_FOOT * height);
 
             if (has_clutter && x > 0 && x < out->path.length - 2) {
-                out->cluttervec.push_back(std::make_tuple(
-                    KM_PER_MILE * out->path.distance[x], METERS_PER_FOOT * (terrain == 0.0 ? height : (height + LR->clutter))));
+                out->cluttervec.push_back( METERS_PER_FOOT * (terrain == 0.0 ? height : (height + LR->clutter)));
             }
 
-            out->referencevec.push_back(std::make_tuple(KM_PER_MILE * out->path.distance[x], METERS_PER_FOOT * r));
-            out->curvaturevec.push_back(
-                std::make_tuple(KM_PER_MILE * out->path.distance[x], METERS_PER_FOOT * (height - terrain)));
+            out->referencevec.push_back(METERS_PER_FOOT * r);
+            out->curvaturevec.push_back(METERS_PER_FOOT * (height - terrain));
         }
 
         else {
-            out->profilevec.push_back(std::make_tuple(out->path.distance[x], height));
+            out->distancevec.push_back(out->path.distance[x]);
+            out->profilevec.push_back(height);
 
             if (has_clutter && x > 0 && x < out->path.length - 2) {
-                out->cluttervec.push_back(
-                    std::make_tuple(out->path.distance[x], (terrain == 0.0 ? height : (height + LR->clutter))));
+                out->cluttervec.push_back((terrain == 0.0 ? height : (height + LR->clutter)));
             }
 
-            out->referencevec.push_back(std::make_tuple(out->path.distance[x], r));
-            out->curvaturevec.push_back(std::make_tuple(out->path.distance[x], height - terrain));
+            out->referencevec.push_back(r);
+            out->curvaturevec.push_back(height - terrain);
         }
 
         if (has_fresnel) {
             if (LR->metric) {
-                out->fresnelvec.push_back(std::make_tuple(KM_PER_MILE * out->path.distance[x], METERS_PER_FOOT * f_zone));
-                out->fresnel60vec.push_back(std::make_tuple(KM_PER_MILE * out->path.distance[x], METERS_PER_FOOT * fpt6_zone));
+                out->fresnelvec.push_back(METERS_PER_FOOT * f_zone);
+                out->fresnel60vec.push_back(METERS_PER_FOOT * fpt6_zone);
             }
 
             else {
-                out->fresnelvec.push_back(std::make_tuple(out->path.distance[x], f_zone));
-                out->fresnel60vec.push_back(std::make_tuple(out->path.distance[x], fpt6_zone));
+                out->fresnelvec.push_back(f_zone);
+                out->fresnel60vec.push_back(fpt6_zone);
             }
 
             if (f_zone < minheight) minheight = f_zone;
@@ -1361,27 +1358,26 @@ void SeriesData(struct site source, struct site destination, unsigned char fresn
         r = 0.0;
 
     if (LR->metric) {
-        out->profilevec.push_back(std::make_tuple(KM_PER_MILE * out->path.distance[out->path.length - 1], METERS_PER_FOOT * r));
-        out->referencevec.push_back(
-            std::make_tuple(KM_PER_MILE * out->path.distance[out->path.length - 1], METERS_PER_FOOT * r));
+        out->distancevec.push_back(KM_PER_MILE * out->path.distance[out->path.length - 1]);
+        out->profilevec.push_back(METERS_PER_FOOT * r);
+        out->referencevec.push_back(METERS_PER_FOOT * r);
     }
 
     else {
-        out->profilevec.push_back(std::make_tuple(out->path.distance[out->path.length - 1], r));
-        out->referencevec.push_back(std::make_tuple(out->path.distance[out->path.length - 1], r));
+        out->distancevec.push_back(r);
+        out->profilevec.push_back(r);
+        out->referencevec.push_back(r);
     }
 
     if (has_fresnel) {
         if (LR->metric) {
-            out->fresnelvec.push_back(
-                std::make_tuple(KM_PER_MILE * out->path.distance[out->path.length - 1], METERS_PER_FOOT * r));
-            out->fresnel60vec.push_back(
-                std::make_tuple(KM_PER_MILE * out->path.distance[out->path.length - 1], METERS_PER_FOOT * r));
+            out->fresnelvec.push_back(METERS_PER_FOOT);
+            out->fresnel60vec.push_back(METERS_PER_FOOT * r);
         }
 
         else {
-            out->fresnelvec.push_back(std::make_tuple(out->path.distance[out->path.length - 1], r));
-            out->fresnel60vec.push_back(std::make_tuple(out->path.distance[out->path.length - 1], r));
+            out->fresnelvec.push_back(r);
+            out->fresnel60vec.push_back(r);
         }
     }
 
@@ -1389,6 +1385,4 @@ void SeriesData(struct site source, struct site destination, unsigned char fresn
 
     if (r < minheight) minheight = r;
 
-    // fprintf(stderr, "\n");
-    fflush(stdout);
 }

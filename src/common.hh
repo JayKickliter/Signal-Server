@@ -116,12 +116,13 @@ struct output {
     double field_strength;
     int hottest;
     struct site tx_site[2];
-    std::vector<std::tuple<double, double>> cluttervec;
-    std::vector<std::tuple<double, double>> referencevec;
-    std::vector<std::tuple<double, double>> fresnelvec;
-    std::vector<std::tuple<double, double>> fresnel60vec;
-    std::vector<std::tuple<double, double>> curvaturevec;
-    std::vector<std::tuple<double, double>> profilevec;
+    std::vector<double> distancevec;
+    std::vector<double> cluttervec;
+    std::vector<double> referencevec;
+    std::vector<double> fresnelvec;
+    std::vector<double> fresnel60vec;
+    std::vector<double> curvaturevec;
+    std::vector<double> profilevec;
     std::vector<char> imagedata;
 };
 

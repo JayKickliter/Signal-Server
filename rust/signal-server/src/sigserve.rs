@@ -49,6 +49,7 @@ pub(crate) mod ffi {
         dbm: f64,
         loss: f64,
         field_strength: f64,
+        distancevec: Vec<f64>,
         cluttervec: Vec<f64>,
         referencevec: Vec<f64>,
         fresnelvec: Vec<f64>,

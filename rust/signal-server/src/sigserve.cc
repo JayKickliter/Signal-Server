@@ -27,35 +27,34 @@ Report handle_args(int argc, char *argv[])
     report.loss = out.loss;
     report.field_strength = out.field_strength;
 
-    for (auto &[a, b] : out.cluttervec) {
+    for (auto &a : out.cluttervec) {
         report.cluttervec.push_back(a);
-        report.cluttervec.push_back(b);
     }
 
-    for (auto &[a, b] : out.referencevec) {
+    for (auto &a : out.referencevec) {
         report.referencevec.push_back(a);
-        report.referencevec.push_back(b);
     }
 
-    for (auto &[a, b] : out.fresnelvec) {
+    for (auto &a : out.fresnelvec) {
         report.fresnelvec.push_back(a);
-        report.fresnelvec.push_back(b);
     }
 
-    for (auto &[a, b] : out.fresnel60vec) {
+    for (auto &a : out.fresnel60vec) {
         report.fresnel60vec.push_back(a);
-        report.fresnel60vec.push_back(b);
     }
 
-    for (auto &[a, b] : out.curvaturevec) {
+    for (auto &a : out.curvaturevec) {
         report.curvaturevec.push_back(a);
-        report.curvaturevec.push_back(b);
     }
 
-    for (auto &[a, b] : out.profilevec) {
+    for (auto &a : out.profilevec) {
         report.profilevec.push_back(a);
-        report.profilevec.push_back(b);
     }
+
+    for (auto &a : out.distancevec) {
+        report.distancevec.push_back(a);
+    }
+
 
     report.image_data.reserve(out.imagedata.size());
     for (auto &pixel : out.imagedata) {
