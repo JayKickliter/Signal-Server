@@ -1308,7 +1308,7 @@ void SeriesData(struct site source, struct site destination, unsigned char fresn
             out->profilevec.push_back(METERS_PER_FOOT * height);
 
             if (has_clutter && x > 0 && x < out->path.length - 2) {
-                out->cluttervec.push_back( METERS_PER_FOOT * (terrain == 0.0 ? height : (height + LR->clutter)));
+                out->cluttervec.push_back(METERS_PER_FOOT * (terrain == 0.0 ? height : (height + LR->clutter)));
             }
 
             out->referencevec.push_back(METERS_PER_FOOT * r);
@@ -1384,5 +1384,4 @@ void SeriesData(struct site source, struct site destination, unsigned char fresn
     if (r > maxheight) maxheight = r;
 
     if (r < minheight) minheight = r;
-
 }

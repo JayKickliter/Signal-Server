@@ -55,7 +55,6 @@ Report handle_args(int argc, char *argv[])
         report.distancevec.push_back(a);
     }
 
-
     report.image_data.reserve(out.imagedata.size());
     for (auto &pixel : out.imagedata) {
         report.image_data.push_back(pixel);
