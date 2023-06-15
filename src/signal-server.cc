@@ -57,6 +57,8 @@ unsigned char G_got_elevation_pattern, G_got_azimuth_pattern;
 
 std::vector<struct dem> G_dem;
 
+std::shared_mutex G_dem_lock;
+
 struct region G_region;
 
 const char *version() { return "4.0.0"; };

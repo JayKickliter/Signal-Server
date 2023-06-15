@@ -1,6 +1,9 @@
 #ifndef _COMMON_HH_
 #define _COMMON_HH_
 
+#include <mutex>
+#include <shared_mutex>
+#include <thread>
 #include <tuple>
 #include <vector>
 
@@ -154,6 +157,7 @@ extern unsigned char G_got_elevation_pattern;
 extern unsigned char G_got_azimuth_pattern;
 
 extern std::vector<struct dem> G_dem;
+extern std::shared_mutex G_dem_lock;
 extern struct region G_region;
 
 extern int G_debug;

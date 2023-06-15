@@ -634,7 +634,9 @@ int LoadSDF_BSDF(char *name, struct output *out)
             }
         }
 
+        std::shared_lock lock(G_dem_lock);
         G_dem.push_back(dem);
+        std::shared_lock unlock(G_dem_lock);
 
         return 1;
     }
@@ -753,7 +755,9 @@ int LoadSDF(char *name, struct output *out)
                 }
             }
 
+            std::shared_lock lock(G_dem_lock);
             G_dem.push_back(dem);
+            std::shared_lock unlock(G_dem_lock);
 
             return_value = 1;
         }
