@@ -1218,7 +1218,9 @@ void PathReport(struct site source, struct site destination, char *name, char gr
     /*fprintf(stderr,
             "Path loss (dB), Received Power (dBm), Field strength (dBuV):\n%.1f\n%.1f\n%.1f",
             out->loss, out->dBm, out->field_strength);*/
-    printf("%.1f %.1f %.1f\n", out->loss, out->dBm, out->field_strength);
+    if (G_debug) {
+        printf("%.1f %.1f %.1f\n", out->loss, out->dBm, out->field_strength);
+    }
 }
 
 void SeriesData(struct site source, struct site destination, unsigned char fresnel_plot, unsigned char normalised,

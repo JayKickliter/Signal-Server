@@ -1798,19 +1798,21 @@ int handle_args(int argc, char *argv[], output *ret_out)
 
         if (out.tx_site[0].lon < -180.0) out.tx_site[0].lon += 360;
 
-        if (cropping) {
-            fprintf(stderr, "|%.6f", out.tx_site[0].lat + out.cropLat);
-            fprintf(stderr, "|%.6f", out.tx_site[0].lon + out.cropLon);
-            fprintf(stderr, "|%.6f", out.tx_site[0].lat - out.cropLat);
-            fprintf(stderr, "|%.6f|", out.tx_site[0].lon - out.cropLon);
+        if (G_debug) {
+            if (cropping) {
+                fprintf(stderr, "|%.6f", out.tx_site[0].lat + out.cropLat);
+                fprintf(stderr, "|%.6f", out.tx_site[0].lon + out.cropLon);
+                fprintf(stderr, "|%.6f", out.tx_site[0].lat - out.cropLat);
+                fprintf(stderr, "|%.6f|", out.tx_site[0].lon - out.cropLon);
+            }
+            else {
+                fprintf(stderr, "|%.6f", out.max_north);
+                fprintf(stderr, "|%.6f", out.east);
+                fprintf(stderr, "|%.6f", out.min_north);
+                fprintf(stderr, "|%.6f|", out.west);
+            }
+            fprintf(stderr, "\n");
         }
-        else {
-            fprintf(stderr, "|%.6f", out.max_north);
-            fprintf(stderr, "|%.6f", out.east);
-            fprintf(stderr, "|%.6f", out.min_north);
-            fprintf(stderr, "|%.6f|", out.west);
-        }
-        fprintf(stderr, "\n");
     }
     else {
         strncpy(out.tx_site[0].name, "Tx", 3);
