@@ -1,67 +1,59 @@
 fn main() {
-    cxx_build::bridge("src/sigserve.rs")
-        .file("src/sigserve.cc")
-        .file("../../src/image-png.cc")
-        .file("../../src/image-ppm.cc")
-        .file("../../src/image.cc")
-        .file("../../src/inputs.cc")
-        .file("../../src/models/cost.cc")
-        .file("../../src/models/ecc33.cc")
-        .file("../../src/models/egli.cc")
-        .file("../../src/models/ericsson.cc")
-        .file("../../src/models/fspl.cc")
-        .file("../../src/models/hata.cc")
-        .file("../../src/models/itwom3.0.cc")
-        .file("../../src/models/los.cc")
-        .file("../../src/models/pel.cc")
-        .file("../../src/models/soil.cc")
-        .file("../../src/models/sui.cc")
-        .file("../../src/outputs.cc")
-        .file("../../src/signal-server.cc")
-        .file("../../src/tiles.cc")
-        .flag_if_supported("-std=c++17")
-        .compile("sigserve_wrapper");
+    let cxx_sources = [
+        "../../src/image-png.cc",
+        "../../src/image-ppm.cc",
+        "../../src/image.cc",
+        "../../src/inputs.cc",
+        "../../src/models/cost.cc",
+        "../../src/models/ecc33.cc",
+        "../../src/models/egli.cc",
+        "../../src/models/ericsson.cc",
+        "../../src/models/fspl.cc",
+        "../../src/models/hata.cc",
+        "../../src/models/itwom3.0.cc",
+        "../../src/models/los.cc",
+        "../../src/models/pel.cc",
+        "../../src/models/soil.cc",
+        "../../src/models/sui.cc",
+        "../../src/outputs.cc",
+        "../../src/signal-server.cc",
+        "../../src/tiles.cc",
+        "src/sigserve.cc",
+    ];
+    let cxx_headers = [
+        "../../src/common.hh",
+        "../../src/image-png.hh",
+        "../../src/image-ppm.hh",
+        "../../src/image.hh",
+        "../../src/inputs.hh",
+        "../../src/models/cost.hh",
+        "../../src/models/ecc33.hh",
+        "../../src/models/egli.hh",
+        "../../src/models/ericsson.hh",
+        "../../src/models/fspl.hh",
+        "../../src/models/hata.hh",
+        "../../src/models/itwom3.0.hh",
+        "../../src/models/los.hh",
+        "../../src/models/pel.hh",
+        "../../src/models/soil.hh",
+        "../../src/models/sui.hh",
+        "../../src/outputs.hh",
+        "../../src/signal-server.hh",
+        "../../src/tiles.hh",
+        "src/sigserve.h",
+    ];
 
+    let mut bridge = cxx_build::bridge("src/sigserve.rs");
+    bridge.flag_if_supported("-std=c++17");
+    for path in &cxx_sources {
+        bridge.file(path);
+    }
+    bridge.compile("sigserve_wrapper");
     println!("cargo:rustc-link-lib=png");
 
-    println!("cargo:rerun-if-changed=../../src/common.hh");
-    println!("cargo:rerun-if-changed=../../src/image-png.cc");
-    println!("cargo:rerun-if-changed=../../src/image-png.hh");
-    println!("cargo:rerun-if-changed=../../src/image-ppm.cc");
-    println!("cargo:rerun-if-changed=../../src/image-ppm.hh");
-    println!("cargo:rerun-if-changed=../../src/image.cc");
-    println!("cargo:rerun-if-changed=../../src/image.hh");
-    println!("cargo:rerun-if-changed=../../src/inputs.cc");
-    println!("cargo:rerun-if-changed=../../src/inputs.hh");
-    println!("cargo:rerun-if-changed=../../src/models/cost.cc");
-    println!("cargo:rerun-if-changed=../../src/models/cost.hh");
-    println!("cargo:rerun-if-changed=../../src/models/ecc33.cc");
-    println!("cargo:rerun-if-changed=../../src/models/ecc33.hh");
-    println!("cargo:rerun-if-changed=../../src/models/egli.cc");
-    println!("cargo:rerun-if-changed=../../src/models/egli.hh");
-    println!("cargo:rerun-if-changed=../../src/models/ericsson.cc");
-    println!("cargo:rerun-if-changed=../../src/models/ericsson.hh");
-    println!("cargo:rerun-if-changed=../../src/models/fspl.cc");
-    println!("cargo:rerun-if-changed=../../src/models/fspl.hh");
-    println!("cargo:rerun-if-changed=../../src/models/hata.cc");
-    println!("cargo:rerun-if-changed=../../src/models/hata.hh");
-    println!("cargo:rerun-if-changed=../../src/models/itwom3.0.cc");
-    println!("cargo:rerun-if-changed=../../src/models/itwom3.0.hh");
-    println!("cargo:rerun-if-changed=../../src/models/los.cc");
-    println!("cargo:rerun-if-changed=../../src/models/los.hh");
-    println!("cargo:rerun-if-changed=../../src/models/pel.cc");
-    println!("cargo:rerun-if-changed=../../src/models/pel.hh");
-    println!("cargo:rerun-if-changed=../../src/models/soil.cc");
-    println!("cargo:rerun-if-changed=../../src/models/soil.hh");
-    println!("cargo:rerun-if-changed=../../src/models/sui.cc");
-    println!("cargo:rerun-if-changed=../../src/models/sui.hh");
-    println!("cargo:rerun-if-changed=../../src/outputs.cc");
-    println!("cargo:rerun-if-changed=../../src/outputs.hh");
-    println!("cargo:rerun-if-changed=../../src/signal-server.cc");
-    println!("cargo:rerun-if-changed=../../src/signal-server.hh");
-    println!("cargo:rerun-if-changed=../../src/tiles.cc");
-    println!("cargo:rerun-if-changed=../../src/tiles.hh");
-    println!("cargo:rerun-if-changed=src/sigserve.cc");
-    println!("cargo:rerun-if-changed=src/sigserve.h");
+    for path in cxx_sources.iter().chain(cxx_headers.iter()) {
+        println!("cargo:rerun-if-changed={path}");
+    }
+
     println!("cargo:rerun-if-changed=src/sigserve.rs");
 }
