@@ -1,7 +1,7 @@
 #include "sigserve.h"
 
 #include "../../../src/common.hh"
-#include "signal-server/src/sigserve.rs.h"
+#include "rfprop/src/sigserve.rs.h"
 
 extern int init(const char *sdf_path, bool debug);
 extern int handle_args(int argc, char *argv[], output *ret_out);

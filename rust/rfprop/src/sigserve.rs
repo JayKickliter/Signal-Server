@@ -1,28 +1,20 @@
+use crate::error::Error;
 use std::{
-    ffi::{c_char, c_int, CString, NulError},
+    ffi::{c_char, CString},
     path::Path,
 };
-use thiserror::Error;
 
-#[derive(Error, Debug)]
-pub enum SigserveError {
-    #[error("arg contains a null byte: {0}")]
-    Args(#[from] NulError),
-    #[error("libsigserve returned a non-zero integer {0}")]
-    Retcode(c_int),
-}
-
-pub fn init(sdf_path: &Path, debug: bool) -> Result<(), SigserveError> {
+pub fn init(sdf_path: &Path, debug: bool) -> Result<(), Error> {
     let sdf_path = CString::new(sdf_path.as_os_str().to_str().unwrap()).unwrap();
     // SAFETY: we're calling into a >20 y/o C+ codebase. Safety can
     //         not be guaranteed.
     match unsafe { ffi::init(sdf_path.as_ptr(), debug) } {
         0 => Ok(()),
-        other => Err(SigserveError::Retcode(other)),
+        other => Err(Error::Retcode(other)),
     }
 }
 
-pub fn call_sigserve(args: &str) -> Result<ffi::Report, SigserveError> {
+pub fn call_sigserve(args: &str) -> Result<ffi::Report, Error> {
     let cstrings = args
         .split_whitespace()
         .map(CString::new)
@@ -35,14 +27,14 @@ pub fn call_sigserve(args: &str) -> Result<ffi::Report, SigserveError> {
     let report = unsafe { ffi::handle_args(c_args.len() as i32, c_args.as_mut_ptr()) };
     match report.retcode {
         0 => Ok(report),
-        other => Err(SigserveError::Retcode(other)),
+        other => Err(Error::Retcode(other)),
     }
 }
 
 #[cxx::bridge(namespace = "sigserve_wrapper")]
 pub(crate) mod ffi {
     #[derive(Default, Debug)]
-    struct Report {
+    pub struct Report {
         // common return code
         retcode: i32,
         // begin point-to-point fields.
@@ -64,7 +56,7 @@ pub(crate) mod ffi {
     }
 
     unsafe extern "C++" {
-        include!("signal-server/src/sigserve.h");
+        include!("rfprop/src/sigserve.h");
         unsafe fn init(sdf_path: *const c_char, debug: bool) -> i32;
         unsafe fn handle_args(argc: i32, argv: *mut *mut c_char) -> Report;
     }
