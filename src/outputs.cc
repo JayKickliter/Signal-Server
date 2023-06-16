@@ -526,7 +526,7 @@ void DoRxdPwr(struct output *out, unsigned char kml, unsigned char ngs, struct s
     image_free(&ctx);
 }
 
-void DoLOS(struct output *out, unsigned char kml, unsigned char ngs, struct site *xmtr)
+void DoLOS(struct output *out, unsigned char kml, unsigned char ngs, struct site *)
 {
     /* This function generates a topographic map in Portable Pix Map
        (PPM) format based on the signal power level values held in the
@@ -705,8 +705,8 @@ void DoLOS(struct output *out, unsigned char kml, unsigned char ngs, struct site
     image_free(&ctx);
 }
 
-void PathReport(struct site source, struct site destination, char *name, char graph_it, int propmodel, int pmenv, double rxGain,
-                struct output *out, const struct LR *LR)
+void PathReport(struct site source, struct site destination, char *name, char /* graph_it */, int propmodel, int pmenv,
+                double rxGain, struct output *out, const struct LR *LR)
 {
     /* This function writes a PPA Path Report (name.txt) to
        the filesystem.  If (graph_it == 1), then gnuplot is invoked
@@ -717,7 +717,7 @@ void PathReport(struct site source, struct site destination, char *name, char gr
        terminal setting and output file type.  If no extension is
        found, .png is assumed. */
 
-    int x, y, z, errnum;
+    int x, y, errnum;
     char strmode[100], report_name[80], block = 0;
     double maxloss = -100000.0, minloss = 100000.0, angle1, angle2, azimuth, pattern = 1.0, patterndB = 0.0, total_loss = 0.0,
            cos_xmtr_angle, cos_test_angle = 0.0, source_alt, test_alt, dest_alt, source_alt2, dest_alt2, distance, elevation,

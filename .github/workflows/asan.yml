@@ -8,7 +8,7 @@ on:
 
 env:
   BUILD_TYPE: RelWithDebInfo
-  EXTRA_FLAGS: -Wall -Wextra -fno-omit-frame-pointer -fsanitize=address
+  EXTRA_FLAGS: -Wall -Wextra -Werror -fno-omit-frame-pointer -fsanitize=address
 
 jobs:
   build:

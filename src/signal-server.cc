@@ -1138,7 +1138,7 @@ int handle_args(int argc, char *argv[], output *ret_out)
             z = x + 1;
 
             if (z <= y && argv[z][0] && argv[z][0] != '-') {
-                strncpy(out.tx_site[0].name, "Tx", 2);
+                strncpy(out.tx_site[0].name, "Tx", sizeof(site::name));
                 // strncpy(out.tx_site[0].filename, argv[z], 253);
                 /* Antenna pattern files have the same basic name as the output file
                  * but with a different extension. If they exist, load them now */

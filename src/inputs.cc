@@ -82,8 +82,8 @@ int loadClutter(char *filename, double radius, struct site tx)
 
     s = fgets(line, 25, fd);  // cellsize
 
-    if (s)
-        ;
+    if (s) {
+    }
 
     // loop over matrix
     for (y = h; y > 0; y--) {
@@ -587,8 +587,13 @@ int LoadSDF_BSDF(char *name, struct output *out)
 
         lseek(fd, 1200 * 1200 * 2, SEEK_SET);
 
-        read(fd, &dem.min_el, 2);
-        read(fd, &dem.max_el, 2);
+        if (read(fd, &dem.min_el, 2) < 0) {
+            return -errno;
+        }
+
+        if (read(fd, &dem.max_el, 2) < 0) {
+            return -errno;
+        }
 
         close(fd);
 
@@ -1222,8 +1227,8 @@ int LoadSignalColors(struct site xmtr)
         x = 0;
         s = fgets(string, 80, fd);
 
-        if (s)
-            ;
+        if (s) {
+        }
 
         while (x < 128 && feof(fd) == 0) {
             pointer = strchr(string, ';');
@@ -1391,8 +1396,8 @@ int LoadLossColors(struct site xmtr)
         x = 0;
         s = fgets(string, 80, fd);
 
-        if (s)
-            ;
+        if (s) {
+        }
 
         while (x < 128 && feof(fd) == 0) {
             pointer = strchr(string, ';');
@@ -1548,8 +1553,8 @@ int LoadDBMColors(struct site xmtr)
         x = 0;
         s = fgets(string, 80, fd);
 
-        if (s)
-            ;
+        if (s) {
+        }
 
         while (x < 128 && feof(fd) == 0) {
             pointer = strchr(string, ';');
@@ -1684,8 +1689,8 @@ int LoadUDT(char *filename)
 
     s = fgets(input, 78, fd1);
 
-    if (s)
-        ;
+    if (s) {
+    }
 
     pointer = strchr(input, ';');
 
@@ -1763,8 +1768,8 @@ int LoadUDT(char *filename)
 
     n = fscanf(fd1, "%d, %d, %lf", &xpix, &ypix, &height);
 
-    if (n)
-        ;
+    if (n) {
+    }
 
     do {
         x = 0;

@@ -42,7 +42,6 @@ int ppm_add_pixel(image_ctx_t *ctx, const uint8_t r, const uint8_t g, const uint
 
 int ppm_write(image_ctx_t *ctx, std::vector<char> *out)
 {
-    size_t written;
     size_t count;
 
     count = ctx->width * ctx->height * RGB_SIZE;

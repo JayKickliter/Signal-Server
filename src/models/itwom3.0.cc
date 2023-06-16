@@ -1406,6 +1406,8 @@ double avar(double zzt, double zzl, double zzc, prop_type &prop, propv_type &pro
                 cfp1 = bfp1[temp_klim];
                 cfp2 = bfp2[temp_klim];
                 cfp3 = bfp3[temp_klim];
+                /* NOTE: we are not sure if this code is supposed to fall through. */
+                [[fallthrough]];
 
             case 4:
                 kdv = propv.mdvar;
@@ -1422,6 +1424,8 @@ double avar(double zzt, double zzl, double zzc, prop_type &prop, propv_type &pro
                     prop.kwx = mymax(prop.kwx, 2);
                 }
 
+                /* NOTE: we are not sure if this code is supposed to fall through. */
+                [[fallthrough]];
             case 3:
                 q = log(0.133 * prop.wn);
 
@@ -1430,9 +1434,13 @@ double avar(double zzt, double zzl, double zzc, prop_type &prop, propv_type &pro
 
                 gm = cfm1 + cfm2 / ((cfm3 * q * cfm3 * q) + 1.0);
                 gp = cfp1 + cfp2 / ((cfp3 * q * cfp3 * q) + 1.0);
+                /* NOTE: we are not sure if this code is supposed to fall through. */
+                [[fallthrough]];
 
             case 2:
                 dexa = sqrt(18e6 * prop.he[0]) + sqrt(18e6 * prop.he[1]) + pow((575.7e12 / prop.wn), THIRD);
+                /* NOTE: we are not sure if this code is supposed to fall through. */
+                [[fallthrough]];
 
             case 1:
                 if (prop.dist < dexa)
@@ -2316,7 +2324,7 @@ void point_to_point(double tht_m, double rht_m, double eps_dielect, double sgm_c
 
 void point_to_pointMDH_two(double tht_m, double rht_m, double eps_dielect, double sgm_conductivity, double eno_ns_surfref,
                            double enc_ncc_clcref, double clutter_height, double clutter_density, double delta_h_diff,
-                           double frq_mhz, int radio_climate, int pol, int mode_var, double timepct, double locpct,
+                           double frq_mhz, int radio_climate, int pol, int /* mode_var */, double timepct, double locpct,
                            double confpct, double &dbloss, int &propmode, double &deltaH, double *elev, int &errnum)
 
 /*************************************************************************************************
@@ -2382,7 +2390,7 @@ void point_to_pointMDH_two(double tht_m, double rht_m, double eps_dielect, doubl
     prop.encc = 1000.00; /*  double enc_ncc_clcref  */
     prop.cch = 22.5;     /* double clutter_height */
     prop.cd = 1.00;      /* double clutter_density */
-    mode_var = 1;        /* int mode_var set for FCC ILLR */
+    /* mode_var = 1;        /\* int mode_var set for FCC ILLR *\/ */
 
     if (q <= 0.0) {
         ja = (long)(3.0 + 0.1 * elev[0]); /* to match addition of (long) */
