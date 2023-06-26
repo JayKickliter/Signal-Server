@@ -1,0 +1,13 @@
+[package]
+name = "rfprop"
+version = "0.1.0"
+edition = "2021"
+build = "build.rs"
+
+[dependencies]
+thiserror = "1"
+cxx = "1"
+
+[build-dependencies]
+cmake = "0.1"
+cxx-build = "1.0"

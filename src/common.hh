@@ -1,6 +1,9 @@
 #ifndef _COMMON_HH_
 #define _COMMON_HH_
 
+#include <mutex>
+#include <shared_mutex>
+#include <thread>
 #include <tuple>
 #include <vector>
 
@@ -116,12 +119,13 @@ struct output {
     double field_strength;
     int hottest;
     struct site tx_site[2];
-    std::vector<std::tuple<double, double>> cluttervec;
-    std::vector<std::tuple<double, double>> referencevec;
-    std::vector<std::tuple<double, double>> fresnelvec;
-    std::vector<std::tuple<double, double>> fresnel60vec;
-    std::vector<std::tuple<double, double>> curvaturevec;
-    std::vector<std::tuple<double, double>> profilevec;
+    std::vector<double> distancevec;
+    std::vector<double> cluttervec;
+    std::vector<double> referencevec;
+    std::vector<double> fresnelvec;
+    std::vector<double> fresnel60vec;
+    std::vector<double> curvaturevec;
+    std::vector<double> profilevec;
     std::vector<char> imagedata;
 };
 
@@ -153,6 +157,7 @@ extern unsigned char G_got_elevation_pattern;
 extern unsigned char G_got_azimuth_pattern;
 
 extern std::vector<struct dem> G_dem;
+extern std::shared_mutex G_dem_lock;
 extern struct region G_region;
 
 extern int G_debug;

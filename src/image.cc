@@ -229,7 +229,7 @@ int image_set_library(char *library)
     length = strlen(library) + 1;
     libname = (char *)calloc(length, sizeof(char));
     if (libname == NULL) return ENOMEM;
-    strncpy(libname, library, length);
+    strcpy(libname, library);
 
     dynamic_backend = libname;
     default_format = IMAGE_LIBRARY;

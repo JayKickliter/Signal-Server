@@ -82,8 +82,8 @@ int loadClutter(char *filename, double radius, struct site tx)
 
     s = fgets(line, 25, fd);  // cellsize
 
-    if (s)
-        ;
+    if (s) {
+    }
 
     // loop over matrix
     for (y = h; y > 0; y--) {
@@ -507,6 +507,48 @@ int LoadSDF_BSDF(char *name, struct output *out)
     for (auto &dem : G_dem) {
         if (minlat == dem.min_north && minlon == dem.min_west && maxlat == dem.max_north && maxlon == dem.max_west) {
             found = 1;
+            // TODO copy-pasted from below, dedup
+            if (dem.min_el < out->min_elevation) out->min_elevation = dem.min_el;
+
+            if (dem.max_el > out->max_elevation) out->max_elevation = dem.max_el;
+
+            if (out->max_north == -90)
+                out->max_north = dem.max_north;
+
+            else if (dem.max_north > out->max_north)
+                out->max_north = dem.max_north;
+
+            if (out->min_north == 90)
+                out->min_north = dem.min_north;
+
+            else if (dem.min_north < out->min_north)
+                out->min_north = dem.min_north;
+
+            if (out->max_west == -1)
+                out->max_west = dem.max_west;
+
+            else {
+                if (abs(dem.max_west - out->max_west) < 180) {
+                    if (dem.max_west > out->max_west) out->max_west = dem.max_west;
+                }
+
+                else {
+                    if (dem.max_west < out->max_west) out->max_west = dem.max_west;
+                }
+            }
+
+            if (out->min_west == 360)
+                out->min_west = dem.min_west;
+
+            else {
+                if (fabs(dem.min_west - out->min_west) < 180.0) {
+                    if (dem.min_west < out->min_west) out->min_west = dem.min_west;
+                }
+
+                else {
+                    if (dem.min_west > out->min_west) out->min_west = dem.min_west;
+                }
+            }
             break;
         }
     }
@@ -545,8 +587,13 @@ int LoadSDF_BSDF(char *name, struct output *out)
 
         lseek(fd, 1200 * 1200 * 2, SEEK_SET);
 
-        read(fd, &dem.min_el, 2);
-        read(fd, &dem.max_el, 2);
+        if (read(fd, &dem.min_el, 2) < 0) {
+            return -errno;
+        }
+
+        if (read(fd, &dem.max_el, 2) < 0) {
+            return -errno;
+        }
 
         close(fd);
 
@@ -592,7 +639,9 @@ int LoadSDF_BSDF(char *name, struct output *out)
             }
         }
 
+        std::shared_lock lock(G_dem_lock);
         G_dem.push_back(dem);
+        std::shared_lock unlock(G_dem_lock);
 
         return 1;
     }
@@ -711,7 +760,9 @@ int LoadSDF(char *name, struct output *out)
                 }
             }
 
+            std::shared_lock lock(G_dem_lock);
             G_dem.push_back(dem);
+            std::shared_lock unlock(G_dem_lock);
 
             return_value = 1;
         }
@@ -1176,8 +1227,8 @@ int LoadSignalColors(struct site xmtr)
         x = 0;
         s = fgets(string, 80, fd);
 
-        if (s)
-            ;
+        if (s) {
+        }
 
         while (x < 128 && feof(fd) == 0) {
             pointer = strchr(string, ';');
@@ -1345,8 +1396,8 @@ int LoadLossColors(struct site xmtr)
         x = 0;
         s = fgets(string, 80, fd);
 
-        if (s)
-            ;
+        if (s) {
+        }
 
         while (x < 128 && feof(fd) == 0) {
             pointer = strchr(string, ';');
@@ -1391,14 +1442,15 @@ int LoadDBMColors(struct site xmtr)
 
     if (color_file != NULL && color_file[0] != 0)
         for (x = 0; color_file[x] != '.' && color_file[x] != 0 && x < 250; x++) filename[x] = color_file[x];
-    else
+    else if (filename) {
         for (x = 0; xmtr.filename[x] != '.' && xmtr.filename[x] != 0 && x < 250; x++) filename[x] = xmtr.filename[x];
 
-    filename[x] = '.';
-    filename[x + 1] = 'd';
-    filename[x + 2] = 'c';
-    filename[x + 3] = 'f';
-    filename[x + 4] = 0;
+        filename[x] = '.';
+        filename[x + 1] = 'd';
+        filename[x + 2] = 'c';
+        filename[x + 3] = 'f';
+        filename[x + 4] = 0;
+    }
 
     /* Default values */
 
@@ -1485,7 +1537,7 @@ int LoadDBMColors(struct site xmtr)
     G_region.levels = 16;
 
     /* Don't save if we don't have an output file */
-    if ((fd = fopen(filename, "r")) == NULL && xmtr.filename[0] == '\0') return 0;
+    if (filename && (fd = fopen(filename, "r")) == NULL && xmtr.filename[0] == '\0') return 0;
 
     if (fd == NULL) {
         if ((fd = fopen(filename, "w")) == NULL) return errno;
@@ -1501,8 +1553,8 @@ int LoadDBMColors(struct site xmtr)
         x = 0;
         s = fgets(string, 80, fd);
 
-        if (s)
-            ;
+        if (s) {
+        }
 
         while (x < 128 && feof(fd) == 0) {
             pointer = strchr(string, ';');
@@ -1637,8 +1689,8 @@ int LoadUDT(char *filename)
 
     s = fgets(input, 78, fd1);
 
-    if (s)
-        ;
+    if (s) {
+    }
 
     pointer = strchr(input, ';');
 
@@ -1716,8 +1768,8 @@ int LoadUDT(char *filename)
 
     n = fscanf(fd1, "%d, %d, %lf", &xpix, &ypix, &height);
 
-    if (n)
-        ;
+    if (n) {
+    }
 
     do {
         x = 0;

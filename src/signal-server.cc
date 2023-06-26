@@ -57,6 +57,8 @@ unsigned char G_got_elevation_pattern, G_got_azimuth_pattern;
 
 std::vector<struct dem> G_dem;
 
+std::shared_mutex G_dem_lock;
+
 struct region G_region;
 
 const char *version() { return "4.0.0"; };
@@ -629,7 +631,7 @@ void ReadPath(struct site source, struct site destination, struct output *out)
         out->path.length = ARRAYSIZE - 1;
 }
 
-double ElevationAngle2(struct site source, struct site destination, double er, struct output *out, const struct LR LR)
+double ElevationAngle2(struct site source, struct site destination, double er, struct output *out, const struct LR *LR)
 {
     /* This function returns the angle of elevation (in degrees)
        of the destination as seen from the source location, UNLESS
@@ -668,7 +670,7 @@ double ElevationAngle2(struct site source, struct site destination, double er, s
         distance = FEET_PER_MILE * out->path.distance[x];
 
         test_alt =
-            G_earthradius + (out->path.elevation[x] == 0.0 ? out->path.elevation[x] : out->path.elevation[x] + LR.clutter);
+            G_earthradius + (out->path.elevation[x] == 0.0 ? out->path.elevation[x] : out->path.elevation[x] + LR->clutter);
 
         cos_test_angle = ((source_alt2) + (distance * distance) - (test_alt * test_alt)) / (2.0 * source_alt * distance);
 
@@ -754,7 +756,7 @@ double ReadBearing(char *input)
     return bearing;
 }
 
-void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f, FILE *outfile, struct output *out, const struct LR LR)
+void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f, FILE *outfile, struct output *out, const struct LR *LR)
 {
     /* Perform an obstruction analysis along the
        path between receiver and transmitter. */
@@ -778,13 +780,13 @@ void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f, FILE *out
 
     if (f) lambda = 9.8425e8 / (f * 1e6);
 
-    if (LR.clutter > 0.0) {
+    if (LR->clutter > 0.0) {
         fprintf(outfile, "Terrain has been raised by");
 
-        if (LR.metric)
-            fprintf(outfile, " %.2f meters", METERS_PER_FOOT * LR.clutter);
+        if (LR->metric)
+            fprintf(outfile, " %.2f meters", METERS_PER_FOOT * LR->clutter);
         else
-            fprintf(outfile, " %.2f feet", LR.clutter);
+            fprintf(outfile, " %.2f feet", LR->clutter);
 
         fprintf(outfile, " to account for ground clutter.\n\n");
     }
@@ -808,7 +810,7 @@ void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f, FILE *out
         site_x.lon = out->path.lon[x];
         site_x.alt = 0.0;
 
-        h_x = GetElevation(site_x) + G_earthradius + LR.clutter;
+        h_x = GetElevation(site_x) + G_earthradius + LR->clutter;
         d_x = FEET_PER_MILE * Distance(rcvr, site_x);
 
         /* Deal with the LOS path first. */
@@ -820,7 +822,7 @@ void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f, FILE *out
                 fprintf(outfile, "Between %s and %s, obstructions were detected at:\n\n", rcvr.name, xmtr.name);
 
             if (site_x.lat >= 0.0) {
-                if (LR.metric)
+                if (LR->metric)
                     fprintf(outfile, "   %8.4f N,%9.4f W, %5.2f kilometers, %6.2f meters AMSL\n", site_x.lat, site_x.lon,
                             KM_PER_MILE * (d_x / FEET_PER_MILE), METERS_PER_FOOT * (h_x - G_earthradius));
                 else
@@ -829,7 +831,7 @@ void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f, FILE *out
             }
 
             else {
-                if (LR.metric)
+                if (LR->metric)
                     fprintf(outfile, "   %8.4f S,%9.4f W, %5.2f kilometers, %6.2f meters AMSL\n", -site_x.lat, site_x.lon,
                             KM_PER_MILE * (d_x / FEET_PER_MILE), METERS_PER_FOOT * (h_x - G_earthradius));
                 else
@@ -874,7 +876,7 @@ void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f, FILE *out
     }
 
     if (h_r > h_r_orig) {
-        if (LR.metric)
+        if (LR->metric)
             snprintf(string, 150,
                      "\nAntenna at %s must be raised to at least %.2f meters AGL\nto clear all obstructions detected.\n",
                      rcvr.name, METERS_PER_FOOT * (h_r - GetElevation(rcvr) - G_earthradius));
@@ -889,7 +891,7 @@ void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f, FILE *out
 
     if (f) {
         if (h_r_fpt6 > h_r_orig) {
-            if (LR.metric)
+            if (LR->metric)
                 snprintf(
                     string_fpt6, 150,
                     "\nAntenna at %s must be raised to at least %.2f meters AGL\nto clear %.0f%c of the first Fresnel zone.\n",
@@ -907,7 +909,7 @@ void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f, FILE *out
             snprintf(string_fpt6, 150, "\n%.0f%c of the first Fresnel zone is clear.\n", G_fzone_clearance * 100.0, 37);
 
         if (h_r_f1 > h_r_orig) {
-            if (LR.metric)
+            if (LR->metric)
                 snprintf(string_f1, 150,
                          "\nAntenna at %s must be raised to at least %.2f meters AGL\nto clear the first Fresnel zone.\n",
                          rcvr.name, METERS_PER_FOOT * (h_r_f1 - GetElevation(rcvr) - G_earthradius));
@@ -951,7 +953,32 @@ void alloc_path(struct path *path)
     path->distance = new double[ARRAYSIZE];
 }
 
-int handle_args(int argc, char *argv[])
+int init(const char *sdf_path, bool debug)
+{
+    // these can stay globals
+    G_gpsav = 0;
+    G_sdf_path[0] = 0;
+    G_fzone_clearance = 0.6;
+    G_earthradius = EARTHRADIUS;
+    G_ippd = IPPD;  // default resolution
+    // leave these as globals
+    G_ppd = (double)G_ippd;
+    G_yppd = G_ppd;
+
+    G_dpp = 1 / G_ppd;
+    G_mpi = G_ippd - 1;
+    G_debug = debug;
+
+    if (sdf_path) {
+        strncpy(G_sdf_path, sdf_path, 253);
+        return 0;
+    }
+    else {
+        return 1;
+    }
+}
+
+int handle_args(int argc, char *argv[], output *ret_out)
 {
     /* Scan for command line arguments */
     int x, y, z = 0, propmodel, knifeedge = 0, ppa = 0, normalise = 0, haf = 0, pmenv = 1, result;
@@ -962,7 +989,7 @@ int handle_args(int argc, char *argv[])
 
     unsigned char LRmap = 0, txsites = 0, topomap = 0, geo = 0, kml = 0, area_mode = 0, max_txsites, ngs = 0;
 
-    char ano_filename[255], clutter_file[255], antenna_file[255];
+    char clutter_file[255], antenna_file[255];
     char *az_filename, *el_filename, *udt_file = NULL;
 
     double altitude = 0.0, altitudeLR = 0.0, tx_range = 0.0, rx_range = 0.0, deg_range = 0.0, deg_limit = 0.0, deg_range_lon;
@@ -981,25 +1008,25 @@ int handle_args(int argc, char *argv[])
     max_txsites = 30;
     resample = 0;
 
-    struct LR LR;
+    struct LR *LR = new struct LR;
+    bzero(LR->antenna_pattern, sizeof(LR->antenna_pattern));
 
     // all these need to be made per-request variables
-    LR.max_range = 1.0;
-    LR.contour_threshold = 0;
-    LR.clutter = 0.0;
-    LR.dbm = 0;
-    LR.metric = 0;
-    LR.eps_dielect = 15.0;        // Farmland
-    LR.sgm_conductivity = 0.005;  // Farmland
-    LR.eno_ns_surfref = 301.0;
-    LR.frq_mhz = 19.0;     // Deliberately too low
-    LR.radio_climate = 5;  // continental
-    LR.pol = 1;            // vert
-    LR.conf = 0.50;
-    LR.rel = 0.50;
-    LR.erp = 0.0;  // will default to Path Loss
+    LR->max_range = 1.0;
+    LR->contour_threshold = 0;
+    LR->clutter = 0.0;
+    LR->dbm = 0;
+    LR->metric = 0;
+    LR->eps_dielect = 15.0;        // Farmland
+    LR->sgm_conductivity = 0.005;  // Farmland
+    LR->eno_ns_surfref = 301.0;
+    LR->frq_mhz = 19.0;     // Deliberately too low
+    LR->radio_climate = 5;  // continental
+    LR->pol = 1;            // vert
+    LR->conf = 0.50;
+    LR->rel = 0.50;
+    LR->erp = 0.0;  // will default to Path Loss
 
-    ano_filename[0] = 0;
     propmodel = 1;  // ITM
     ngs = 1;        // no terrain background
     kml = 1;
@@ -1045,7 +1072,7 @@ int handle_args(int argc, char *argv[])
             z = x + 1;
 
             if (z <= y && argv[z][0] && argv[z][0] != '-') {
-                sscanf(argv[z], "%lf", &LR.max_range);
+                sscanf(argv[z], "%lf", &LR->max_range);
             }
         }
 
@@ -1053,9 +1080,9 @@ int handle_args(int argc, char *argv[])
             z = x + 1;
 
             if (z <= y && argv[z][0] && argv[z][0] != '-') {
-                sscanf(argv[z], "%lf", &LR.clutter);
+                sscanf(argv[z], "%lf", &LR->clutter);
 
-                if (LR.clutter < 0.0) LR.clutter = 0.0;
+                if (LR->clutter < 0.0) LR->clutter = 0.0;
             }
         }
 
@@ -1111,7 +1138,7 @@ int handle_args(int argc, char *argv[])
             z = x + 1;
 
             if (z <= y && argv[z][0] && argv[z][0] != '-') {
-                strncpy(out.tx_site[0].name, "Tx", 2);
+                strncpy(out.tx_site[0].name, "Tx", sizeof(site::name));
                 // strncpy(out.tx_site[0].filename, argv[z], 253);
                 /* Antenna pattern files have the same basic name as the output file
                  * but with a different extension. If they exist, load them now */
@@ -1133,7 +1160,7 @@ int handle_args(int argc, char *argv[])
                     strcpy(el_filename, argv[z]);
                 strcat(el_filename, EL_FILE_SUFFIX);
 
-                if ((result = LoadPAT(az_filename, el_filename, &LR)) != 0) {
+                if ((result = LoadPAT(az_filename, el_filename, LR)) != 0) {
                     fprintf(stderr, "Permissions error reading antenna pattern file\n");
                     free(az_filename);
                     free(el_filename);
@@ -1156,18 +1183,18 @@ int handle_args(int argc, char *argv[])
             z = x + 1;
 
             if (z <= y && argv[z][0]) /* A minus argument is legal here */
-                sscanf(argv[z], "%d", &LR.contour_threshold);
+                sscanf(argv[z], "%d", &LR->contour_threshold);
         }
 
         if (strcmp(argv[x], "-m") == 0) {
-            LR.metric = 1;
+            LR->metric = 1;
         }
 
         if (strcmp(argv[x], "-t") == 0) {
             ngs = 0;  // greyscale background
         }
 
-        if (strcmp(argv[x], "-dbm") == 0) LR.dbm = 1;
+        if (strcmp(argv[x], "-dbm") == 0) LR->dbm = 1;
 
         /*if (strcmp(argv[x], "-lid") == 0) {
             z = x + 1;
@@ -1286,7 +1313,7 @@ int handle_args(int argc, char *argv[])
             z = x + 1;
 
             if (z <= y && argv[z][0] && argv[z][0] != '-') {
-                sscanf(argv[z], "%lf", &LR.frq_mhz);
+                sscanf(argv[z], "%lf", &LR->frq_mhz);
             }
         }
 
@@ -1294,7 +1321,7 @@ int handle_args(int argc, char *argv[])
             z = x + 1;
 
             if (z <= y && argv[z][0] && argv[z][0] != '-') {
-                sscanf(argv[z], "%lf", &LR.erp);
+                sscanf(argv[z], "%lf", &LR->erp);
             }
         }
 
@@ -1302,7 +1329,7 @@ int handle_args(int argc, char *argv[])
             z = x + 1;
 
             if (z <= y && argv[z][0] && argv[z][0] != '-') {
-                sscanf(argv[z], "%d", &LR.radio_climate);
+                sscanf(argv[z], "%d", &LR->radio_climate);
             }
         }
         if (strcmp(argv[x], "-te") == 0) {
@@ -1340,8 +1367,8 @@ int handle_args(int argc, char *argv[])
                         tercon = 0.001;
                         break;
                 }
-                LR.eps_dielect = terdic;
-                LR.sgm_conductivity = tercon;
+                LR->eps_dielect = terdic;
+                LR->sgm_conductivity = tercon;
             }
         }
 
@@ -1351,7 +1378,7 @@ int handle_args(int argc, char *argv[])
             if (z <= y && argv[z][0] && argv[z][0] != '-') {
                 sscanf(argv[z], "%lf", &terdic);
 
-                LR.eps_dielect = terdic;
+                LR->eps_dielect = terdic;
             }
         }
 
@@ -1361,13 +1388,13 @@ int handle_args(int argc, char *argv[])
             if (z <= y && argv[z][0] && argv[z][0] != '-') {
                 sscanf(argv[z], "%lf", &tercon);
 
-                LR.sgm_conductivity = tercon;
+                LR->sgm_conductivity = tercon;
             }
         }
 
         if (strcmp(argv[x], "-hp") == 0) {
             // Horizontal polarisation (0)
-            LR.pol = 0;
+            LR->pol = 0;
         }
 
         /*UDT*/
@@ -1429,8 +1456,8 @@ int handle_args(int argc, char *argv[])
             z = x + 1;
 
             if (z <= y && argv[z][0]) {
-                sscanf(argv[z], "%lf", &LR.rel);
-                LR.rel = LR.rel / 100;
+                sscanf(argv[z], "%lf", &LR->rel);
+                LR->rel = LR->rel / 100;
             }
         }
         // Confidence % for ITM model
@@ -1438,8 +1465,8 @@ int handle_args(int argc, char *argv[])
             z = x + 1;
 
             if (z <= y && argv[z][0]) {
-                sscanf(argv[z], "%lf", &LR.conf);
-                LR.conf = LR.conf / 100;
+                sscanf(argv[z], "%lf", &LR->conf);
+                LR->conf = LR->conf / 100;
             }
         }
         // LossColors for the -scf, -dcf and -lcf, depending on mode
@@ -1463,19 +1490,19 @@ int handle_args(int argc, char *argv[])
         fprintf(stderr, "ERROR: Either the lon was missing or out of range!");
         exit(EINVAL);
     }
-    if (LR.frq_mhz < 20 || LR.frq_mhz > 100000) {
+    if (LR->frq_mhz < 20 || LR->frq_mhz > 100000) {
         fprintf(stderr, "ERROR: Either the Frequency was missing or out of range!");
         exit(EINVAL);
     }
-    if (LR.erp > 500000000) {
+    if (LR->erp > 500000000) {
         fprintf(stderr, "ERROR: Power was out of range!");
         exit(EINVAL);
     }
-    if (LR.eps_dielect > 80 || LR.eps_dielect < 0.1) {
+    if (LR->eps_dielect > 80 || LR->eps_dielect < 0.1) {
         fprintf(stderr, "ERROR: Ground Dielectric value out of range!");
         exit(EINVAL);
     }
-    if (LR.sgm_conductivity > 0.01 || LR.sgm_conductivity < 0.000001) {
+    if (LR->sgm_conductivity > 0.01 || LR->sgm_conductivity < 0.000001) {
         fprintf(stderr, "ERROR: Ground conductivity out of range!");
         exit(EINVAL);
     }
@@ -1496,11 +1523,11 @@ int handle_args(int argc, char *argv[])
         }
     }*/
 
-    if (LR.contour_threshold < -200 || LR.contour_threshold > 240) {
+    if (LR->contour_threshold < -200 || LR->contour_threshold > 240) {
         fprintf(stderr, "ERROR: Receiver threshold out of range (-200 / +240)");
         exit(EINVAL);
     }
-    if (propmodel > 2 && propmodel < 7 && LR.frq_mhz < 150) {
+    if (propmodel > 2 && propmodel < 7 && LR->frq_mhz < 150) {
         fprintf(stderr, "ERROR: Frequency too low for Propagation model");
         exit(EINVAL);
     }
@@ -1514,13 +1541,13 @@ int handle_args(int argc, char *argv[])
         fprintf(stderr, "ERROR: Cannot resample higher than a factor of 10");
         exit(EINVAL);
     }
-    if (LR.metric) {
+    if (LR->metric) {
         altitudeLR /= METERS_PER_FOOT; /* 10ft * 0.3 = 3.3m */
-        LR.max_range /= KM_PER_MILE;   /* 10 / 1.6 = 7.5 */
+        LR->max_range /= KM_PER_MILE;  /* 10 / 1.6 = 7.5 */
         altitude /= METERS_PER_FOOT;
         out.tx_site[0].alt /= METERS_PER_FOOT; /* Feet to metres */
         out.tx_site[1].alt /= METERS_PER_FOOT; /* Feet to metres */
-        LR.clutter /= METERS_PER_FOOT;         /* Feet to metres */
+        LR->clutter /= METERS_PER_FOOT;        /* Feet to metres */
     }
 
     /* Ensure a trailing '/' is present in sdf_path */
@@ -1637,9 +1664,9 @@ int handle_args(int argc, char *argv[])
                width of the analysis and the size of
                the map. */
 
-            if (LR.max_range == 0.0) LR.max_range = tx_range + rx_range;
+            if (LR->max_range == 0.0) LR->max_range = tx_range + rx_range;
 
-            deg_range = LR.max_range / 57.0;
+            deg_range = LR->max_range / 57.0;
 
             // No more than 8 degs
             deg_limit = 3.5;
@@ -1704,7 +1731,7 @@ int handle_args(int argc, char *argv[])
         Clutter tiles cover 16 x 12 degs but we only need a fraction of that area.
         Limit by max_range / miles per degree (at equator)
         */
-        if ((result = loadClutter(clutter_file, LR.max_range / 45, out.tx_site[0])) != 0) {
+        if ((result = loadClutter(clutter_file, LR->max_range / 45, out.tx_site[0])) != 0) {
             fprintf(stderr, "Error, invalid or clutter file not found\n");
             return result;
         }
@@ -1714,12 +1741,12 @@ int handle_args(int argc, char *argv[])
         if (propmodel == 2) {  // Model 2 = LOS
             cropping = false;  // TODO: File is written in DoLOS() so this needs moving to PlotPropagation() to allow styling,
                                // cropping etc
-            PlotLOSMap(&out, out.tx_site[0], altitudeLR, ano_filename, use_threads, LR);
+            PlotLOSMap(&out, out.tx_site[0], altitudeLR, NULL, use_threads, LR);
             DoLOS(&out, kml, ngs, out.tx_site);
         }
         else {
             // 90% of effort here
-            PlotPropagation(&out, out.tx_site[0], altitudeLR, ano_filename, propmodel, knifeedge, haf, pmenv, use_threads, LR);
+            PlotPropagation(&out, out.tx_site[0], altitudeLR, NULL, propmodel, knifeedge, haf, pmenv, use_threads, LR);
 
             if (G_debug) {
                 fprintf(stderr, "Finished PlotPropagation()\n");
@@ -1755,9 +1782,9 @@ int handle_args(int argc, char *argv[])
             }
 
             // Write bitmap
-            if (LR.erp == 0.0)
+            if (LR->erp == 0.0)
                 DoPathLoss(&out, geo, kml, ngs, out.tx_site, LR);
-            else if (LR.dbm)
+            else if (LR->dbm)
                 DoRxdPwr(&out, kml, ngs, out.tx_site, LR);
             else if ((result = DoSigStr(&out, kml, ngs, out.tx_site, LR)) != 0)
                 return result;
@@ -1771,19 +1798,21 @@ int handle_args(int argc, char *argv[])
 
         if (out.tx_site[0].lon < -180.0) out.tx_site[0].lon += 360;
 
-        if (cropping) {
-            fprintf(stderr, "|%.6f", out.tx_site[0].lat + out.cropLat);
-            fprintf(stderr, "|%.6f", out.tx_site[0].lon + out.cropLon);
-            fprintf(stderr, "|%.6f", out.tx_site[0].lat - out.cropLat);
-            fprintf(stderr, "|%.6f|", out.tx_site[0].lon - out.cropLon);
+        if (G_debug) {
+            if (cropping) {
+                fprintf(stderr, "|%.6f", out.tx_site[0].lat + out.cropLat);
+                fprintf(stderr, "|%.6f", out.tx_site[0].lon + out.cropLon);
+                fprintf(stderr, "|%.6f", out.tx_site[0].lat - out.cropLat);
+                fprintf(stderr, "|%.6f|", out.tx_site[0].lon - out.cropLon);
+            }
+            else {
+                fprintf(stderr, "|%.6f", out.max_north);
+                fprintf(stderr, "|%.6f", out.east);
+                fprintf(stderr, "|%.6f", out.min_north);
+                fprintf(stderr, "|%.6f|", out.west);
+            }
+            fprintf(stderr, "\n");
         }
-        else {
-            fprintf(stderr, "|%.6f", out.max_north);
-            fprintf(stderr, "|%.6f", out.east);
-            fprintf(stderr, "|%.6f", out.min_north);
-            fprintf(stderr, "|%.6f|", out.west);
-        }
-        fprintf(stderr, "\n");
     }
     else {
         strncpy(out.tx_site[0].name, "Tx", 3);
@@ -1803,6 +1832,12 @@ int handle_args(int argc, char *argv[])
         delete[] i.signal;
     }
 
+    if (ret_out) {
+        *ret_out = out;
+    }
+
+    delete LR;
+
     return 0;
 }
 
@@ -1819,7 +1854,7 @@ int scan_stdin()
             p2 = strtok(NULL, " ");
         }
         argv[argc] = NULL;
-        handle_args(argc, argv);
+        handle_args(argc, argv, NULL);
     }
     return 1;
 }

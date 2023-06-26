@@ -68,7 +68,7 @@ void write_png_data(png_structp png_ptr, png_bytep data, size_t length)
     return;
 }
 
-void flush_png_data(png_structp png_ptr) { return; }
+void flush_png_data(png_structp) { return; }
 
 int png_write(image_ctx_t *ctx, std::vector<char> *out)
 {
