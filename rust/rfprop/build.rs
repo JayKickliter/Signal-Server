@@ -48,6 +48,8 @@ fn main() {
     for path in &cxx_sources {
         bridge.file(path);
     }
+    #[cfg(feature = "address_sanitizer")]
+    bridge.flag("-fsanitize=address");
     bridge.compile("sigserve_wrapper");
     println!("cargo:rustc-link-lib=png");
 

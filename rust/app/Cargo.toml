@@ -5,3 +5,7 @@ edition = "2021"
 
 [dependencies]
 rfprop = { path = "../rfprop" }
+
+[features]
+default = []
+address_sanitizer = ["rfprop/address_sanitizer"]
