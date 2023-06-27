@@ -48,7 +48,7 @@ jobs:
       - name: Setup | Rust
         uses: dtolnay/rust-toolchain@nightly
 
-      - name: Build | Test
+      - name: Run | Test
         env:
           RUSTFLAGS: "-Z sanitizer=address"
         run: |

@@ -15,30 +15,49 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Configure CMake
+
+      - name: Setup | Configure
         run: |
           cmake -B ${{github.workspace}}/build     \
           -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}   \
           -DCMAKE_CXX_FLAGS="${{env.EXTRA_FLAGS}}"
-      - name: Build
+
+      - name: Setup | Build
         run: cmake --build ${{github.workspace}}/build
-      - name: Show data
-        run: ls -l data
-      - name: Cleveland
+
+      - name: Test | P2P
         run: |
           ./build/src/signalserver \
           -dbg                     \
           -sdf data                \
-          -lat 41.490298           \
-          -lon -81.699936          \
-          -txh 4                   \
+          -lat 41.491489           \
+          -lon -81.695537          \
+          -txh 10                  \
           -f 900                   \
-          -erp 20                  \
-          -rxh 2                   \
-          -rt -70 -dbm             \
+          -erp 90                  \
+          -rla 41.338866           \
+          -rlo -81.597838          \
+          -rxh 10                  \
+          -rt -140 -dbm            \
           -m                       \
-          -o cleveland             \
+          -pm 4
+
+      - name: Test | Image
+        run: |
+          ./build/src/signalserver \
+          -dbg                     \
+          -sdf data                \
+          -t                       \
+          -lat 41.491489           \
+          -lon -81.695537          \
+          -txh 10                  \
+          -f 900                   \
+          -erp 90                  \
+          -rxh 10                  \
+          -rt -140 -dbm            \
+          -m                       \
           -R 20                    \
           -pm 4
-      - name: Check formatting
+
+      - name: Hygeine | Formatting
         run: make -C ${{github.workspace}}/build check-format
