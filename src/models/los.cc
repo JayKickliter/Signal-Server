@@ -457,7 +457,7 @@ void PlotPropPath(struct output *out, struct site source, struct site destinatio
                     // Longley Rice ITM
                     point_to_point_ITM(source.alt * METERS_PER_FOOT, destination.alt * METERS_PER_FOOT, LR->eps_dielect,
                                        LR->sgm_conductivity, LR->eno_ns_surfref, LR->frq_mhz, LR->radio_climate, LR->pol,
-                                       LR->conf, LR->rel, loss, strmode, out->elev, errnum);
+                                       LR->conf, LR->rel, loss, strmode, out->elev.data(), errnum);
                     break;
                 case 3:
                     // HATA 1, 2 & 3
@@ -490,10 +490,8 @@ void PlotPropPath(struct output *out, struct site source, struct site destinatio
                 case 8:
                     // ITWOM 3.0
                     point_to_point(source.alt * METERS_PER_FOOT, destination.alt * METERS_PER_FOOT, LR->eps_dielect,
-                                   LR->sgm_conductivity,
-
-                                   LR->eno_ns_surfref, LR->frq_mhz, LR->radio_climate, LR->pol, LR->conf, LR->rel, loss,
-                                   strmode, out->elev, errnum);
+                                   LR->sgm_conductivity, LR->eno_ns_surfref, LR->frq_mhz, LR->radio_climate, LR->pol, LR->conf,
+                                   LR->rel, loss, strmode, out->elev.data(), errnum);
                     break;
                 case 9:
                     // Ericsson
@@ -519,11 +517,11 @@ void PlotPropPath(struct output *out, struct site source, struct site destinatio
                 default:
                     point_to_point_ITM(source.alt * METERS_PER_FOOT, destination.alt * METERS_PER_FOOT, LR->eps_dielect,
                                        LR->sgm_conductivity, LR->eno_ns_surfref, LR->frq_mhz, LR->radio_climate, LR->pol,
-                                       LR->conf, LR->rel, loss, strmode, out->elev, errnum);
+                                       LR->conf, LR->rel, loss, strmode, out->elev.data(), errnum);
             }
 
             if (knifeedge == 1 && propmodel > 1) {
-                diffloss = ked(LR->frq_mhz, destination.alt * METERS_PER_FOOT, dkm, out->elev);
+                diffloss = ked(LR->frq_mhz, destination.alt * METERS_PER_FOOT, dkm, out->elev.data());
                 loss += (diffloss);  // ;)
             }
             // Key stage. Link dB for p2p is returned as 'loss'.

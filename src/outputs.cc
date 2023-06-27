@@ -1054,7 +1054,7 @@ void PathReport(struct site source, struct site destination, char *name, char /*
                     // Longley Rice ITM
                     point_to_point_ITM(source.alt * METERS_PER_FOOT, destination.alt * METERS_PER_FOOT, LR->eps_dielect,
                                        LR->sgm_conductivity, LR->eno_ns_surfref, LR->frq_mhz, LR->radio_climate, LR->pol,
-                                       LR->conf, LR->rel, out->loss, strmode, out->elev, errnum);
+                                       LR->conf, LR->rel, out->loss, strmode, out->elev.data(), errnum);
                     break;
                 case 3:
                     // HATA 1, 2 & 3
@@ -1087,7 +1087,7 @@ void PathReport(struct site source, struct site destination, char *name, char /*
                     // ITWOM 3.0
                     point_to_point(source.alt * METERS_PER_FOOT, destination.alt * METERS_PER_FOOT, LR->eps_dielect,
                                    LR->sgm_conductivity, LR->eno_ns_surfref, LR->frq_mhz, LR->radio_climate, LR->pol, LR->conf,
-                                   LR->rel, out->loss, strmode, out->elev, errnum);
+                                   LR->rel, out->loss, strmode, out->elev.data(), errnum);
                     break;
                 case 9:
                     // Ericsson
@@ -1099,7 +1099,7 @@ void PathReport(struct site source, struct site destination, char *name, char /*
                 default:
                     point_to_point_ITM(source.alt * METERS_PER_FOOT, destination.alt * METERS_PER_FOOT, LR->eps_dielect,
                                        LR->sgm_conductivity, LR->eno_ns_surfref, LR->frq_mhz, LR->radio_climate, LR->pol,
-                                       LR->conf, LR->rel, out->loss, strmode, out->elev, errnum);
+                                       LR->conf, LR->rel, out->loss, strmode, out->elev.data(), errnum);
             }
 
             if (block)

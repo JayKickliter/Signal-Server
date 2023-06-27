@@ -63,10 +63,10 @@ struct site {
 };
 
 struct path {
-    double *lat;
-    double *lon;
-    double *elevation;
-    double *distance;
+    std::vector<double> lat;
+    std::vector<double> lon;
+    std::vector<double> elevation;
+    std::vector<double> distance;
     int length;
 };
 
@@ -105,7 +105,7 @@ struct output {
     double max_north;
     double min_west;
     double max_west;
-    double *elev;
+    std::vector<double> elev;
     double north;
     double east;
     double south;

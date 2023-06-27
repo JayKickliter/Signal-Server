@@ -932,25 +932,15 @@ void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f, FILE *out
     }
 }
 
-void free_elev(struct output *out) { delete[] out->elev; }
+void resize_elev(struct output &out) { out.elev.resize(ARRAYSIZE + 10, 0.0); }
 
-void free_path(struct path *path)
+void resize_path(struct path &path)
 {
-    delete[] path->lat;
-    delete[] path->lon;
-    delete[] path->elevation;
-    delete[] path->distance;
-}
-
-void alloc_elev(struct output *out) { out->elev = new double[ARRAYSIZE + 10]; }
-
-void alloc_path(struct path *path)
-{
-    path->length = 0;
-    path->lat = new double[ARRAYSIZE];
-    path->lon = new double[ARRAYSIZE];
-    path->elevation = new double[ARRAYSIZE];
-    path->distance = new double[ARRAYSIZE];
+    path.length = 0;
+    path.lat.resize(ARRAYSIZE, 0.0);
+    path.lon.resize(ARRAYSIZE, 0.0);
+    path.elevation.resize(ARRAYSIZE, 0.0);
+    path.distance.resize(ARRAYSIZE, 0.0);
 }
 
 int init(const char *sdf_path, bool debug)
@@ -1064,8 +1054,8 @@ int handle_args(int argc, char *argv[], output *ret_out)
     out.min_north = 90;
     out.max_north = -90;
 
-    alloc_path(&out.path);
-    alloc_elev(&out);
+    resize_path(out.path);
+    resize_elev(out);
 
     for (x = 0; x <= y; x++) {
         if (strcmp(argv[x], "-R") == 0) {
@@ -1823,9 +1813,6 @@ int handle_args(int argc, char *argv[], output *ret_out)
         SeriesData(out.tx_site[1], out.tx_site[0], 1, normalise, &out, LR);
     }
     fflush(stderr);
-
-    free_path(&out.path);
-    free_elev(&out);
 
     for (auto &i : out.dem_out) {
         delete[] i.mask;
