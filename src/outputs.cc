@@ -768,7 +768,7 @@ void PathReport(struct site source, struct site destination, char *name, char /*
     if (G_got_azimuth_pattern || G_got_elevation_pattern) {
         x = (int)rint(10.0 * (10.0 - angle2));
 
-        if (x >= 0 && x <= 1000) pattern = (double)LR->antenna_pattern[(int)rint(azimuth)][x];
+        if (x >= 0 && x <= 1000) pattern = (double)LR->ant_pat((int)rint(azimuth), x);
 
         patterndB = 20.0 * log10(pattern);
     }
@@ -1113,7 +1113,7 @@ void PathReport(struct site source, struct site destination, char *name, char /*
             x = (int)rint(10.0 * (10.0 - elevation));
 
             if (x >= 0 && x <= 1000) {
-                pattern = (double)LR->antenna_pattern[(int)azimuth][x];
+                pattern = (double)LR->ant_pat((int)azimuth, x);
 
                 if (pattern != 0.0) {
                     patterndB = 20.0 * log10(pattern);

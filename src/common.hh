@@ -70,6 +70,15 @@ struct path {
     int length;
 };
 
+class antenna_pattern {
+    std::vector<float> elems;
+
+   public:
+    antenna_pattern() : elems(361 * 1001, 0.0) {}
+    float const &operator()(int azimuth, int elevation) const { return elems[(azimuth * 1001) + elevation]; }
+    float &operator()(int azimuth, int elevation) { return elems[(azimuth * 1001) + elevation]; }
+};
+
 // TODO what does LR mean
 // essentially this struct holds the
 // read-only configuration options
@@ -88,7 +97,7 @@ struct LR {
     double erp;
     int radio_climate;
     int pol;
-    float antenna_pattern[361][1001];
+    antenna_pattern ant_pat;
     double antenna_downtilt;
     double antenna_dt_direction;
     double antenna_rotation;

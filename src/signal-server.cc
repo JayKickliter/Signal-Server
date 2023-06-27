@@ -995,7 +995,6 @@ int handle_args(int argc, char *argv[], output &out)
     resample = 0;
 
     struct LR *LR = new struct LR;
-    bzero(LR->antenna_pattern, sizeof(LR->antenna_pattern));
 
     // all these need to be made per-request variables
     LR->max_range = 1.0;

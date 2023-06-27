@@ -550,7 +550,7 @@ void PlotPropPath(struct output *out, struct site source, struct site destinatio
             if (x >= 0 && x <= 1000) {
                 azimuth = rint(azimuth);
 
-                pattern = (double)LR->antenna_pattern[(int)azimuth][x];
+                pattern = LR->ant_pat((int)azimuth, x);
 
                 if (pattern != 0.0) {
                     pattern = 20.0 * log10(pattern);

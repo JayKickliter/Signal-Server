@@ -1117,7 +1117,7 @@ int LoadPAT(char *az_filename, char *el_filename, struct LR *LR)
                 else
                     az = 1.0;
 
-                LR->antenna_pattern[x][y] = az * elevation;
+                LR->ant_pat(x, y) = az * elevation;
             }
         }
     }
