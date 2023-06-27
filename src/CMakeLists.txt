@@ -19,13 +19,16 @@ add_library(sigserve
   tiles.cc
 )
 
+target_link_libraries(sigserve
+  PNG::PNG
+)
+
 add_executable(signalserver
   main.cc
 )
 
 target_link_libraries(signalserver
   sigserve
-  PNG::PNG
 )
 
 install(TARGETS sigserve)
