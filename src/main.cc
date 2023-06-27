@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <fstream>
+#include <iterator>
+
 #include "signal-server.hh"
 
 int main(int argc, char *argv[])
@@ -107,5 +110,14 @@ int main(int argc, char *argv[])
     }
 
     output out;
-    return handle_args(argc - 1, argv + 1, out);
+    int ret = handle_args(argc - 1, argv + 1, out);
+
+    if (!ret) {
+        if (out.imagedata.size()) {
+            std::ofstream png_out("out.png");
+            std::ostream_iterator<uint8_t> png_out_iter(png_out);
+            std::copy(out.imagedata.begin(), out.imagedata.end(), png_out_iter);
+        }
+    }
+    return ret;
 }
