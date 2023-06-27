@@ -24,7 +24,7 @@ double ReadBearing(char *input);
 void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f, FILE *outfile, struct output *out, const struct LR *LR);
 void resize_elev(struct output &out);
 void resize_path(struct path &path);
-int handle_args(int argc, char *argv[], output *ret_out);
+int handle_args(int argc, char *argv[], output &ret_out);
 int scan_stdin();
 const char *version();
 

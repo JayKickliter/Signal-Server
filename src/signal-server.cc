@@ -968,7 +968,7 @@ int init(const char *sdf_path, bool debug)
     }
 }
 
-int handle_args(int argc, char *argv[], output *ret_out)
+int handle_args(int argc, char *argv[], output &out)
 {
     /* Scan for command line arguments */
     int x, y, z = 0, propmodel, knifeedge = 0, ppa = 0, normalise = 0, haf = 0, pmenv = 1, result;
@@ -1029,8 +1029,6 @@ int handle_args(int argc, char *argv[], output *ret_out)
     antenna_file[0] = '\0';
 
     y = argc - 1;
-
-    struct output out;
 
     out.hottest = 0;
 
@@ -1841,7 +1839,8 @@ int scan_stdin()
             p2 = strtok(NULL, " ");
         }
         argv[argc] = NULL;
-        handle_args(argc, argv, NULL);
+        output out;
+        handle_args(argc, argv, out);
     }
     return 1;
 }
