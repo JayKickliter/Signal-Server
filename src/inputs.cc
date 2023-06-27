@@ -17,7 +17,7 @@
 #define BZBUFFER 65536
 #define GZBUFFER 32768
 
-extern char *color_file;
+extern char *G_color_file;
 
 int loadClutter(char *filename, double radius, struct site tx)
 {
@@ -1130,8 +1130,8 @@ int LoadSignalColors(struct site xmtr)
     char filename[255], string[80], *pointer = NULL, *s;
     FILE *fd = NULL;
 
-    if (color_file != NULL && color_file[0] != 0)
-        for (x = 0; color_file[x] != '.' && color_file[x] != 0 && x < 250; x++) filename[x] = color_file[x];
+    if (G_color_file != NULL && G_color_file[0] != 0)
+        for (x = 0; G_color_file[x] != '.' && G_color_file[x] != 0 && x < 250; x++) filename[x] = G_color_file[x];
     else
         for (x = 0; xmtr.filename[x] != '.' && xmtr.filename[x] != 0 && x < 250; x++) filename[x] = xmtr.filename[x];
 
@@ -1271,8 +1271,8 @@ int LoadLossColors(struct site xmtr)
     char filename[255], string[80], *pointer = NULL, *s;
     FILE *fd = NULL;
 
-    if (color_file != NULL && color_file[0] != 0)
-        for (x = 0; color_file[x] != '.' && color_file[x] != 0 && x < 250; x++) filename[x] = color_file[x];
+    if (G_color_file != NULL && G_color_file[0] != 0)
+        for (x = 0; G_color_file[x] != '.' && G_color_file[x] != 0 && x < 250; x++) filename[x] = G_color_file[x];
     else
         for (x = 0; xmtr.filename[x] != '.' && xmtr.filename[x] != 0 && x < 250; x++) filename[x] = xmtr.filename[x];
 
@@ -1440,8 +1440,8 @@ int LoadDBMColors(struct site xmtr)
     char filename[255], string[80], *pointer = NULL, *s;
     FILE *fd = NULL;
 
-    if (color_file != NULL && color_file[0] != 0)
-        for (x = 0; color_file[x] != '.' && color_file[x] != 0 && x < 250; x++) filename[x] = color_file[x];
+    if (G_color_file != NULL && G_color_file[0] != 0)
+        for (x = 0; G_color_file[x] != '.' && G_color_file[x] != 0 && x < 250; x++) filename[x] = G_color_file[x];
     else if (filename) {
         for (x = 0; xmtr.filename[x] != '.' && xmtr.filename[x] != 0 && x < 250; x++) filename[x] = xmtr.filename[x];
 

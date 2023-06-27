@@ -51,7 +51,7 @@ int G_ippd, G_mpi, G_debug = 0;
 
 double G_earthradius, G_dpp, G_ppd, G_yppd, G_fzone_clearance = 0.6, G_delta = 0;
 
-char *color_file = NULL;
+char *G_color_file = NULL;
 
 unsigned char G_got_elevation_pattern, G_got_azimuth_pattern;
 
@@ -990,7 +990,7 @@ int handle_args(int argc, char *argv[], output &out)
     geo = 0;
     clutter_file[0] = 0;
     udt_file = NULL;
-    color_file = NULL;
+    G_color_file = NULL;
     max_txsites = 30;
     resample = 0;
 
@@ -1456,9 +1456,9 @@ int handle_args(int argc, char *argv[], output &out)
             z = x + 1;
 
             if (z <= y && argv[z][0]) {
-                color_file = (char *)calloc(PATH_MAX + 1, sizeof(char));
-                if (color_file == NULL) return ENOMEM;
-                strncpy(color_file, argv[z], 253);
+                G_color_file = (char *)calloc(PATH_MAX + 1, sizeof(char));
+                if (G_color_file == NULL) return ENOMEM;
+                strncpy(G_color_file, argv[z], 253);
             }
         }
     }
