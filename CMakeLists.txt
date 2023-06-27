@@ -40,7 +40,7 @@ find_library(bz2 bz2)
 find_library(dl dl)
 find_library(pthread pthread)
 find_library(z z)
-find_library(png png)
+find_package(PNG)
 
 
 ##########################################################################

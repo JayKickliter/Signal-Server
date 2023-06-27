@@ -25,7 +25,7 @@ add_executable(signalserver
 
 target_link_libraries(signalserver
   sigserve
-  png
+  PNG::PNG
 )
 
 install(TARGETS sigserve)
