@@ -50,8 +50,8 @@ struct dem_output {
     float max_north;
     float min_west;
     float max_west;
-    unsigned char *mask;
-    unsigned char *signal;
+    std::vector<unsigned char> mask;
+    std::vector<unsigned char> signal;
 };
 
 struct site {

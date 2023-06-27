@@ -178,8 +178,8 @@ int PutMask(struct output *out, double lat, double lon, int value)
                 tmp.min_west = dem.min_west;
                 tmp.max_west = dem.max_west;
                 tmp.dem = &dem;
-                tmp.mask = new unsigned char[dem.ippd * dem.ippd];
-                tmp.signal = new unsigned char[dem.ippd * dem.ippd];
+                tmp.mask.resize(dem.ippd * dem.ippd, 0);
+                tmp.signal.resize(dem.ippd * dem.ippd, 0);
                 out->dem_out.push_back(tmp);
                 found = &out->dem_out.back();
                 break;
@@ -231,10 +231,8 @@ int OrMask(struct output *out, double lat, double lon, int value)
                 tmp.min_west = dem.min_west;
                 tmp.max_west = dem.max_west;
                 tmp.dem = &dem;
-                tmp.mask = new unsigned char[dem.ippd * dem.ippd];
-                bzero(tmp.mask, dem.ippd * dem.ippd);
-                tmp.signal = new unsigned char[dem.ippd * dem.ippd];
-                bzero(tmp.signal, dem.ippd * dem.ippd);
+                tmp.mask.resize(dem.ippd * dem.ippd, 0);
+                tmp.signal.resize(dem.ippd * dem.ippd, 0);
                 out->dem_out.push_back(tmp);
                 found = &out->dem_out.back();
                 break;
@@ -312,10 +310,8 @@ void PutSignal(struct output *out, double lat, double lon, unsigned char signal)
                 tmp.min_west = dem.min_west;
                 tmp.max_west = dem.max_west;
                 tmp.dem = &dem;
-                tmp.mask = new unsigned char[dem.ippd * dem.ippd];
-                bzero(tmp.mask, dem.ippd * dem.ippd);
-                tmp.signal = new unsigned char[dem.ippd * dem.ippd];
-                bzero(tmp.signal, dem.ippd * dem.ippd);
+                tmp.mask.resize(dem.ippd * dem.ippd, 0);
+                tmp.signal.resize(dem.ippd * dem.ippd);
                 out->dem_out.push_back(tmp);
                 found = &out->dem_out.back();
                 break;
@@ -1811,15 +1807,6 @@ int handle_args(int argc, char *argv[], output &out)
         SeriesData(out.tx_site[1], out.tx_site[0], 1, normalise, &out, LR);
     }
     fflush(stderr);
-
-    for (auto &i : out.dem_out) {
-        delete[] i.mask;
-        delete[] i.signal;
-    }
-
-    if (ret_out) {
-        *ret_out = out;
-    }
 
     delete LR;
 
