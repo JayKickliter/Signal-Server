@@ -21,8 +21,7 @@
 #include "models/sui.hh"
 #include "signal-server.hh"
 
-void DoPathLoss(struct output *out, unsigned char geo, unsigned char kml, unsigned char ngs, struct site *xmtr,
-                const struct LR *LR)
+void DoPathLoss(struct output *out, unsigned char geo, unsigned char kml, unsigned char ngs, struct site *xmtr, LR const &lr)
 {
     /* This function generates a topographic map in Portable Pix Map
        (PPM) format based on the content of flags held in the mask[][]
@@ -131,7 +130,7 @@ void DoPathLoss(struct output *out, unsigned char geo, unsigned char kml, unsign
                 }
 
                 if (cityorcounty == 0) {
-                    if (loss == 0 || (LR->contour_threshold != 0 && loss > abs(LR->contour_threshold))) {
+                    if (loss == 0 || (lr.contour_threshold != 0 && loss > abs(lr.contour_threshold))) {
                         if (ngs) /* No terrain */
                             ADD_PIXELA(&ctx, 255, 255, 255, 0);
                         else {
@@ -189,7 +188,7 @@ void DoPathLoss(struct output *out, unsigned char geo, unsigned char kml, unsign
     image_free(&ctx);
 }
 
-int DoSigStr(struct output *out, unsigned char kml, unsigned char ngs, struct site *xmtr, const struct LR *LR)
+int DoSigStr(struct output *out, unsigned char kml, unsigned char ngs, struct site *xmtr, LR const &lr)
 {
     /* This function generates a topographic map in Portable Pix Map
        (PPM) format based on the signal strength values held in the
@@ -293,7 +292,7 @@ int DoSigStr(struct output *out, unsigned char kml, unsigned char ngs, struct si
                 }
 
                 if (cityorcounty == 0) {
-                    if (LR->contour_threshold != 0 && signal < LR->contour_threshold) {
+                    if (lr.contour_threshold != 0 && signal < lr.contour_threshold) {
                         if (ngs)
                             ADD_PIXELA(&ctx, 255, 255, 255, 0);
                         else {
@@ -358,7 +357,7 @@ int DoSigStr(struct output *out, unsigned char kml, unsigned char ngs, struct si
     return 0;
 }
 
-void DoRxdPwr(struct output *out, unsigned char kml, unsigned char ngs, struct site *xmtr, const struct LR *LR)
+void DoRxdPwr(struct output *out, unsigned char kml, unsigned char ngs, struct site *xmtr, LR const &lr)
 {
     /* This function generates a topographic map in Portable Pix Map
        (PPM) format based on the signal power level values held in the
@@ -461,7 +460,7 @@ void DoRxdPwr(struct output *out, unsigned char kml, unsigned char ngs, struct s
                 }
 
                 if (cityorcounty == 0) {
-                    if (LR->contour_threshold != 0 && dBm < LR->contour_threshold) {
+                    if (lr.contour_threshold != 0 && dBm < lr.contour_threshold) {
                         if (ngs) /* No terrain */
                             ADD_PIXELA(&ctx, 255, 255, 255, 0);
                         else {
@@ -706,7 +705,7 @@ void DoLOS(struct output *out, unsigned char kml, unsigned char ngs, struct site
 }
 
 void PathReport(struct site source, struct site destination, char *name, char /* graph_it */, int propmodel, int pmenv,
-                double rxGain, struct output *out, const struct LR *LR)
+                double rxGain, struct output *out, LR const &lr)
 {
     /* This function writes a PPA Path Report (name.txt) to
        the filesystem.  If (graph_it == 1), then gnuplot is invoked
@@ -750,7 +749,7 @@ void PathReport(struct site source, struct site destination, char *name, char /*
         }
     }
 
-    if (LR->metric) {
+    if (lr.metric) {
         fprintf(fd2, "Ground elevation: %.2f meters AMSL\n", METERS_PER_FOOT * GetElevation(source));
         fprintf(fd2, "Antenna height: %.2f meters AGL / %.2f meters AMSL\n", METERS_PER_FOOT * source.alt,
                 METERS_PER_FOOT * (source.alt + GetElevation(source)));
@@ -763,17 +762,17 @@ void PathReport(struct site source, struct site destination, char *name, char /*
 
     azimuth = Azimuth(source, destination);
     angle1 = ElevationAngle(source, destination);
-    angle2 = ElevationAngle2(source, destination, G_earthradius, out, LR);
+    angle2 = ElevationAngle2(source, destination, G_earthradius, out, lr);
 
     if (G_got_azimuth_pattern || G_got_elevation_pattern) {
         x = (int)rint(10.0 * (10.0 - angle2));
 
-        if (x >= 0 && x <= 1000) pattern = (double)LR->ant_pat((int)rint(azimuth), x);
+        if (x >= 0 && x <= 1000) pattern = (double)lr.ant_pat((int)rint(azimuth), x);
 
         patterndB = 20.0 * log10(pattern);
     }
 
-    if (LR->metric)
+    if (lr.metric)
         fprintf(fd2, "Distance to %s: %.2f kilometers\n", destination.name, KM_PER_MILE * Distance(source, destination));
 
     else
@@ -805,7 +804,7 @@ void PathReport(struct site source, struct site destination, char *name, char /*
         }
     }
 
-    if (LR->metric) {
+    if (lr.metric) {
         fprintf(fd2, "Ground elevation: %.2f meters AMSL\n", METERS_PER_FOOT * GetElevation(destination));
         fprintf(fd2, "Antenna height: %.2f meters AGL / %.2f meters AMSL\n", METERS_PER_FOOT * destination.alt,
                 METERS_PER_FOOT * (destination.alt + GetElevation(destination)));
@@ -817,7 +816,7 @@ void PathReport(struct site source, struct site destination, char *name, char /*
                 destination.alt + GetElevation(destination));
     }
 
-    if (LR->metric)
+    if (lr.metric)
         fprintf(fd2, "Distance to %s: %.2f kilometers\n", source.name, KM_PER_MILE * Distance(source, destination));
 
     else
@@ -826,13 +825,13 @@ void PathReport(struct site source, struct site destination, char *name, char /*
     azimuth = Azimuth(destination, source);
 
     angle1 = ElevationAngle(destination, source);
-    angle2 = ElevationAngle2(destination, source, G_earthradius, out, LR);
+    angle2 = ElevationAngle2(destination, source, G_earthradius, out, lr);
 
     fprintf(fd2, "Azimuth to %s: %.2f degrees grid\n", source.name, azimuth);
 
     fprintf(fd2, "Downtilt angle to %s: %+.4f degrees\n", source.name, angle1);
 
-    if (LR->frq_mhz > 0.0) {
+    if (lr.frq_mhz > 0.0) {
         fprintf(fd2, "\n\nPropagation model: ");
 
         switch (propmodel) {
@@ -878,13 +877,13 @@ void PathReport(struct site source, struct site destination, char *name, char /*
                 fprintf(fd2, "Rural / Optimistic\n");
                 break;
         }
-        fprintf(fd2, "Earth's Dielectric Constant: %.3lf\n", LR->eps_dielect);
-        fprintf(fd2, "Earth's Conductivity: %.3lf Siemens/meter\n", LR->sgm_conductivity);
-        fprintf(fd2, "Atmospheric Bending Constant (N-units): %.3lf ppm\n", LR->eno_ns_surfref);
-        fprintf(fd2, "Frequency: %.3lf MHz\n", LR->frq_mhz);
-        fprintf(fd2, "Radio Climate: %d (", LR->radio_climate);
+        fprintf(fd2, "Earth's Dielectric Constant: %.3lf\n", lr.eps_dielect);
+        fprintf(fd2, "Earth's Conductivity: %.3lf Siemens/meter\n", lr.sgm_conductivity);
+        fprintf(fd2, "Atmospheric Bending Constant (N-units): %.3lf ppm\n", lr.eno_ns_surfref);
+        fprintf(fd2, "Frequency: %.3lf MHz\n", lr.frq_mhz);
+        fprintf(fd2, "Radio Climate: %d (", lr.radio_climate);
 
-        switch (LR->radio_climate) {
+        switch (lr.radio_climate) {
             case 1:
                 fprintf(fd2, "Equatorial");
                 break;
@@ -917,28 +916,28 @@ void PathReport(struct site source, struct site destination, char *name, char /*
                 fprintf(fd2, "Unknown");
         }
 
-        fprintf(fd2, ")\nPolarisation: %d (", LR->pol);
+        fprintf(fd2, ")\nPolarisation: %d (", lr.pol);
 
-        if (LR->pol == 0) fprintf(fd2, "Horizontal");
+        if (lr.pol == 0) fprintf(fd2, "Horizontal");
 
-        if (LR->pol == 1) fprintf(fd2, "Vertical");
+        if (lr.pol == 1) fprintf(fd2, "Vertical");
 
-        fprintf(fd2, ")\nFraction of Situations: %.1lf%c\n", LR->conf * 100.0, 37);
-        fprintf(fd2, "Fraction of Time: %.1lf%c\n", LR->rel * 100.0, 37);
+        fprintf(fd2, ")\nFraction of Situations: %.1lf%c\n", lr.conf * 100.0, 37);
+        fprintf(fd2, "Fraction of Time: %.1lf%c\n", lr.rel * 100.0, 37);
 
-        if (LR->erp != 0.0) {
+        if (lr.erp != 0.0) {
             fprintf(fd2, "\nReceiver gain: %.1f dBd / %.1f dBi\n", rxGain, rxGain + 2.14);
             fprintf(fd2, "Transmitter ERP plus Receiver gain: ");
 
-            if (LR->erp < 1.0) fprintf(fd2, "%.1lf milliwatts", 1000.0 * LR->erp);
+            if (lr.erp < 1.0) fprintf(fd2, "%.1lf milliwatts", 1000.0 * lr.erp);
 
-            if (LR->erp >= 1.0 && LR->erp < 10.0) fprintf(fd2, "%.1lf Watts", LR->erp);
+            if (lr.erp >= 1.0 && lr.erp < 10.0) fprintf(fd2, "%.1lf Watts", lr.erp);
 
-            if (LR->erp >= 10.0 && LR->erp < 10.0e3) fprintf(fd2, "%.0lf Watts", LR->erp);
+            if (lr.erp >= 10.0 && lr.erp < 10.0e3) fprintf(fd2, "%.0lf Watts", lr.erp);
 
-            if (LR->erp >= 10.0e3) fprintf(fd2, "%.3lf kilowatts", LR->erp / 1.0e3);
+            if (lr.erp >= 10.0e3) fprintf(fd2, "%.3lf kilowatts", lr.erp / 1.0e3);
 
-            out->dBm = 10.0 * (log10(LR->erp * 1000.0));
+            out->dBm = 10.0 * (log10(lr.erp * 1000.0));
             fprintf(fd2, " (%+.2f dBm)\n", out->dBm);
             fprintf(fd2, "Transmitter ERP minus Receiver gain: %.2f dBm\n", out->dBm - rxGain);
 
@@ -946,7 +945,7 @@ void PathReport(struct site source, struct site destination, char *name, char /*
 
             fprintf(fd2, "Transmitter EIRP plus Receiver gain: ");
 
-            eirp = LR->erp * 1.636816521;
+            eirp = lr.erp * 1.636816521;
 
             if (eirp < 1.0) fprintf(fd2, "%.1lf milliwatts", 1000.0 * eirp);
 
@@ -974,8 +973,8 @@ void PathReport(struct site source, struct site destination, char *name, char /*
            path into the elev[] array. */
 
         for (x = 1; x < out->path.length - 1; x++)
-            out->elev[x + 2] = METERS_PER_FOOT * (out->path.elevation[x] == 0.0 ? out->path.elevation[x]
-                                                                                : (LR->clutter + out->path.elevation[x]));
+            out->elev[x + 2] = METERS_PER_FOOT *
+                               (out->path.elevation[x] == 0.0 ? out->path.elevation[x] : (lr.clutter + out->path.elevation[x]));
 
         /* Copy ending points without clutter */
 
@@ -1042,9 +1041,9 @@ void PathReport(struct site source, struct site destination, char *name, char /*
 
             /*
                point_to_point(elev, source.alt*METERS_PER_FOOT,
-               destination.alt*METERS_PER_FOOT, LR->eps_dielect,
-               LR->sgm_conductivity, LR->eno_ns_surfref, LR->frq_mhz,
-               LR->radio_climate, LR->pol, LR->conf, LR->rel, loss,
+               destination.alt*METERS_PER_FOOT, lr.eps_dielect,
+               lr.sgm_conductivity, lr.eno_ns_surfref, lr.frq_mhz,
+               lr.radio_climate, lr.pol, lr.conf, lr.rel, loss,
                strmode, errnum);
              */
             dkm = (out->elev[1] * out->elev[0]) / 1000;  // km
@@ -1052,54 +1051,54 @@ void PathReport(struct site source, struct site destination, char *name, char /*
             switch (propmodel) {
                 case 1:
                     // Longley Rice ITM
-                    point_to_point_ITM(source.alt * METERS_PER_FOOT, destination.alt * METERS_PER_FOOT, LR->eps_dielect,
-                                       LR->sgm_conductivity, LR->eno_ns_surfref, LR->frq_mhz, LR->radio_climate, LR->pol,
-                                       LR->conf, LR->rel, out->loss, strmode, out->elev.data(), errnum);
+                    point_to_point_ITM(source.alt * METERS_PER_FOOT, destination.alt * METERS_PER_FOOT, lr.eps_dielect,
+                                       lr.sgm_conductivity, lr.eno_ns_surfref, lr.frq_mhz, lr.radio_climate, lr.pol, lr.conf,
+                                       lr.rel, out->loss, strmode, out->elev.data(), errnum);
                     break;
                 case 3:
                     // HATA 1, 2 & 3
-                    out->loss = HATApathLoss(LR->frq_mhz, source.alt * METERS_PER_FOOT,
+                    out->loss = HATApathLoss(lr.frq_mhz, source.alt * METERS_PER_FOOT,
                                              (out->path.elevation[y] * METERS_PER_FOOT) + (destination.alt * METERS_PER_FOOT),
                                              dkm, pmenv);
                     break;
                 case 4:
                     // COST231-HATA
-                    out->loss = ECC33pathLoss(LR->frq_mhz, source.alt * METERS_PER_FOOT,
+                    out->loss = ECC33pathLoss(lr.frq_mhz, source.alt * METERS_PER_FOOT,
                                               (out->path.elevation[y] * METERS_PER_FOOT) + (destination.alt * METERS_PER_FOOT),
                                               dkm, pmenv);
                     break;
                 case 5:
                     // SUI
-                    out->loss = SUIpathLoss(LR->frq_mhz, source.alt * METERS_PER_FOOT,
+                    out->loss = SUIpathLoss(lr.frq_mhz, source.alt * METERS_PER_FOOT,
                                             (out->path.elevation[y] * METERS_PER_FOOT) + (destination.alt * METERS_PER_FOOT),
                                             dkm, pmenv);
                     break;
                 case 6:
                     out->loss = COST231pathLoss(
-                        LR->frq_mhz, source.alt * METERS_PER_FOOT,
+                        lr.frq_mhz, source.alt * METERS_PER_FOOT,
                         (out->path.elevation[y] * METERS_PER_FOOT) + (destination.alt * METERS_PER_FOOT), dkm, pmenv);
                     break;
                 case 7:
                     // ITU-R P.525 Free space path loss
-                    out->loss = FSPLpathLoss(LR->frq_mhz, dkm, false);
+                    out->loss = FSPLpathLoss(lr.frq_mhz, dkm, false);
                     break;
                 case 8:
                     // ITWOM 3.0
-                    point_to_point(source.alt * METERS_PER_FOOT, destination.alt * METERS_PER_FOOT, LR->eps_dielect,
-                                   LR->sgm_conductivity, LR->eno_ns_surfref, LR->frq_mhz, LR->radio_climate, LR->pol, LR->conf,
-                                   LR->rel, out->loss, strmode, out->elev.data(), errnum);
+                    point_to_point(source.alt * METERS_PER_FOOT, destination.alt * METERS_PER_FOOT, lr.eps_dielect,
+                                   lr.sgm_conductivity, lr.eno_ns_surfref, lr.frq_mhz, lr.radio_climate, lr.pol, lr.conf,
+                                   lr.rel, out->loss, strmode, out->elev.data(), errnum);
                     break;
                 case 9:
                     // Ericsson
                     out->loss = EricssonpathLoss(
-                        LR->frq_mhz, source.alt * METERS_PER_FOOT,
+                        lr.frq_mhz, source.alt * METERS_PER_FOOT,
                         (out->path.elevation[y] * METERS_PER_FOOT) + (destination.alt * METERS_PER_FOOT), dkm, pmenv);
                     break;
 
                 default:
-                    point_to_point_ITM(source.alt * METERS_PER_FOOT, destination.alt * METERS_PER_FOOT, LR->eps_dielect,
-                                       LR->sgm_conductivity, LR->eno_ns_surfref, LR->frq_mhz, LR->radio_climate, LR->pol,
-                                       LR->conf, LR->rel, out->loss, strmode, out->elev.data(), errnum);
+                    point_to_point_ITM(source.alt * METERS_PER_FOOT, destination.alt * METERS_PER_FOOT, lr.eps_dielect,
+                                       lr.sgm_conductivity, lr.eno_ns_surfref, lr.frq_mhz, lr.radio_climate, lr.pol, lr.conf,
+                                       lr.rel, out->loss, strmode, out->elev.data(), errnum);
             }
 
             if (block)
@@ -1113,7 +1112,7 @@ void PathReport(struct site source, struct site destination, char *name, char /*
             x = (int)rint(10.0 * (10.0 - elevation));
 
             if (x >= 0 && x <= 1000) {
-                pattern = (double)LR->ant_pat((int)azimuth, x);
+                pattern = (double)lr.ant_pat((int)azimuth, x);
 
                 if (pattern != 0.0) {
                     patterndB = 20.0 * log10(pattern);
@@ -1136,7 +1135,7 @@ void PathReport(struct site source, struct site destination, char *name, char /*
         distance = Distance(source, destination);
 
         if (distance != 0.0) {
-            free_space_loss = 36.6 + (20.0 * log10(LR->frq_mhz)) + (20.0 * log10(distance));
+            free_space_loss = 36.6 + (20.0 * log10(lr.frq_mhz)) + (20.0 * log10(distance));
             fprintf(fd2, "Free space path loss: %.2f dB\n", free_space_loss);
         }
 
@@ -1159,8 +1158,8 @@ void PathReport(struct site source, struct site destination, char *name, char /*
 
         if (patterndB != 0.0) fprintf(fd2, "Total path loss including %s antenna pattern: %.2f dB\n", source.name, total_loss);
 
-        if (LR->erp != 0.0) {
-            out->field_strength = (139.4 + (20.0 * log10(LR->frq_mhz)) - total_loss) + (10.0 * log10(LR->erp / 1000.0));
+        if (lr.erp != 0.0) {
+            out->field_strength = (139.4 + (20.0 * log10(lr.frq_mhz)) - total_loss) + (10.0 * log10(lr.erp / 1000.0));
 
             /* dBm is referenced to EIRP */
 
@@ -1212,7 +1211,7 @@ void PathReport(struct site source, struct site destination, char *name, char /*
         }
     }
 
-    ObstructionAnalysis(source, destination, LR->frq_mhz, fd2, out, LR);
+    ObstructionAnalysis(source, destination, lr.frq_mhz, fd2, out, lr);
     fclose(fd2);
 
     /*fprintf(stderr,
@@ -1224,7 +1223,7 @@ void PathReport(struct site source, struct site destination, char *name, char /*
 }
 
 void SeriesData(struct site source, struct site destination, unsigned char fresnel_plot, unsigned char normalised,
-                struct output *out, const struct LR *LR)
+                struct output *out, LR const &lr)
 {
     int x;
     double a, b, c, height = 0.0, refangle, cangle, maxheight = -100000.0, minheight = 100000.0, lambda = 0.0, f_zone = 0.0,
@@ -1246,7 +1245,7 @@ void SeriesData(struct site source, struct site destination, unsigned char fresn
     }
 
     if (fresnel_plot) {
-        lambda = 9.8425e8 / (LR->frq_mhz * 1e6);
+        lambda = 9.8425e8 / (lr.frq_mhz * 1e6);
         d = FEET_PER_MILE * out->path.distance[out->path.length - 1];
     }
 
@@ -1257,11 +1256,11 @@ void SeriesData(struct site source, struct site destination, unsigned char fresn
         nm = (-source.alt - es - nb) / (out->path.distance[out->path.length - 1]);
     }
 
-    if (LR->clutter > 0.0) {
+    if (lr.clutter > 0.0) {
         has_clutter = true;
     }
 
-    if ((LR->frq_mhz >= 20.0) && (LR->frq_mhz <= 100000.0) && fresnel_plot) {
+    if ((lr.frq_mhz >= 20.0) && (lr.frq_mhz <= 100000.0) && fresnel_plot) {
         has_fresnel = true;
     }
 
@@ -1286,7 +1285,7 @@ void SeriesData(struct site source, struct site destination, unsigned char fresn
          * path to the first Fresnel zone boundary.
          */
 
-        if ((LR->frq_mhz >= 20.0) && (LR->frq_mhz <= 100000.0) && fresnel_plot) {
+        if ((lr.frq_mhz >= 20.0) && (lr.frq_mhz <= 100000.0) && fresnel_plot) {
             d1 = FEET_PER_MILE * out->path.distance[x];
             f_zone = -1.0 * sqrt(lambda * d1 * (d - d1) / d);
             fpt6_zone = f_zone * G_fzone_clearance;
@@ -1296,7 +1295,7 @@ void SeriesData(struct site source, struct site destination, unsigned char fresn
             r = -(nm * out->path.distance[x]) - nb;
             height += r;
 
-            if ((LR->frq_mhz >= 20.0) && (LR->frq_mhz <= 100000.0) && fresnel_plot) {
+            if ((lr.frq_mhz >= 20.0) && (lr.frq_mhz <= 100000.0) && fresnel_plot) {
                 f_zone += r;
                 fpt6_zone += r;
             }
@@ -1305,12 +1304,12 @@ void SeriesData(struct site source, struct site destination, unsigned char fresn
         else
             r = 0.0;
 
-        if (LR->metric) {
+        if (lr.metric) {
             out->distancevec.push_back(KM_PER_MILE * out->path.distance[x]);
             out->profilevec.push_back(METERS_PER_FOOT * height);
 
             if (has_clutter && x > 0 && x < out->path.length - 2) {
-                out->cluttervec.push_back(METERS_PER_FOOT * (terrain == 0.0 ? height : (height + LR->clutter)));
+                out->cluttervec.push_back(METERS_PER_FOOT * (terrain == 0.0 ? height : (height + lr.clutter)));
             }
 
             out->referencevec.push_back(METERS_PER_FOOT * r);
@@ -1322,7 +1321,7 @@ void SeriesData(struct site source, struct site destination, unsigned char fresn
             out->profilevec.push_back(height);
 
             if (has_clutter && x > 0 && x < out->path.length - 2) {
-                out->cluttervec.push_back((terrain == 0.0 ? height : (height + LR->clutter)));
+                out->cluttervec.push_back((terrain == 0.0 ? height : (height + lr.clutter)));
             }
 
             out->referencevec.push_back(r);
@@ -1330,7 +1329,7 @@ void SeriesData(struct site source, struct site destination, unsigned char fresn
         }
 
         if (has_fresnel) {
-            if (LR->metric) {
+            if (lr.metric) {
                 out->fresnelvec.push_back(METERS_PER_FOOT * f_zone);
                 out->fresnel60vec.push_back(METERS_PER_FOOT * fpt6_zone);
             }
@@ -1343,7 +1342,7 @@ void SeriesData(struct site source, struct site destination, unsigned char fresn
             if (f_zone < minheight) minheight = f_zone;
         }
 
-        if ((height + LR->clutter) > maxheight) maxheight = height + LR->clutter;
+        if ((height + lr.clutter) > maxheight) maxheight = height + lr.clutter;
 
         if (height < minheight) minheight = height;
 
@@ -1359,7 +1358,7 @@ void SeriesData(struct site source, struct site destination, unsigned char fresn
     else
         r = 0.0;
 
-    if (LR->metric) {
+    if (lr.metric) {
         out->distancevec.push_back(KM_PER_MILE * out->path.distance[out->path.length - 1]);
         out->profilevec.push_back(METERS_PER_FOOT * r);
         out->referencevec.push_back(METERS_PER_FOOT * r);
@@ -1372,7 +1371,7 @@ void SeriesData(struct site source, struct site destination, unsigned char fresn
     }
 
     if (has_fresnel) {
-        if (LR->metric) {
+        if (lr.metric) {
             out->fresnelvec.push_back(METERS_PER_FOOT);
             out->fresnel60vec.push_back(METERS_PER_FOOT * r);
         }
