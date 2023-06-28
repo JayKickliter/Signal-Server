@@ -1,4 +1,8 @@
 [workspace]
 members = [
   "rust/rfprop",
+  "rust/sdftool",
 ]
+
+[profile.release]
+debug = true

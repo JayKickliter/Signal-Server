@@ -11,6 +11,7 @@
 #include <zlib.h>
 
 #include <memory>
+#include <cassert>
 
 #include "common.hh"
 #include "signal-server.hh"
@@ -583,26 +584,94 @@ int LoadSDF_BSDF(char *name, struct output *out)
             fflush(stderr);
         }
 
+        /*
+         * ┌─────────────────────────────────────┐
+         * │                                     │
+         * │                                     │
+         * │                                     │
+         * │                                     │
+         * │                                     │
+         * │    IPPD^2 i16 elevation samples     │
+         * │           (little-endian)           │
+         * │                                     │
+         * │                                     │
+         * │                                     │
+         * │                                     │
+         * │                                     │
+         * │                                     │
+         * ├─────────────────────────────────────┤
+         * │              u16 IPPD               │
+         * │           (little-endian)           │
+         * ├─────────────────────────────────────┤
+         * │        i16 minimum elevation        │
+         * │           (little-endian)           │
+         * ├─────────────────────────────────────┤
+         * │        i16 maximum elevation        │
+         * │           (little-endian)           │
+         * ├─────────────────────────────────────┤
+         * │             u16 Version             │
+         * │           (little-endian)           │
+         * └─────────────────────────────────────┘
+         */
+
+        struct FooterV0 {
+            uint16_t ippd;
+            int16_t min_el;
+            int16_t max_el;
+
+            /** Parses this from `fd`.
+             *
+             * @returns 0 on success
+             * @returns a negative value on error
+             */
+            int read(int fd)
+            {
+                uint16_t version = UINT16_MAX;
+                if (lseek(fd, -2, SEEK_END) == -1) {
+                    return -errno;
+                }
+                if (::read(fd, &version, sizeof(version)) != sizeof(version)) {
+                    return -errno;
+                }
+                if (version != 0) {
+                    return -1;
+                }
+                if (lseek(fd, -8, SEEK_END) == -1) {
+                    return -errno;
+                }
+                if (::read(fd, &this->ippd, sizeof(this->ippd)) != sizeof(this->ippd)) {
+                    return -errno;
+                }
+                assert(this->ippd == 1200 || this->ippd == 3600);
+                if (::read(fd, &this->min_el, sizeof(this->min_el)) != sizeof(this->min_el)) {
+                    return -errno;
+                }
+                if (::read(fd, &this->max_el, sizeof(this->max_el)) != sizeof(this->max_el)) {
+                    return -errno;
+                }
+                return 0;
+            }
+        };
+
+        int parse_res;
+        FooterV0 footer;
+        if ((parse_res = footer.read(fd)) != 0) {
+            close(fd);
+            return parse_res;
+        }
+
         struct dem dem;
-
-        dem.ippd = 1200;
-
-        dem.data = (short *)mmap(NULL, 1200 * 1200 * 2, PROT_READ, MAP_PRIVATE, fd, 0);
-
         dem.min_north = minlat;
         dem.min_west = minlon;
         dem.max_north = maxlat;
         dem.max_west = maxlon;
+        dem.ippd = footer.ippd;
+        dem.min_el = footer.min_el;
+        dem.max_el = footer.max_el;
 
-        lseek(fd, 1200 * 1200 * 2, SEEK_SET);
-
-        if (read(fd, &dem.min_el, 2) < 0) {
-            return -errno;
-        }
-
-        if (read(fd, &dem.max_el, 2) < 0) {
-            return -errno;
-        }
+        /* TODO: need to seek before mapping? */
+        lseek(fd, 0, SEEK_SET);
+        dem.data = (short *)mmap(NULL, sizeof(int16_t) * dem.ippd * dem.ippd, PROT_READ, MAP_PRIVATE, fd, 0);
 
         close(fd);
 
