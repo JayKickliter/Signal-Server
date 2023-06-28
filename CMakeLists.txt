@@ -50,4 +50,4 @@ find_package(PNG)
 # Main applicaiton(s)
 add_subdirectory(src)
 # Tool
-add_subdirectory(utils/sdf/usgs2sdf)
+# add_subdirectory(utils/sdf/usgs2sdf)
