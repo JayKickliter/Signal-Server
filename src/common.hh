@@ -50,8 +50,8 @@ struct dem_output {
     float max_north;
     float min_west;
     float max_west;
-    unsigned char *mask;
-    unsigned char *signal;
+    std::vector<unsigned char> mask;
+    std::vector<unsigned char> signal;
 };
 
 struct site {
@@ -63,11 +63,20 @@ struct site {
 };
 
 struct path {
-    double *lat;
-    double *lon;
-    double *elevation;
-    double *distance;
+    std::vector<double> lat;
+    std::vector<double> lon;
+    std::vector<double> elevation;
+    std::vector<double> distance;
     int length;
+};
+
+class antenna_pattern {
+    std::vector<float> elems;
+
+   public:
+    antenna_pattern() : elems(361 * 1001, 0.0) {}
+    float const &operator()(int azimuth, int elevation) const { return elems[(azimuth * 1001) + elevation]; }
+    float &operator()(int azimuth, int elevation) { return elems[(azimuth * 1001) + elevation]; }
 };
 
 // TODO what does LR mean
@@ -88,7 +97,7 @@ struct LR {
     double erp;
     int radio_climate;
     int pol;
-    float antenna_pattern[361][1001];
+    antenna_pattern ant_pat;
     double antenna_downtilt;
     double antenna_dt_direction;
     double antenna_rotation;
@@ -105,7 +114,7 @@ struct output {
     double max_north;
     double min_west;
     double max_west;
-    double *elev;
+    std::vector<double> elev;
     double north;
     double east;
     double south;

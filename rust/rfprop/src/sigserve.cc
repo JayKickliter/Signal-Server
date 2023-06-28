@@ -4,7 +4,7 @@
 #include "rfprop/src/sigserve.rs.h"
 
 extern int init(const char *sdf_path, bool debug);
-extern int handle_args(int argc, char *argv[], output *ret_out);
+extern int handle_args(int argc, char *argv[], output &ret_out);
 
 namespace sigserve_wrapper {
 
@@ -15,7 +15,7 @@ Report handle_args(int argc, char *argv[])
     Report report;
     output out;
 
-    report.retcode = ::handle_args(argc, argv, &out);
+    report.retcode = ::handle_args(argc, argv, out);
     if (report.retcode) {
         return report;
     }

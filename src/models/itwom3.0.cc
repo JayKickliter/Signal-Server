@@ -2390,7 +2390,7 @@ void point_to_pointMDH_two(double tht_m, double rht_m, double eps_dielect, doubl
     prop.encc = 1000.00; /*  double enc_ncc_clcref  */
     prop.cch = 22.5;     /* double clutter_height */
     prop.cd = 1.00;      /* double clutter_density */
-    /* mode_var = 1;        /\* int mode_var set for FCC ILLR *\/ */
+    /* mode_var = 1;        /\* int mode_var set for FCC ILLR &\/ */
 
     if (q <= 0.0) {
         ja = (long)(3.0 + 0.1 * elev[0]); /* to match addition of (long) */

@@ -1,0 +1,55 @@
+name: rust
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+    tags: ["v*"]
+
+env:
+  RUST_BACKTRACE: short
+  RUSTFLAGS: "-D warnings"
+
+jobs:
+  hygiene:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Setup | Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.11.0
+        with:
+          access_token: ${{ github.token }}
+
+      - name: Setup | Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup | Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Build | Hygiene
+        run: |
+          cargo fmt  -- --check
+          cargo clippy --all-features -- -D clippy::all
+
+  test:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Setup | Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.11.0
+        with:
+          access_token: ${{ github.token }}
+
+      - name: Setup | Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup | Rust
+        uses: dtolnay/rust-toolchain@nightly
+
+      - name: Run | Test
+        env:
+          RUSTFLAGS: "-Z sanitizer=address"
+        run: |
+          cargo +nightly test --features=address_sanitizer --target x86_64-unknown-linux-gnu

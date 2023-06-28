@@ -14,7 +14,7 @@ int LoadSDF_GZ(char *name);
 char *GZfgets(char *output, gzFile gzfd, unsigned length);
 int LoadSDF_BZ(char *name);
 int LoadSDF(char *name, int winfiles);
-int LoadPAT(char *az_filename, char *el_filename, struct LR *LR);
+int LoadPAT(char *az_filename, char *el_filename, struct LR &lr);
 int LoadSignalColors(struct site xmtr);
 int LoadLossColors(struct site xmtr);
 int LoadDBMColors(struct site xmtr);

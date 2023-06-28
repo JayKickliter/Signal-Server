@@ -11,3 +11,7 @@ cxx = "1"
 [build-dependencies]
 cmake = "0.1"
 cxx-build = "1.0"
+
+[features]
+default = []
+address_sanitizer = []

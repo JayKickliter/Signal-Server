@@ -17,7 +17,7 @@
 #define BZBUFFER 65536
 #define GZBUFFER 32768
 
-extern char *color_file;
+extern char *G_color_file;
 
 int loadClutter(char *filename, double radius, struct site tx)
 {
@@ -771,7 +771,7 @@ int LoadSDF(char *name, struct output *out)
     return return_value;
 }
 
-int LoadPAT(char *az_filename, char *el_filename, struct LR *LR)
+int LoadPAT(char *az_filename, char *el_filename, struct LR &lr)
 {
     /* This function reads and processes antenna pattern (.az
        and .el) files that may correspond in name to previously
@@ -819,8 +819,8 @@ int LoadPAT(char *az_filename, char *el_filename, struct LR *LR)
 
         if (pointer != NULL) *pointer = 0;
 
-        if (LR->antenna_rotation != -1)  // If cmdline override
-            rotation = (float)LR->antenna_rotation;
+        if (lr.antenna_rotation != -1)  // If cmdline override
+            rotation = (float)lr.antenna_rotation;
         else
             sscanf(string, "%f", &rotation);
 
@@ -962,14 +962,14 @@ int LoadPAT(char *az_filename, char *el_filename, struct LR *LR)
 
         sscanf(string, "%f %f", &mechanical_tilt, &tilt_azimuth);
 
-        if (LR->antenna_downtilt != 99.0) {      // If Cmdline override
-            if (LR->antenna_dt_direction == -1)  // dt_dir not specified
-                tilt_azimuth = rotation;         // use rotation value
-            mechanical_tilt = (float)LR->antenna_downtilt;
+        if (lr.antenna_downtilt != 99.0) {      // If Cmdline override
+            if (lr.antenna_dt_direction == -1)  // dt_dir not specified
+                tilt_azimuth = rotation;        // use rotation value
+            mechanical_tilt = (float)lr.antenna_downtilt;
         }
 
-        if (LR->antenna_dt_direction != -1)  // If Cmdline override
-            tilt_azimuth = (float)LR->antenna_dt_direction;
+        if (lr.antenna_dt_direction != -1)  // If Cmdline override
+            tilt_azimuth = (float)lr.antenna_dt_direction;
 
         if (G_debug) {
             fprintf(stderr, "Antenna Pattern Mechamical Downtilt = %f\n", mechanical_tilt);
@@ -1117,7 +1117,7 @@ int LoadPAT(char *az_filename, char *el_filename, struct LR *LR)
                 else
                     az = 1.0;
 
-                LR->antenna_pattern[x][y] = az * elevation;
+                lr.ant_pat(x, y) = az * elevation;
             }
         }
     }
@@ -1130,8 +1130,8 @@ int LoadSignalColors(struct site xmtr)
     char filename[255], string[80], *pointer = NULL, *s;
     FILE *fd = NULL;
 
-    if (color_file != NULL && color_file[0] != 0)
-        for (x = 0; color_file[x] != '.' && color_file[x] != 0 && x < 250; x++) filename[x] = color_file[x];
+    if (G_color_file != NULL && G_color_file[0] != 0)
+        for (x = 0; G_color_file[x] != '.' && G_color_file[x] != 0 && x < 250; x++) filename[x] = G_color_file[x];
     else
         for (x = 0; xmtr.filename[x] != '.' && xmtr.filename[x] != 0 && x < 250; x++) filename[x] = xmtr.filename[x];
 
@@ -1271,8 +1271,8 @@ int LoadLossColors(struct site xmtr)
     char filename[255], string[80], *pointer = NULL, *s;
     FILE *fd = NULL;
 
-    if (color_file != NULL && color_file[0] != 0)
-        for (x = 0; color_file[x] != '.' && color_file[x] != 0 && x < 250; x++) filename[x] = color_file[x];
+    if (G_color_file != NULL && G_color_file[0] != 0)
+        for (x = 0; G_color_file[x] != '.' && G_color_file[x] != 0 && x < 250; x++) filename[x] = G_color_file[x];
     else
         for (x = 0; xmtr.filename[x] != '.' && xmtr.filename[x] != 0 && x < 250; x++) filename[x] = xmtr.filename[x];
 
@@ -1440,8 +1440,8 @@ int LoadDBMColors(struct site xmtr)
     char filename[255], string[80], *pointer = NULL, *s;
     FILE *fd = NULL;
 
-    if (color_file != NULL && color_file[0] != 0)
-        for (x = 0; color_file[x] != '.' && color_file[x] != 0 && x < 250; x++) filename[x] = color_file[x];
+    if (G_color_file != NULL && G_color_file[0] != 0)
+        for (x = 0; G_color_file[x] != '.' && G_color_file[x] != 0 && x < 250; x++) filename[x] = G_color_file[x];
     else if (filename) {
         for (x = 0; xmtr.filename[x] != '.' && xmtr.filename[x] != 0 && x < 250; x++) filename[x] = xmtr.filename[x];
 
