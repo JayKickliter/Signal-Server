@@ -10,8 +10,8 @@
 #include <unistd.h>
 #include <zlib.h>
 
-#include <memory>
 #include <cassert>
+#include <memory>
 
 #include "common.hh"
 #include "signal-server.hh"
