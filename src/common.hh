@@ -166,7 +166,7 @@ extern unsigned char G_got_elevation_pattern;
 extern unsigned char G_got_azimuth_pattern;
 
 extern std::vector<struct dem> G_dem;
-extern std::shared_mutex G_dem_lock;
+extern std::shared_mutex G_dem_mtx;
 extern struct region G_region;
 
 extern int G_debug;
