@@ -55,9 +55,9 @@ char *G_color_file = NULL;
 
 unsigned char G_got_elevation_pattern, G_got_azimuth_pattern;
 
-std::vector<struct dem> G_dem;
+std::shared_mutex G_dem_mtx;
 
-std::shared_mutex G_dem_lock;
+std::vector<std::shared_ptr<const struct dem>> G_dem;
 
 struct region G_region;
 
@@ -168,18 +168,18 @@ int PutMask(struct output *out, double lat, double lon, int value)
     // and create a corresponding output vector entry
     if (!found) {
         for (auto &dem : G_dem) {
-            x = (int)rint(G_ppd * (lat - dem.min_north));
-            y = G_mpi - (int)rint(G_yppd * (LonDiff(dem.max_west, lon)));
+            x = (int)rint(G_ppd * (lat - dem->min_north));
+            y = G_mpi - (int)rint(G_yppd * (LonDiff(dem->max_west, lon)));
 
             if (x >= 0 && x <= G_mpi && y >= 0 && y <= G_mpi) {
                 struct dem_output tmp;
-                tmp.min_north = dem.min_north;
-                tmp.max_north = dem.max_north;
-                tmp.min_west = dem.min_west;
-                tmp.max_west = dem.max_west;
-                tmp.dem = &dem;
-                tmp.mask.resize(dem.ippd * dem.ippd, 0);
-                tmp.signal.resize(dem.ippd * dem.ippd, 0);
+                tmp.min_north = dem->min_north;
+                tmp.max_north = dem->max_north;
+                tmp.min_west = dem->min_west;
+                tmp.max_west = dem->max_west;
+                tmp.dem = dem;
+                tmp.mask.resize(dem->ippd * dem->ippd, 0);
+                tmp.signal.resize(dem->ippd * dem->ippd, 0);
                 out->dem_out.push_back(tmp);
                 found = &out->dem_out.back();
                 break;
@@ -221,18 +221,18 @@ int OrMask(struct output *out, double lat, double lon, int value)
     // and create a corresponding output vector entry
     if (!found) {
         for (auto &dem : G_dem) {
-            x = (int)rint(G_ppd * (lat - dem.min_north));
-            y = G_mpi - (int)rint(G_yppd * (LonDiff(dem.max_west, lon)));
+            x = (int)rint(G_ppd * (lat - dem->min_north));
+            y = G_mpi - (int)rint(G_yppd * (LonDiff(dem->max_west, lon)));
 
             if (x >= 0 && x <= G_mpi && y >= 0 && y <= G_mpi) {
                 struct dem_output tmp;
-                tmp.min_north = dem.min_north;
-                tmp.max_north = dem.max_north;
-                tmp.min_west = dem.min_west;
-                tmp.max_west = dem.max_west;
-                tmp.dem = &dem;
-                tmp.mask.resize(dem.ippd * dem.ippd, 0);
-                tmp.signal.resize(dem.ippd * dem.ippd, 0);
+                tmp.min_north = dem->min_north;
+                tmp.max_north = dem->max_north;
+                tmp.min_west = dem->min_west;
+                tmp.max_west = dem->max_west;
+                tmp.dem = dem;
+                tmp.mask.resize(dem->ippd * dem->ippd, 0);
+                tmp.signal.resize(dem->ippd * dem->ippd, 0);
                 out->dem_out.push_back(tmp);
                 found = &out->dem_out.back();
                 break;
@@ -300,18 +300,18 @@ void PutSignal(struct output *out, double lat, double lon, unsigned char signal)
     // and create a corresponding output vector entry
     if (!found) {
         for (auto &dem : G_dem) {
-            x = (int)rint(G_ppd * (lat - dem.min_north));
-            y = G_mpi - (int)rint(G_yppd * (LonDiff(dem.max_west, lon)));
+            x = (int)rint(G_ppd * (lat - dem->min_north));
+            y = G_mpi - (int)rint(G_yppd * (LonDiff(dem->max_west, lon)));
 
             if (x >= 0 && x <= G_mpi && y >= 0 && y <= G_mpi) {
                 struct dem_output tmp;
-                tmp.min_north = dem.min_north;
-                tmp.max_north = dem.max_north;
-                tmp.min_west = dem.min_west;
-                tmp.max_west = dem.max_west;
-                tmp.dem = &dem;
-                tmp.mask.resize(dem.ippd * dem.ippd, 0);
-                tmp.signal.resize(dem.ippd * dem.ippd);
+                tmp.min_north = dem->min_north;
+                tmp.max_north = dem->max_north;
+                tmp.min_west = dem->min_west;
+                tmp.max_west = dem->max_west;
+                tmp.dem = dem;
+                tmp.mask.resize(dem->ippd * dem->ippd, 0);
+                tmp.signal.resize(dem->ippd * dem->ippd);
                 out->dem_out.push_back(tmp);
                 found = &out->dem_out.back();
                 break;
@@ -363,14 +363,14 @@ double GetElevation(struct site location)
 
     int x = 0, y = 0;
     double elevation;
-    struct dem *found = NULL;
+    std::shared_ptr<const dem> found;
 
     for (auto &dem : G_dem) {
-        x = (int)rint(G_ppd * (location.lat - dem.min_north));
-        y = G_mpi - (int)rint(G_yppd * (LonDiff(dem.max_west, location.lon)));
+        x = (int)rint(G_ppd * (location.lat - dem->min_north));
+        y = G_mpi - (int)rint(G_yppd * (LonDiff(dem->max_west, location.lon)));
 
         if (x >= 0 && x <= G_mpi && y >= 0 && y <= G_mpi) {
-            found = &dem;
+            found = dem;
             break;
         }
     }
@@ -390,15 +390,15 @@ int AddElevation(double lat, double lon, double height, int size)
        in memory.  Does nothing and returns 0 for locations
        not found in memory. */
 
-    struct dem *found = NULL;
     int i, j, x = 0, y = 0;
+    std::shared_ptr<const dem> found;
 
     for (auto &dem : G_dem) {
-        x = (int)rint(G_ppd * (lat - dem.min_north));
-        y = G_mpi - (int)rint(G_yppd * (LonDiff(dem.max_west, lon)));
+        x = (int)rint(G_ppd * (lat - dem->min_north));
+        y = G_mpi - (int)rint(G_yppd * (LonDiff(dem->max_west, lon)));
 
         if (x >= 0 && x <= G_mpi && y >= 0 && y <= G_mpi) {
-            found = &dem;
+            found = dem;
             break;
         }
     }
