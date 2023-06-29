@@ -1,6 +1,7 @@
 #ifndef _COMMON_HH_
 #define _COMMON_HH_
 
+#include <memory>
 #include <mutex>
 #include <shared_mutex>
 #include <thread>
@@ -45,7 +46,7 @@ struct dem {
 };
 
 struct dem_output {
-    struct dem *dem;
+    std::shared_ptr<const struct dem> dem;
     float min_north;
     float max_north;
     float min_west;
@@ -165,7 +166,7 @@ extern char G_gpsav;
 extern unsigned char G_got_elevation_pattern;
 extern unsigned char G_got_azimuth_pattern;
 
-extern std::vector<struct dem> G_dem;
+extern std::vector<std::shared_ptr<const struct dem>> G_dem;
 extern std::shared_mutex G_dem_mtx;
 extern struct region G_region;
 

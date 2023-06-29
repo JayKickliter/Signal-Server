@@ -120,8 +120,8 @@ bool can_process(double lat, double lon)
     return true;  // XXX hacked for now because we don't use threads
 
     for (indx = 0, found = 0; indx < MAXPAGES && found == 0;) {
-        x = (int)rint(G_ppd * (lat - G_dem[indx].min_north));
-        y = G_mpi - (int)rint(G_yppd * (LonDiff(G_dem[indx].max_west, lon)));
+        x = (int)rint(G_ppd * (lat - G_dem[indx]->min_north));
+        y = G_mpi - (int)rint(G_yppd * (LonDiff(G_dem[indx]->max_west, lon)));
 
         if (x >= 0 && x <= G_mpi && y >= 0 && y <= G_mpi)
             found = 1;

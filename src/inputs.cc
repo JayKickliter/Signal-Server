@@ -10,6 +10,8 @@
 #include <unistd.h>
 #include <zlib.h>
 
+#include <memory>
+
 #include "common.hh"
 #include "signal-server.hh"
 #include "tiles.hh"
@@ -510,49 +512,49 @@ int LoadSDF_BSDF(char *name, struct output *out)
         std::shared_lock r_lock(G_dem_mtx);
 
         for (auto &dem : G_dem) {
-            if (minlat == dem.min_north && minlon == dem.min_west && maxlat == dem.max_north && maxlon == dem.max_west) {
+            if (minlat == dem->min_north && minlon == dem->min_west && maxlat == dem->max_north && maxlon == dem->max_west) {
                 found = 1;
 
                 // TODO copy-pasted from below, dedup
-                if (dem.min_el < out->min_elevation) out->min_elevation = dem.min_el;
+                if (dem->min_el < out->min_elevation) out->min_elevation = dem->min_el;
 
-                if (dem.max_el > out->max_elevation) out->max_elevation = dem.max_el;
+                if (dem->max_el > out->max_elevation) out->max_elevation = dem->max_el;
 
                 if (out->max_north == -90)
-                    out->max_north = dem.max_north;
+                    out->max_north = dem->max_north;
 
-                else if (dem.max_north > out->max_north)
-                    out->max_north = dem.max_north;
+                else if (dem->max_north > out->max_north)
+                    out->max_north = dem->max_north;
 
                 if (out->min_north == 90)
-                    out->min_north = dem.min_north;
+                    out->min_north = dem->min_north;
 
-                else if (dem.min_north < out->min_north)
-                    out->min_north = dem.min_north;
+                else if (dem->min_north < out->min_north)
+                    out->min_north = dem->min_north;
 
                 if (out->max_west == -1)
-                    out->max_west = dem.max_west;
+                    out->max_west = dem->max_west;
 
                 else {
-                    if (abs(dem.max_west - out->max_west) < 180) {
-                        if (dem.max_west > out->max_west) out->max_west = dem.max_west;
+                    if (abs(dem->max_west - out->max_west) < 180) {
+                        if (dem->max_west > out->max_west) out->max_west = dem->max_west;
                     }
 
                     else {
-                        if (dem.max_west < out->max_west) out->max_west = dem.max_west;
+                        if (dem->max_west < out->max_west) out->max_west = dem->max_west;
                     }
                 }
 
                 if (out->min_west == 360)
-                    out->min_west = dem.min_west;
+                    out->min_west = dem->min_west;
 
                 else {
-                    if (fabs(dem.min_west - out->min_west) < 180.0) {
-                        if (dem.min_west < out->min_west) out->min_west = dem.min_west;
+                    if (fabs(dem->min_west - out->min_west) < 180.0) {
+                        if (dem->min_west < out->min_west) out->min_west = dem->min_west;
                     }
 
                     else {
-                        if (dem.min_west > out->min_west) out->min_west = dem.min_west;
+                        if (dem->min_west > out->min_west) out->min_west = dem->min_west;
                     }
                 }
                 break;
@@ -647,7 +649,8 @@ int LoadSDF_BSDF(char *name, struct output *out)
         }
 
         std::unique_lock lock(G_dem_mtx);
-        G_dem.push_back(dem);
+        std::shared_ptr<const struct dem> s_dem(new struct dem(dem));
+        G_dem.push_back(s_dem);
 
         return 1;
     }
@@ -699,7 +702,8 @@ int LoadSDF(char *name, struct output *out)
             /* Hold an RAII read lock on G_dem while iterating through the vec. */
             std::shared_lock r_lock(G_dem_mtx);
             for (auto &dem : G_dem) {
-                if (minlat == dem.min_north && minlon == dem.min_west && maxlat == dem.max_north && maxlon == dem.max_west) {
+                if (minlat == dem->min_north && minlon == dem->min_west && maxlat == dem->max_north &&
+                    maxlon == dem->max_west) {
                     found = 1;
                     break;
                 }
@@ -770,7 +774,8 @@ int LoadSDF(char *name, struct output *out)
             }
 
             std::unique_lock lock(G_dem_mtx);
-            G_dem.push_back(dem);
+            std::shared_ptr<const struct dem> s_dem(new struct dem(dem));
+            G_dem.push_back(s_dem);
 
             return_value = 1;
         }
