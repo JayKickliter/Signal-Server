@@ -1524,7 +1524,7 @@ int LoadDBMColors(struct site xmtr)
 
     if (G_color_file != NULL && G_color_file[0] != 0)
         for (x = 0; G_color_file[x] != '.' && G_color_file[x] != 0 && x < 250; x++) filename[x] = G_color_file[x];
-    else if (filename) {
+    else {
         for (x = 0; xmtr.filename[x] != '.' && xmtr.filename[x] != 0 && x < 250; x++) filename[x] = xmtr.filename[x];
 
         filename[x] = '.';
@@ -1619,7 +1619,7 @@ int LoadDBMColors(struct site xmtr)
     G_region.levels = 16;
 
     /* Don't save if we don't have an output file */
-    if (filename && (fd = fopen(filename, "r")) == NULL && xmtr.filename[0] == '\0') return 0;
+    if ((fd = fopen(filename, "r")) == NULL && xmtr.filename[0] == '\0') return 0;
 
     if (fd == NULL) {
         if ((fd = fopen(filename, "w")) == NULL) return errno;
