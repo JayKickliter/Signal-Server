@@ -86,8 +86,8 @@ void DoPathLoss(struct output *out, unsigned char geo, unsigned char kml, unsign
             }
 
             if (found != NULL) {
-                mask = found->mask[DEM_INDEX(found->dem->ippd, x0, y0)];
-                loss = found->signal[DEM_INDEX(found->dem->ippd, x0, y0)];
+                mask = found->mask(x0, y0);
+                loss = found->signal(x0, y0);
                 cityorcounty = 0;
 
                 match = 255;
@@ -136,13 +136,12 @@ void DoPathLoss(struct output *out, unsigned char geo, unsigned char kml, unsign
                         else {
                             /* Display land or sea elevation */
 
-                            if (found->dem->data[DEM_INDEX(found->dem->ippd, x0, y0)] == 0)
+                            if (found->dem(x0, y0) == 0)
                                 ADD_PIXEL(&ctx, 0, 0, 170);
                             else {
-                                terrain = (unsigned)(0.5 + pow((double)(found->dem->data[DEM_INDEX(found->dem->ippd, x0, y0)] -
-                                                                        out->min_elevation),
-                                                               one_over_gamma) *
-                                                               conversion);
+                                terrain =
+                                    (unsigned)(0.5 + pow((double)(found->dem(x0, y0) - out->min_elevation), one_over_gamma) *
+                                                         conversion);
                                 ADD_PIXEL(&ctx, terrain, terrain, terrain);
                             }
                         }
@@ -156,14 +155,13 @@ void DoPathLoss(struct output *out, unsigned char geo, unsigned char kml, unsign
 
                         else { /* terrain / sea-level */
 
-                            if (found->dem->data[DEM_INDEX(found->dem->ippd, x0, y0)] == 0)
+                            if (found->dem(x0, y0) == 0)
                                 ADD_PIXEL(&ctx, 0, 0, 170);
                             else {
                                 /* Elevation: Greyscale */
-                                terrain = (unsigned)(0.5 + pow((double)(found->dem->data[DEM_INDEX(found->dem->ippd, x0, y0)] -
-                                                                        out->min_elevation),
-                                                               one_over_gamma) *
-                                                               conversion);
+                                terrain =
+                                    (unsigned)(0.5 + pow((double)(found->dem(x0, y0) - out->min_elevation), one_over_gamma) *
+                                                         conversion);
                                 ADD_PIXEL(&ctx, terrain, terrain, terrain);
                             }
                         }
@@ -249,8 +247,8 @@ int DoSigStr(struct output *out, unsigned char kml, unsigned char ngs, struct si
             }
 
             if (found) {
-                mask = found->mask[DEM_INDEX(found->dem->ippd, x0, y0)];
-                signal = (found->signal[DEM_INDEX(found->dem->ippd, x0, y0)]) - 100;
+                mask = found->mask(x0, y0);
+                signal = found->signal(x0, y0) - 100;
                 cityorcounty = 0;
                 match = 255;
 
@@ -298,10 +296,10 @@ int DoSigStr(struct output *out, unsigned char kml, unsigned char ngs, struct si
                         else {
                             /* Display land or sea elevation */
 
-                            if (found->dem->data[DEM_INDEX(found->dem->ippd, x0, y0)] == 0)
+                            if (found->dem(x0, y0) == 0)
                                 ADD_PIXEL(&ctx, 0, 0, 170);
                             else {
-                                terrain = (unsigned)(0.5 + pow((double)(found->dem->data[DEM_INDEX(found->dem->ippd, x0, y0)] -
+                                terrain = (unsigned)(0.5 + pow((double)(found->dem(x0, y0) -
                                                                         out->min_elevation),
                                                                one_over_gamma) *
                                                                conversion);
@@ -321,12 +319,12 @@ int DoSigStr(struct output *out, unsigned char kml, unsigned char ngs, struct si
                             if (ngs)
                                 ADD_PIXELA(&ctx, 255, 255, 255, 0);
                             else {
-                                if (found->dem->data[DEM_INDEX(found->dem->ippd, x0, y0)] == 0)
+                                if (found->dem(x0, y0) == 0)
                                     ADD_PIXEL(&ctx, 0, 0, 170);
                                 else {
                                     /* Elevation: Greyscale */
                                     terrain =
-                                        (unsigned)(0.5 + pow((double)(found->dem->data[DEM_INDEX(found->dem->ippd, x0, y0)] -
+                                        (unsigned)(0.5 + pow((double)(found->dem(x0, y0) -
                                                                       out->min_elevation),
                                                              one_over_gamma) *
                                                              conversion);
@@ -419,8 +417,8 @@ void DoRxdPwr(struct output *out, unsigned char kml, unsigned char ngs, struct s
             }
 
             if (found) {
-                mask = found->mask[DEM_INDEX(found->dem->ippd, x0, y0)];
-                dBm = (found->signal[DEM_INDEX(found->dem->ippd, x0, y0)]) - 200;
+                mask = found->mask(x0, y0);
+                dBm = found->signal(x0, y0) - 200;
                 cityorcounty = 0;
                 match = 255;
 
@@ -466,10 +464,10 @@ void DoRxdPwr(struct output *out, unsigned char kml, unsigned char ngs, struct s
                         else {
                             /* Display land or sea elevation */
 
-                            if (found->dem->data[DEM_INDEX(found->dem->ippd, x0, y0)] == 0)
+                            if (found->dem(x0, y0) == 0)
                                 ADD_PIXEL(&ctx, 0, 0, 170);
                             else {
-                                terrain = (unsigned)(0.5 + pow((double)(found->dem->data[DEM_INDEX(found->dem->ippd, x0, y0)] -
+                                terrain = (unsigned)(0.5 + pow((double)(found->dem(x0, y0) -
                                                                         out->min_elevation),
                                                                one_over_gamma) *
                                                                conversion);
@@ -490,13 +488,13 @@ void DoRxdPwr(struct output *out, unsigned char kml, unsigned char ngs, struct s
                                 ADD_PIXEL(&ctx, 255, 255,
                                           255);  // WHITE
                             else {
-                                if (found->dem->data[DEM_INDEX(found->dem->ippd, x0, y0)] == 0)
+                                if (found->dem(x0, y0) == 0)
                                     ADD_PIXEL(&ctx, 0, 0,
                                               170);  // BLUE
                                 else {
                                     /* Elevation: Greyscale */
                                     terrain =
-                                        (unsigned)(0.5 + pow((double)(found->dem->data[DEM_INDEX(found->dem->ippd, x0, y0)] -
+                                        (unsigned)(0.5 + pow((double)(found->dem(x0, y0) -
                                                                       out->min_elevation),
                                                              one_over_gamma) *
                                                              conversion);
@@ -581,7 +579,7 @@ void DoLOS(struct output *out, unsigned char kml, unsigned char ngs, struct site
             }
 
             if (found) {
-                mask = found->mask[DEM_INDEX(found->dem->ippd, x0, y0)];
+                mask = found->mask(x0, y0);
 
                 if (mask & 2) /* Text Labels: Red */
                     ADD_PIXEL(&ctx, 255, 0, 0);
@@ -672,12 +670,12 @@ void DoLOS(struct output *out, unsigned char kml, unsigned char ngs, struct site
                                 ADD_PIXELA(&ctx, 255, 255, 255, 0);
                             else {
                                 /* Sea-level: Medium Blue */
-                                if (found->dem->data[DEM_INDEX(found->dem->ippd, x0, y0)] == 0)
+                                if (found->dem(x0, y0) == 0)
                                     ADD_PIXEL(&ctx, 0, 0, 170);
                                 else {
                                     /* Elevation: Greyscale */
                                     terrain =
-                                        (unsigned)(0.5 + pow((double)(found->dem->data[DEM_INDEX(found->dem->ippd, x0, y0)] -
+                                        (unsigned)(0.5 + pow((double)(found->dem(x0, y0) -
                                                                       out->min_elevation),
                                                              one_over_gamma) *
                                                              conversion);

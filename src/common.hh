@@ -32,8 +32,6 @@
 
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
 
-#define DEM_INDEX(ippd, x, y) (((y)*ippd) + x)
-
 struct dem {
     int ippd;
     float min_north;
@@ -43,16 +41,22 @@ struct dem {
     short max_el;
     short min_el;
     short *data;
+
+    short const &operator()(int x, int y) const { return data[(y * ippd) + x]; }
+    short &operator()(int x, int y) { return data[(y * ippd) + x]; }
 };
 
 struct dem_output {
-    std::shared_ptr<const struct dem> dem;
     float min_north;
     float max_north;
     float min_west;
     float max_west;
-    std::vector<unsigned char> mask;
-    std::vector<unsigned char> signal;
+    std::shared_ptr<const struct dem> dem_;
+    std::vector<unsigned char> mask_;
+    std::vector<unsigned char> signal_;
+    short &dem(int x, int y) { return dem_->data[(y * dem_->ippd) + x]; }
+    unsigned char &mask(int x, int y) { return mask_[(y * dem_->ippd) + x]; }
+    unsigned char &signal(int x, int y) { return signal_[(y * dem_->ippd) + x]; }
 };
 
 struct site {

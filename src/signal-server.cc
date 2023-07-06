@@ -177,9 +177,9 @@ int PutMask(struct output *out, double lat, double lon, int value)
                 tmp.max_north = dem->max_north;
                 tmp.min_west = dem->min_west;
                 tmp.max_west = dem->max_west;
-                tmp.dem = dem;
-                tmp.mask.resize(dem->ippd * dem->ippd, 0);
-                tmp.signal.resize(dem->ippd * dem->ippd, 0);
+                tmp.dem_ = dem;
+                tmp.mask_.resize(dem->ippd * dem->ippd, 0);
+                tmp.signal_.resize(dem->ippd * dem->ippd, 0);
                 out->dem_out.push_back(tmp);
                 found = &out->dem_out.back();
                 break;
@@ -188,8 +188,8 @@ int PutMask(struct output *out, double lat, double lon, int value)
     }
 
     if (found) {
-        found->mask[DEM_INDEX(found->dem->ippd, x, y)] = value;
-        return ((int)found->mask[DEM_INDEX(found->dem->ippd, x, y)]);
+        found->mask(x, y) = value;
+        return ((int)found->mask(x, y));
     }
 
     else
@@ -230,9 +230,9 @@ int OrMask(struct output *out, double lat, double lon, int value)
                 tmp.max_north = dem->max_north;
                 tmp.min_west = dem->min_west;
                 tmp.max_west = dem->max_west;
-                tmp.dem = dem;
-                tmp.mask.resize(dem->ippd * dem->ippd, 0);
-                tmp.signal.resize(dem->ippd * dem->ippd, 0);
+                tmp.dem_ = dem;
+                tmp.mask_.resize(dem->ippd * dem->ippd, 0);
+                tmp.signal_.resize(dem->ippd * dem->ippd, 0);
                 out->dem_out.push_back(tmp);
                 found = &out->dem_out.back();
                 break;
@@ -241,8 +241,8 @@ int OrMask(struct output *out, double lat, double lon, int value)
     }
 
     if (found) {
-        found->mask[DEM_INDEX(found->dem->ippd, x, y)] |= value;
-        return ((int)found->mask[DEM_INDEX(found->dem->ippd, x, y)]);
+        found->mask(x, y) |= value;
+        return ((int)found->mask(x, y));
     }
 
     else
@@ -267,7 +267,7 @@ int GetMask(struct output *out, double lat, double lon)
     }
 
     if (found) {
-        return ((int)found->mask[DEM_INDEX(found->dem->ippd, x, y)]);
+        return ((int)found->mask(x, y));
     }
     else {
         return 0;
@@ -309,9 +309,9 @@ void PutSignal(struct output *out, double lat, double lon, unsigned char signal)
                 tmp.max_north = dem->max_north;
                 tmp.min_west = dem->min_west;
                 tmp.max_west = dem->max_west;
-                tmp.dem = dem;
-                tmp.mask.resize(dem->ippd * dem->ippd, 0);
-                tmp.signal.resize(dem->ippd * dem->ippd);
+                tmp.dem_ = dem;
+                tmp.mask_.resize(dem->ippd * dem->ippd, 0);
+                tmp.signal_.resize(dem->ippd * dem->ippd);
                 out->dem_out.push_back(tmp);
                 found = &out->dem_out.back();
                 break;
@@ -320,7 +320,7 @@ void PutSignal(struct output *out, double lat, double lon, unsigned char signal)
     }
 
     if (found) {  // Write values to file
-        found->signal[DEM_INDEX(found->dem->ippd, x, y)] = signal;
+        found->signal(x, y) = signal;
         // return (dem[indx].signal[x][y]);
         return;
     }
@@ -350,7 +350,7 @@ unsigned char GetSignal(struct output *out, double lat, double lon)
     }
 
     if (found)
-        return (found->signal[DEM_INDEX(found->dem->ippd, x, y)]);
+        return (found->signal(x, y));
     else
         return 0;
 }
@@ -376,7 +376,7 @@ double GetElevation(struct site location)
     }
 
     if (found)
-        elevation = 3.28084 * found->data[DEM_INDEX(found->ippd, x, y)];
+        elevation = 3.28084 * (*found)(x, y);
     else
         elevation = -5000.0;
 
@@ -391,7 +391,7 @@ int AddElevation(double lat, double lon, double height, int size)
        not found in memory. */
 
     int i, j, x = 0, y = 0;
-    std::shared_ptr<const dem> found;
+    std::shared_ptr<dem> found;
 
     for (auto &dem : G_dem) {
         x = (int)rint(G_ppd * (lat - dem->min_north));
@@ -403,7 +403,7 @@ int AddElevation(double lat, double lon, double height, int size)
         }
     }
 
-    if (found && size < 2) found->data[DEM_INDEX(found->ippd, x, y)] += (short)rint(height);
+    if (found && size < 2) (*found)(x, y) += (short)rint(height);
 
     // Make surrounding area bigger for wide area landcover. Should enhance 3x3 pixels including c.p
     if (found && size > 1) {
