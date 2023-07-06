@@ -152,6 +152,8 @@ where
 
 /// Converts the contents of a source HGT file to binary and write to
 /// DST.
+///
+/// https://www.researchgate.net/profile/Pierre-Boulanger-4/publication/228924813/figure/fig8/AS:300852653903880@1448740270695/Description-of-a-HGT-file-structure-The-name-file-in-this-case-is-N20W100HGT.png
 fn hgt_to_bsdf<S, D>(res: Resolution, src_path: PathBuf, mut src: S, mut dst: D) -> Result<()>
 where
     S: BufRead,
