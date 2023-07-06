@@ -537,7 +537,7 @@ void WriteSDF(char *filename)
 int main(int argc, char *argv[])
 {
     int x, y, z = 0;
-    char *env = NULL, string[255], *s = NULL;
+    char *env = NULL, string[255];
     FILE *fd;
 
     if (strstr(argv[0], "srtm2sdf-hd") != NULL) {
