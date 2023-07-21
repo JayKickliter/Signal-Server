@@ -809,22 +809,23 @@ PlotLOSMap(struct output * out,
     // Four sections start here
     // Process north edge east/west, east edge north/south,
     // south edge east/west, west edge north/south
-    double             range_min_west[]  = {out->min_west,
+    double range_min_west[]  = {out->min_west,
                                out->min_west,
                                out->min_west,
                                out->max_west};
-    double             range_min_north[] = {out->max_north,
+    double range_min_north[] = {out->max_north,
                                 out->min_north,
                                 out->min_north,
                                 out->min_north};
-    double             range_max_west[]  = {out->max_west,
+    double range_max_west[]  = {out->max_west,
                                out->min_west,
                                out->max_west,
                                out->max_west};
-    double             range_max_north[] = {out->max_north,
+    double range_max_north[] = {out->max_north,
                                 out->max_north,
                                 out->min_north,
                                 out->max_north};
+
     propagationRange * r[NUM_SECTIONS];
 
     for (int i = 0; i < NUM_SECTIONS; ++i) {
