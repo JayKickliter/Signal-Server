@@ -10,8 +10,7 @@
 
 /* Return the offset of the first newline in text or the length of
    text if there's no newline */
-static int
-newline_offset(const char * text) {
+static int newline_offset(const char * text) {
     const char * newline = strchr(text, '\n');
     if (!newline)
         return strlen(text);
@@ -24,8 +23,7 @@ struct write_result {
     int    pos;
 };
 
-static size_t
-write_response(void * ptr, size_t size, size_t nmemb, void * stream) {
+static size_t write_response(void * ptr, size_t size, size_t nmemb, void * stream) {
     struct write_result * result = (struct write_result *)stream;
 
     if (result->pos + size * nmemb >= BUFFER_SIZE - 1) {
@@ -39,8 +37,7 @@ write_response(void * ptr, size_t size, size_t nmemb, void * stream) {
     return size * nmemb;
 }
 
-static char *
-request(const char * url) {
+static char * request(const char * url) {
     CURL *   curl;
     CURLcode status;
     char *   data;
@@ -79,8 +76,7 @@ request(const char * url) {
     return data;
 }
 
-int
-main(int argc, char * argv[]) {
+int main(int argc, char * argv[]) {
     size_t i;
     char * text;
     char   url[URL_SIZE];

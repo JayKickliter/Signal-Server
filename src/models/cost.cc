@@ -15,8 +15,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-double
-COST231pathLoss(float f, float TxH, float RxH, float d, int mode) {
+double COST231pathLoss(float f, float TxH, float RxH, float d, int mode) {
     /*
     COST231 extension to HATA model
     Frequency 1500 to 2000MHz

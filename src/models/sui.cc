@@ -4,13 +4,11 @@
 
 // use call with log/ln as this may be faster
 // use constant of value 20.0/log(10.0)
-static __inline float
-_20log10f(float x) {
+static __inline float _20log10f(float x) {
     return (8.685889f * logf(x));
 }
 
-double
-SUIpathLoss(double f, double TxH, double RxH, double d, int mode) {
+double SUIpathLoss(double f, double TxH, double RxH, double d, int mode) {
     /*
        f = Frequency (MHz) 1900 to 11000
        TxH =  Transmitter height (m)

@@ -21,13 +21,12 @@
 #include "models/sui.hh"
 #include "signal-server.hh"
 
-void
-DoPathLoss(struct output * out,
-           unsigned char   geo,
-           unsigned char   kml,
-           unsigned char   ngs,
-           struct site *   xmtr,
-           LR const &      lr) {
+void DoPathLoss(struct output * out,
+                unsigned char   geo,
+                unsigned char   kml,
+                unsigned char   ngs,
+                struct site *   xmtr,
+                LR const &      lr) {
     /* This function generates a topographic map in Portable Pix Map
        (PPM) format based on the content of flags held in the mask[][]
        array (only).  The image created is rotated counter-clockwise
@@ -222,12 +221,11 @@ DoPathLoss(struct output * out,
     image_free(&ctx);
 }
 
-int
-DoSigStr(struct output * out,
-         unsigned char   kml,
-         unsigned char   ngs,
-         struct site *   xmtr,
-         LR const &      lr) {
+int DoSigStr(struct output * out,
+             unsigned char   kml,
+             unsigned char   ngs,
+             struct site *   xmtr,
+             LR const &      lr) {
     /* This function generates a topographic map in Portable Pix Map
        (PPM) format based on the signal strength values held in the
        signal[][] array.  The image created is rotated counter-clockwise
@@ -425,12 +423,11 @@ DoSigStr(struct output * out,
     return 0;
 }
 
-void
-DoRxdPwr(struct output * out,
-         unsigned char   kml,
-         unsigned char   ngs,
-         struct site *   xmtr,
-         LR const &      lr) {
+void DoRxdPwr(struct output * out,
+              unsigned char   kml,
+              unsigned char   ngs,
+              struct site *   xmtr,
+              LR const &      lr) {
     /* This function generates a topographic map in Portable Pix Map
        (PPM) format based on the signal power level values held in the
        signal[][] array.  The image created is rotated counter-clockwise
@@ -625,8 +622,10 @@ DoRxdPwr(struct output * out,
     image_free(&ctx);
 }
 
-void
-DoLOS(struct output * out, unsigned char kml, unsigned char ngs, struct site *) {
+void DoLOS(struct output * out,
+           unsigned char   kml,
+           unsigned char   ngs,
+           struct site *) {
     /* This function generates a topographic map in Portable Pix Map
        (PPM) format based on the signal power level values held in the
        signal[][] array.  The image created is rotated counter-clockwise
@@ -823,16 +822,15 @@ DoLOS(struct output * out, unsigned char kml, unsigned char ngs, struct site *) 
     image_free(&ctx);
 }
 
-void
-PathReport(struct site source,
-           struct site destination,
-           char *      name,
-           char /* graph_it */,
-           int             propmodel,
-           int             pmenv,
-           double          rxGain,
-           struct output * out,
-           LR const &      lr) {
+void PathReport(struct site source,
+                struct site destination,
+                char *      name,
+                char /* graph_it */,
+                int             propmodel,
+                int             pmenv,
+                double          rxGain,
+                struct output * out,
+                LR const &      lr) {
     /* This function writes a PPA Path Report (name.txt) to
        the filesystem.  If (graph_it == 1), then gnuplot is invoked
        to generate an appropriate output file indicating the Longley-Rice
@@ -1519,13 +1517,12 @@ PathReport(struct site source,
     }
 }
 
-void
-SeriesData(struct site     source,
-           struct site     destination,
-           unsigned char   fresnel_plot,
-           unsigned char   normalised,
-           struct output * out,
-           LR const &      lr) {
+void SeriesData(struct site     source,
+                struct site     destination,
+                unsigned char   fresnel_plot,
+                unsigned char   normalised,
+                struct output * out,
+                LR const &      lr) {
     int    x;
     double a, b, c, height = 0.0, refangle, cangle, maxheight = -100000.0,
                     minheight = 100000.0, lambda = 0.0, f_zone = 0.0,

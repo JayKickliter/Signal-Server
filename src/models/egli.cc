@@ -31,13 +31,11 @@ http://people.seas.harvard.edu/~jones/es151/prop_models/propagation.html#pel
 // static float h1min = 1.0;
 // static float h2min = 1.0;
 
-static __inline float
-_10log10f(float x) {
+static __inline float _10log10f(float x) {
     return (4.342944f * logf(x));
 }
 
-double
-EgliPathLoss(float f, float h1, float h2, float d) {
+double EgliPathLoss(float f, float h1, float h2, float d) {
     double Lp50 = NAN;
     float  C1, C2;
 

@@ -5,8 +5,7 @@
 
 #include "image.hh"
 
-int
-ppm_init(image_ctx_t * ctx) {
+int ppm_init(image_ctx_t * ctx) {
     size_t buf_size;
 
     /* Perform simple sanity checking */
@@ -27,12 +26,11 @@ ppm_init(image_ctx_t * ctx) {
     return 0;
 }
 
-int
-ppm_add_pixel(image_ctx_t * ctx,
-              const uint8_t r,
-              const uint8_t g,
-              const uint8_t b,
-              const uint8_t) {
+int ppm_add_pixel(image_ctx_t * ctx,
+                  const uint8_t r,
+                  const uint8_t g,
+                  const uint8_t b,
+                  const uint8_t) {
     uint8_t * next;
 
     next = ctx->next_pixel;
@@ -46,8 +44,7 @@ ppm_add_pixel(image_ctx_t * ctx,
     return 0;
 }
 
-int
-ppm_write(image_ctx_t * ctx, std::vector<char> * out) {
+int ppm_write(image_ctx_t * ctx, std::vector<char> * out) {
     size_t count;
 
     count = ctx->width * ctx->height * RGB_SIZE;

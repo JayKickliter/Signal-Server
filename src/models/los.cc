@@ -186,8 +186,7 @@ namespace {
  * Acute Angle from Rx point to an obstacle of height (opp) and
  * distance (adj)
  */
-static double
-incidenceAngle(double opp, double adj) {
+static double incidenceAngle(double opp, double adj) {
     return atan2(opp, adj) * 180 / PI;
 }
 
@@ -197,8 +196,7 @@ incidenceAngle(double opp, double adj) {
  * thoroughness for increased speed which adds a proportional diffraction
  * effect to obstacles.
  */
-static double
-ked(double freq, double rxh, double dkm, double * elev) {
+static double ked(double freq, double rxh, double dkm, double * elev) {
     double obh, obd, rxobaoi = 0, d;
 
     obh = 0; // Obstacle height
@@ -234,12 +232,11 @@ ked(double freq, double rxh, double dkm, double * elev) {
     }
 }
 
-void
-PlotLOSPath(struct output * out,
-            struct site     source,
-            struct site     destination,
-            char            mask_value,
-            LR const *      lr) {
+void PlotLOSPath(struct output * out,
+                 struct site     source,
+                 struct site     destination,
+                 char            mask_value,
+                 LR const *      lr) {
     /* This function analyzes the path between the source and
        destination locations. It determines which points along
 
@@ -360,16 +357,15 @@ PlotLOSPath(struct output * out,
     }
 }
 
-void
-PlotPropPath(struct output * out,
-             struct site     source,
-             struct site     destination,
-             unsigned char   mask_value,
-             FILE *          fd,
-             int             propmodel,
-             int             knifeedge,
-             int             pmenv,
-             LR const *      lr) {
+void PlotPropPath(struct output * out,
+                  struct site     source,
+                  struct site     destination,
+                  unsigned char   mask_value,
+                  FILE *          fd,
+                  int             propmodel,
+                  int             knifeedge,
+                  int             pmenv,
+                  LR const *      lr) {
     int    x, y, ifs, ofs, errnum;
     char   block = 0, strmode[100];
     double loss, azimuth,
@@ -774,13 +770,12 @@ PlotPropPath(struct output * out,
     //	cropLon-=360;
 }
 
-void
-PlotLOSMap(struct output * out,
-           struct site     source,
-           double          altitude,
-           char *          plo_filename,
-           bool            use_threads,
-           LR const *      lr) {
+void PlotLOSMap(struct output * out,
+                struct site     source,
+                double          altitude,
+                char *          plo_filename,
+                bool            use_threads,
+                LR const *      lr) {
     /* This function performs a 360 degree sweep around the
        transmitter site (source location), and plots the
        line-of-sight coverage of the transmitter on the ss
@@ -877,17 +872,16 @@ PlotLOSMap(struct output * out,
     }
 }
 
-void
-PlotPropagation(struct output * out,
-                struct site     source,
-                double          altitude,
-                char *          plo_filename,
-                int             propmodel,
-                int             knifeedge,
-                int             haf,
-                int             pmenv,
-                bool            use_threads,
-                LR const *      lr) {
+void PlotPropagation(struct output * out,
+                     struct site     source,
+                     double          altitude,
+                     char *          plo_filename,
+                     int             propmodel,
+                     int             knifeedge,
+                     int             haf,
+                     int             pmenv,
+                     bool            use_threads,
+                     LR const *      lr) {
     static __thread unsigned char mask_value = 1;
     FILE *                        fd         = NULL;
 
@@ -1003,12 +997,11 @@ PlotPropagation(struct output * out,
         mask_value++;
 }
 
-void
-PlotPath(struct output * out,
-         struct site     source,
-         struct site     destination,
-         char            mask_value,
-         LR const *      lr) {
+void PlotPath(struct output * out,
+              struct site     source,
+              struct site     destination,
+              char            mask_value,
+              LR const *      lr) {
     /* This function analyzes the path between the source and
        destination locations.  It determines which points along
        the path have line-of-sight visibility to the source.

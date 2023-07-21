@@ -7,7 +7,7 @@ AllowShortBlocksOnASingleLine: false
 AllowShortFunctionsOnASingleLine: Empty
 AllowShortIfStatementsOnASingleLine: false
 AllowShortLoopsOnASingleLine: false
-AlwaysBreakAfterReturnType: TopLevel
+AlwaysBreakAfterReturnType: None
 AlwaysBreakTemplateDeclarations: true #  If true, always break after the template<...> of a template declaration
 BinPackArguments: false
 BinPackParameters: false

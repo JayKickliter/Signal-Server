@@ -21,8 +21,7 @@ char sdf_filename[30], sdf_path[255], replacement_flag, opened = 0, hgt = 0,
 int srtm[3601][3601], usgs[1201][1201], max_north, max_west, n, min_north,
     min_west, merge = 0, min_elevation, bzerror, ippd, mpi;
 
-int
-ReadSRTM(char * filename) {
+int ReadSRTM(char * filename) {
     int           x, y, infile, byte = 0, bytes_read;
     unsigned char error, buffer[2];
     char          north[3], west[4], *base = NULL, blw_filename[255];
@@ -240,8 +239,7 @@ ReadSRTM(char * filename) {
     return 0;
 }
 
-int
-LoadSDF_SDF(char * name) {
+int LoadSDF_SDF(char * name) {
     /* This function reads uncompressed
        SPLAT Data Files (.sdf) into memory. */
 
@@ -283,8 +281,7 @@ LoadSDF_SDF(char * name) {
     return 1;
 }
 
-char *
-BZfgets(BZFILE * bzfd, unsigned length) {
+char * BZfgets(BZFILE * bzfd, unsigned length) {
     /* This function returns at most one less than 'length' number
        of characters from a bz2 compressed file whose file descriptor
        is pointed to by *bzfd.  In operation, a buffer is filled with
@@ -338,8 +335,7 @@ BZfgets(BZFILE * bzfd, unsigned length) {
     return (output);
 }
 
-int
-LoadSDF_BZ(char * name) {
+int LoadSDF_BZ(char * name) {
     /* This function reads .bz2 compressed
        SPLAT Data Files into memory. */
 
@@ -391,8 +387,7 @@ LoadSDF_BZ(char * name) {
         return 0;
 }
 
-char
-LoadSDF(char * name) {
+char LoadSDF(char * name) {
     /* This function loads the requested SDF file from the filesystem.
        First, it tries to invoke the LoadSDF_SDF() function to load an
        uncompressed SDF file (since uncompressed files load slightly
@@ -413,8 +408,7 @@ LoadSDF(char * name) {
     return return_value;
 }
 
-int
-ReadUSGS() {
+int ReadUSGS() {
     char usgs_filename[15];
 
     /* usgs_filename is a minimal filename ("40:41:74:75").
@@ -426,8 +420,7 @@ ReadUSGS() {
     return (LoadSDF(usgs_filename));
 }
 
-void
-average_terrain(int y, int x, int z) {
+void average_terrain(int y, int x, int z) {
     long   accum;
     int    temp = 0, count, bad_value;
     double average;
@@ -520,8 +513,7 @@ average_terrain(int y, int x, int z) {
         srtm[y][x] = min_elevation;
 }
 
-void
-WriteSDF(char * filename) {
+void WriteSDF(char * filename) {
     /* Like the HGT files, the extreme southwest corner
      * provides the point of reference for the SDF file.
      * The SDF file extends from min_north degrees to
@@ -574,8 +566,7 @@ WriteSDF(char * filename) {
     fclose(outfile);
 }
 
-int
-main(int argc, char * argv[]) {
+int main(int argc, char * argv[]) {
     int    x, y, z = 0;
     char * env = NULL, string[255];
     FILE * fd;

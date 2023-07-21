@@ -17,10 +17,8 @@
 #include "image-png.hh"
 #include "image-ppm.hh"
 
-int
-get_dt(image_dispatch_table_t * dt, int format);
-int
-load_library(image_dispatch_table_t * dt);
+int get_dt(image_dispatch_table_t * dt, int format);
+int load_library(image_dispatch_table_t * dt);
 
 #define DISPATCH_TABLE(ctx) ((image_dispatch_table_t *)(ctx)->_dt)
 
@@ -32,8 +30,7 @@ char *     dynamic_backend = NULL;
  * Changes the default format for the next
  * uninitialized image canvas
  */
-int
-image_set_format(int format) {
+int image_set_format(int format) {
     if (format <= IMAGE_DEFAULT || format >= IMAGE_FORMAT_MAX)
         return EINVAL;
     default_format = format;
@@ -45,12 +42,11 @@ image_set_format(int format) {
  * Initialize an image context. Must be called
  * before attempting to write any image data
  */
-int
-image_init(image_ctx_t * ctx,
-           const size_t  width,
-           const size_t  height,
-           const int     model,
-           const int     format) {
+int image_init(image_ctx_t * ctx,
+               const size_t  width,
+               const size_t  height,
+               const int     model,
+               const int     format) {
     int                      success = 0;
     image_dispatch_table_t * dt;
 
@@ -108,24 +104,22 @@ image_init(image_ctx_t * ctx,
  * takes an open file handle and writes image data to it.
  * These functions simply wrap the underlying format-specific functions
  */
-int
-image_add_pixel(image_ctx_t * ctx,
-                const uint8_t r,
-                const uint8_t g,
-                const uint8_t b,
-                const uint8_t a) {
+int image_add_pixel(image_ctx_t * ctx,
+                    const uint8_t r,
+                    const uint8_t g,
+                    const uint8_t b,
+                    const uint8_t a) {
     if (ctx->initialized != 1)
         return EINVAL;
     return DISPATCH_TABLE(ctx)->add_pixel(ctx, r, g, b, a);
 }
-int
-image_set_pixel(image_ctx_t * ctx,
-                const size_t  x,
-                const size_t  y,
-                const uint8_t r,
-                const uint8_t g,
-                const uint8_t b,
-                const uint8_t a) {
+int image_set_pixel(image_ctx_t * ctx,
+                    const size_t  x,
+                    const size_t  y,
+                    const uint8_t r,
+                    const uint8_t g,
+                    const uint8_t b,
+                    const uint8_t a) {
     size_t block_size;
     if (ctx->initialized != 1)
         return EINVAL;
@@ -137,29 +131,26 @@ image_set_pixel(image_ctx_t * ctx,
     ctx->next_pixel = ctx->canvas + PIXEL_OFFSET(x, y, ctx->width, block_size);
     return DISPATCH_TABLE(ctx)->add_pixel(ctx, r, g, b, a);
 }
-int
-image_get_pixel(image_ctx_t *   ctx,
-                const size_t    x,
-                const size_t    y,
-                const uint8_t * r,
-                const uint8_t * g,
-                const uint8_t * b,
-                const uint8_t * a) {
+int image_get_pixel(image_ctx_t *   ctx,
+                    const size_t    x,
+                    const size_t    y,
+                    const uint8_t * r,
+                    const uint8_t * g,
+                    const uint8_t * b,
+                    const uint8_t * a) {
     if (ctx->initialized != 1)
         return EINVAL;
     if (DISPATCH_TABLE(ctx)->get_pixel != NULL)
         return DISPATCH_TABLE(ctx)->get_pixel(ctx, x, y, r, g, b, a);
     return ENOSYS;
 }
-int
-image_write(image_ctx_t * ctx, std::vector<char> * out) {
+int image_write(image_ctx_t * ctx, std::vector<char> * out) {
     if (ctx->initialized != 1)
         return EINVAL;
     return DISPATCH_TABLE(ctx)->write(ctx, out);
 }
 
-void
-image_free(image_ctx_t * ctx) {
+void image_free(image_ctx_t * ctx) {
     if (ctx->initialized != 1)
         return;
     if (DISPATCH_TABLE(ctx)->free != NULL) {
@@ -177,8 +168,7 @@ image_free(image_ctx_t * ctx) {
  * by the user. If the extension is already correct, return
  * that; if not append if there is space
  */
-int
-image_get_filename(image_ctx_t * ctx, char * out, size_t len_out, char * in) {
+int image_get_filename(image_ctx_t * ctx, char * out, size_t len_out, char * in) {
     size_t len_src;
     size_t len_ext;
     int    success = 0;
@@ -221,8 +211,7 @@ image_get_filename(image_ctx_t * ctx, char * out, size_t len_out, char * in) {
  * Load the dispatch table for the specified image
  * format. Currently only pixmap supported.
  */
-int
-get_dt(image_dispatch_table_t * dt, int format) {
+int get_dt(image_dispatch_table_t * dt, int format) {
     int success = 0;
 
     memset((void *)dt, 0x00, sizeof(image_dispatch_table_t));
@@ -253,8 +242,7 @@ get_dt(image_dispatch_table_t * dt, int format) {
  * image_set_library
  * Set the library to use for generating images
  */
-int
-image_set_library(char * library) {
+int image_set_library(char * library) {
     char * libname;
     size_t length;
 
@@ -273,8 +261,7 @@ image_set_library(char * library) {
  * Returns the current saved image rendering
  * library
  */
-char *
-image_get_library() {
+char * image_get_library() {
     return dynamic_backend;
 }
 
@@ -284,8 +271,7 @@ image_get_library() {
  * Load an external library to perform image processing
  * It must be a custom compatible library
  */
-int
-load_library(image_dispatch_table_t * dt) {
+int load_library(image_dispatch_table_t * dt) {
     void * hndl;
     int    success = 0;
 

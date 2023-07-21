@@ -11,8 +11,7 @@
 #define MAX_LINE 50000
 
 /* Computes the distance between two long/lat points */
-double
-haversine_formula(double th1, double ph1, double th2, double ph2) {
+double haversine_formula(double th1, double ph1, double th2, double ph2) {
 #define TO_RAD (3.1415926536 / 180)
     int    R = 6371;
     double dx, dy, dz;
@@ -24,8 +23,7 @@ haversine_formula(double th1, double ph1, double th2, double ph2) {
     return asin(sqrt(dx * dx + dy * dy + dz * dz) / 2) * 2 * R;
 }
 
-int
-tile_load_lidar(tile_t * tile, char * filename, struct output * out) {
+int tile_load_lidar(tile_t * tile, char * filename, struct output * out) {
     FILE * fd;
     char   line[MAX_LINE];
     short  nextval;
@@ -195,8 +193,7 @@ tile_load_lidar(tile_t * tile, char * filename, struct output * out) {
  * NOTE: This means that new resolutions can only increment in multiples of the
  * original (ie 2m LIDAR can be 4/6/8/... and 20m can be 40/60)
  */
-int
-tile_rescale(tile_t * tile, float scale) {
+int tile_rescale(tile_t * tile, float scale) {
     short * new_data;
     size_t  skip_count = 1;
     size_t  copy_count = 1;
@@ -292,8 +289,7 @@ tile_rescale(tile_t * tile, float scale) {
  * resolution value in meters as its argument. It then calculates the
  * nearest (via averaging) resample value and calls resample_data
  */
-int
-tile_resize(tile_t * tile, int resolution) {
+int tile_resize(tile_t * tile, int resolution) {
     double current_res_km = haversine_formula(tile->max_north,
                                               tile->max_west,
                                               tile->max_north,
@@ -313,8 +309,7 @@ tile_resize(tile_t * tile, int resolution) {
  * tile_destroy
  * This function simply destroys any data associated with a tile
  */
-void
-tile_destroy(tile_t * tile) {
+void tile_destroy(tile_t * tile) {
     if (tile->data != NULL)
         free(tile->data);
 }

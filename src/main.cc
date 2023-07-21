@@ -6,8 +6,7 @@
 
 #include "signal-server.hh"
 
-int
-main(int argc, char * argv[]) {
+int main(int argc, char * argv[]) {
     if (argc == 1) {
         fprintf(
             stdout,

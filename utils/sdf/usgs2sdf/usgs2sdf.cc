@@ -38,8 +38,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-char *
-d2e(char * string) {
+char * d2e(char * string) {
     /* This function is used to replace 'D's with 'E's for proper
        exponential notation of numeric strings read from delimited
        USGS data files.  It returns a pointer to a string. */
@@ -52,8 +51,7 @@ d2e(char * string) {
     return (string);
 }
 
-int
-main(int argc, char * argv[]) {
+int main(int argc, char * argv[]) {
     unsigned char minimum[30], maximum[30], swlong[30], swlat[30], nwlong[30],
         nwlat[30], nelong[30], nelat[30], selong[30], selat[30];
     char   string[40];

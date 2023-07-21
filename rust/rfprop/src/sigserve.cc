@@ -3,10 +3,8 @@
 #include "../../../src/common.hh"
 #include "rfprop/src/sigserve.rs.h"
 
-extern int
-init(const char * sdf_path, bool debug);
-extern int
-handle_args(int argc, char * argv[], output & ret_out);
+extern int init(const char * sdf_path, bool debug);
+extern int handle_args(int argc, char * argv[], output & ret_out);
 
 namespace sigserve_wrapper {
 

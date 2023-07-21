@@ -11,8 +11,7 @@
 
 #define PNG_DEBUG 3
 
-void
-abort_(const char * s, ...) {
+void abort_(const char * s, ...) {
     va_list args;
     va_start(args, s);
     vfprintf(stderr, s, args);
@@ -20,8 +19,7 @@ abort_(const char * s, ...) {
     va_end(args);
 }
 
-int
-png_init(image_ctx_t * ctx) {
+int png_init(image_ctx_t * ctx) {
     size_t buf_size;
 
     /* Perform simple sanity checking */
@@ -42,12 +40,11 @@ png_init(image_ctx_t * ctx) {
     return 0;
 }
 
-int
-png_add_pixel(image_ctx_t * ctx,
-              const uint8_t r,
-              const uint8_t g,
-              const uint8_t b,
-              const uint8_t a) {
+int png_add_pixel(image_ctx_t * ctx,
+                  const uint8_t r,
+                  const uint8_t g,
+                  const uint8_t b,
+                  const uint8_t a) {
     uint8_t * next;
 
     next = ctx->next_pixel;
@@ -67,20 +64,17 @@ struct png_writer {
     char * out;
 };
 
-void
-write_png_data(png_structp png_ptr, png_bytep data, size_t length) {
+void write_png_data(png_structp png_ptr, png_bytep data, size_t length) {
     std::vector<char> * out = (std::vector<char> *)png_get_io_ptr(png_ptr);
     out->insert(out->end(), data, data + length);
     return;
 }
 
-void
-flush_png_data(png_structp) {
+void flush_png_data(png_structp) {
     return;
 }
 
-int
-png_write(image_ctx_t * ctx, std::vector<char> * out) {
+int png_write(image_ctx_t * ctx, std::vector<char> * out) {
     // TODO better error handling here
     png_structp png_ptr =
         png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);

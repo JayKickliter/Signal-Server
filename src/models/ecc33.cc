@@ -2,8 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-double
-ECC33pathLoss(float f, float TxH, float RxH, float d, int mode) {
+double ECC33pathLoss(float f, float TxH, float RxH, float d, int mode) {
     // Sanity check as this model operates within limited Txh/Rxh bounds
     if (TxH - RxH < 0) {
         RxH = RxH / (d * 2);

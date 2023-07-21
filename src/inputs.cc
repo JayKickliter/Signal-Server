@@ -22,8 +22,7 @@
 
 extern char * G_color_file;
 
-int
-loadClutter(char * filename, double radius, struct site tx) {
+int loadClutter(char * filename, double radius, struct site tx) {
     /* This function reads a MODIS 17-class clutter file in ASCII Grid format.
        The nominal heights it applies to each value, eg. 5 (Mixed forest) = 15m
        are taken from ITU-R P.452-11. It doesn't have it's own matrix, instead
@@ -491,8 +490,7 @@ int loadLIDAR(char *filenames, int resample, struct output *out)
 }
 #endif
 
-int
-LoadSDF_BSDF(char * name, struct output * out) {
+int LoadSDF_BSDF(char * name, struct output * out) {
     /* This function reads uncompressed ss Data Files (.sdf)
        containing digital elevation model data into memory.
        Elevation data, maximum and minimum elevations, and
@@ -763,8 +761,7 @@ LoadSDF_BSDF(char * name, struct output * out) {
         return found;
 }
 
-int
-LoadSDF(char * name, struct output * out) {
+int LoadSDF(char * name, struct output * out) {
     /* This function loads the requested SDF file from the filesystem.
        It first tries to invoke the LoadSDF_SDF() function to load an
        uncompressed SDF file (since uncompressed files load slightly
@@ -895,8 +892,7 @@ LoadSDF(char * name, struct output * out) {
     return return_value;
 }
 
-int
-LoadPAT(char * az_filename, char * el_filename, struct LR & lr) {
+int LoadPAT(char * az_filename, char * el_filename, struct LR & lr) {
     /* This function reads and processes antenna pattern (.az
        and .el) files that may correspond in name to previously
        loaded ss .lrp files or may be user-supplied by cmdline.  */
@@ -1275,8 +1271,7 @@ LoadPAT(char * az_filename, char * el_filename, struct LR & lr) {
     return 0;
 }
 
-int
-LoadSignalColors(struct site xmtr) {
+int LoadSignalColors(struct site xmtr) {
     int    x, y, ok, val[4];
     char   filename[255], string[80], *pointer = NULL, *s;
     FILE * fd = NULL;
@@ -1434,8 +1429,7 @@ LoadSignalColors(struct site xmtr) {
     return 0;
 }
 
-int
-LoadLossColors(struct site xmtr) {
+int LoadLossColors(struct site xmtr) {
     int    x, y, ok, val[4];
     char   filename[255], string[80], *pointer = NULL, *s;
     FILE * fd = NULL;
@@ -1621,8 +1615,7 @@ LoadLossColors(struct site xmtr) {
     return 0;
 }
 
-int
-LoadDBMColors(struct site xmtr) {
+int LoadDBMColors(struct site xmtr) {
     int    x, y, ok, val[4];
     char   filename[255], string[80], *pointer = NULL, *s;
     FILE * fd = NULL;
@@ -1803,12 +1796,11 @@ LoadDBMColors(struct site xmtr) {
     return 0;
 }
 
-int
-LoadTopoData(double          max_lon,
-             double          min_lon,
-             double          max_lat,
-             double          min_lat,
-             struct output * out) {
+int LoadTopoData(double          max_lon,
+                 double          min_lon,
+                 double          max_lat,
+                 double          min_lat,
+                 struct output * out) {
     /* This function loads the SDF files required
        to cover the limits of the region specified. */
 
@@ -1879,8 +1871,7 @@ LoadTopoData(double          max_lon,
     return 0;
 }
 
-int
-LoadUDT(char * filename) {
+int LoadUDT(char * filename) {
     /* This function reads a file containing User-Defined Terrain
        features for their addition to the digital elevation model
        data used by SPLAT!.  Elevations in the UDT file are evaluated

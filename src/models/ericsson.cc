@@ -2,8 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-double
-EricssonpathLoss(float f, float TxH, float RxH, float d, int mode) {
+double EricssonpathLoss(float f, float TxH, float RxH, float d, int mode) {
     /*
        AKA Ericsson 9999 model
      */
