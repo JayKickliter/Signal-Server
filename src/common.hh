@@ -35,32 +35,32 @@
 #define DEM_INDEX(ippd, x, y) (((y)*ippd) + x)
 
 struct dem {
-    int ippd;
-    float min_north;
-    float max_north;
-    float min_west;
-    float max_west;
-    short max_el;
-    short min_el;
-    short *data;
+    int     ippd;
+    float   min_north;
+    float   max_north;
+    float   min_west;
+    float   max_west;
+    short   max_el;
+    short   min_el;
+    short * data;
 };
 
 struct dem_output {
     std::shared_ptr<const struct dem> dem;
-    float min_north;
-    float max_north;
-    float min_west;
-    float max_west;
-    std::vector<unsigned char> mask;
-    std::vector<unsigned char> signal;
+    float                             min_north;
+    float                             max_north;
+    float                             min_west;
+    float                             max_west;
+    std::vector<unsigned char>        mask;
+    std::vector<unsigned char>        signal;
 };
 
 struct site {
     double lat;
     double lon;
-    float alt;
-    char name[50];
-    char filename[255];
+    float  alt;
+    char   name[50];
+    char   filename[255];
 };
 
 struct path {
@@ -68,81 +68,86 @@ struct path {
     std::vector<double> lon;
     std::vector<double> elevation;
     std::vector<double> distance;
-    int length;
+    int                 length;
 };
 
 class antenna_pattern {
     std::vector<float> elems;
 
-   public:
-    antenna_pattern() : elems(361 * 1001, 0.0) {}
-    float const &operator()(int azimuth, int elevation) const { return elems[(azimuth * 1001) + elevation]; }
-    float &operator()(int azimuth, int elevation) { return elems[(azimuth * 1001) + elevation]; }
+  public:
+    antenna_pattern()
+        : elems(361 * 1001, 0.0) {}
+    float const & operator()(int azimuth, int elevation) const {
+        return elems[(azimuth * 1001) + elevation];
+    }
+    float & operator()(int azimuth, int elevation) {
+        return elems[(azimuth * 1001) + elevation];
+    }
 };
 
 // TODO what does LR mean
 // essentially this struct holds the
 // read-only configuration options
 struct LR {
-    double max_range;
-    double clutter;
-    int contour_threshold;
-    char dbm;
-    unsigned char metric;
-    double eps_dielect;
-    double sgm_conductivity;
-    double eno_ns_surfref;
-    double frq_mhz;
-    double conf;
-    double rel;
-    double erp;
-    int radio_climate;
-    int pol;
+    double          max_range;
+    double          clutter;
+    int             contour_threshold;
+    char            dbm;
+    unsigned char   metric;
+    double          eps_dielect;
+    double          sgm_conductivity;
+    double          eno_ns_surfref;
+    double          frq_mhz;
+    double          conf;
+    double          rel;
+    double          erp;
+    int             radio_climate;
+    int             pol;
     antenna_pattern ant_pat;
-    double antenna_downtilt;
-    double antenna_dt_direction;
-    double antenna_rotation;
+    double          antenna_downtilt;
+    double          antenna_dt_direction;
+    double          antenna_rotation;
 };
 
 struct output {
     std::vector<dem_output> dem_out;
-    int width;
-    int height;
-    int min_elevation;
-    int max_elevation;
-    struct path path;
-    double min_north;
-    double max_north;
-    double min_west;
-    double max_west;
-    std::vector<double> elev;
-    double north;
-    double east;
-    double south;
-    double west;
-    double westoffset;
-    double eastoffset;
-    double cropLat;
-    double cropLon;
-    double dBm;
-    double loss;
-    double field_strength;
-    int hottest;
-    struct site tx_site[2];
-    std::vector<double> distancevec;
-    std::vector<double> cluttervec;
-    std::vector<double> referencevec;
-    std::vector<double> fresnelvec;
-    std::vector<double> fresnel60vec;
-    std::vector<double> curvaturevec;
-    std::vector<double> profilevec;
-    std::vector<char> imagedata;
+    int                     width;
+    int                     height;
+    int                     min_elevation;
+    int                     max_elevation;
+    struct path             path;
+    double                  min_north;
+    double                  max_north;
+    double                  min_west;
+    double                  max_west;
+    std::vector<double>     elev;
+    double                  north;
+    double                  east;
+    double                  south;
+    double                  west;
+    double                  westoffset;
+    double                  eastoffset;
+    double                  cropLat;
+    double                  cropLon;
+    double                  dBm;
+    double                  loss;
+    double                  field_strength;
+    int                     hottest;
+    struct site             tx_site[2];
+    std::vector<double>     distancevec;
+    std::vector<double>     cluttervec;
+    std::vector<double>     referencevec;
+    std::vector<double>     fresnelvec;
+    std::vector<double>     fresnel60vec;
+    std::vector<double>     curvaturevec;
+    std::vector<double>     profilevec;
+    std::vector<char>       imagedata;
 };
 
 struct region {
     unsigned char color[128][3];
-    int level[128];
-    int levels;
+    int           level[128];
+    int           levels;
 };
 
 extern int MAXPAGES;
@@ -167,8 +172,8 @@ extern unsigned char G_got_elevation_pattern;
 extern unsigned char G_got_azimuth_pattern;
 
 extern std::vector<std::shared_ptr<const struct dem>> G_dem;
-extern std::shared_mutex G_dem_mtx;
-extern struct region G_region;
+extern std::shared_mutex                              G_dem_mtx;
+extern struct region                                  G_region;
 
 extern int G_debug;
 

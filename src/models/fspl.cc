@@ -22,17 +22,19 @@
 
 // use call with log/ln as this may be faster
 // use constant of value 20.0/log(10.0)
-static __inline float _20log10f(float x) { return (8.685889f * logf(x)); }
+static __inline float
+_20log10f(float x) {
+    return (8.685889f * logf(x));
+}
 
-double FSPLpathLoss(float f, float d, bool bBlock)
-{
+double
+FSPLpathLoss(float f, float d, bool bBlock) {
     double dLoss = 0.0;
 
     if (bBlock) {
         // No line of sight
         dLoss = 255.0;
-    }
-    else {
+    } else {
         // Line of sight
         dLoss = 32.44 + _20log10f(f) + _20log10f(d);
     }

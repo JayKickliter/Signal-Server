@@ -31,44 +31,45 @@ http://people.seas.harvard.edu/~jones/es151/prop_models/propagation.html#pel
 // static float h1min = 1.0;
 // static float h2min = 1.0;
 
-static __inline float _10log10f(float x) { return (4.342944f * logf(x)); }
+static __inline float
+_10log10f(float x) {
+    return (4.342944f * logf(x));
+}
 
-double EgliPathLoss(float f, float h1, float h2, float d)
-{
+double
+EgliPathLoss(float f, float h1, float h2, float d) {
     double Lp50 = NAN;
-    float C1, C2;
+    float  C1, C2;
 
     /*  if ((f >= fcmin) && (f <= fcmax) &&
           (h1 >= h1min) && (h2 >= h2min))
       {*/
     if (h1 > 10.0 && h2 > 10.0) {
         Lp50 = 85.9;
-        C1 = 2.0;
-        C2 = 2.0;
-    }
-    else if (h1 > 10.0) {
+        C1   = 2.0;
+        C2   = 2.0;
+    } else if (h1 > 10.0) {
         Lp50 = 76.3;
-        C1 = 2.0;
-        C2 = 1.0;
-    }
-    else if (h2 > 10.0) {
+        C1   = 2.0;
+        C2   = 1.0;
+    } else if (h2 > 10.0) {
         Lp50 = 76.3;
-        C1 = 1.0;
-        C2 = 2.0;
-    }
-    else  // both antenna heights below 10 metres
+        C1   = 1.0;
+        C2   = 2.0;
+    } else // both antenna heights below 10 metres
     {
         Lp50 = 66.7;
-        C1 = 1.0;
-        C2 = 1.0;
-    }  // end if
+        C1   = 1.0;
+        C2   = 1.0;
+    } // end if
 
-    Lp50 += 4.0f * _10log10f(d) + 2.0f * _10log10f(f) - C1 * _10log10f(h1) - C2 * _10log10f(h2);
+    Lp50 += 4.0f * _10log10f(d) + 2.0f * _10log10f(f) - C1 * _10log10f(h1)
+            - C2 * _10log10f(h2);
     /*}
     else
     {
-      fprintf(stderr,"Parameter error: Egli path loss model f=%6.2f h1=%6.2f h2=%6.2f d=%6.2f\n", f, h1, h2, d);
-      exit(EXIT_FAILURE);
+      fprintf(stderr,"Parameter error: Egli path loss model f=%6.2f h1=%6.2f
+    h2=%6.2f d=%6.2f\n", f, h1, h2, d); exit(EXIT_FAILURE);
     }*/
 
     return (Lp50);

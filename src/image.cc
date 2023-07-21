@@ -17,22 +17,25 @@
 #include "image-png.hh"
 #include "image-ppm.hh"
 
-int get_dt(image_dispatch_table_t *dt, int format);
-int load_library(image_dispatch_table_t *dt);
+int
+get_dt(image_dispatch_table_t * dt, int format);
+int
+load_library(image_dispatch_table_t * dt);
 
 #define DISPATCH_TABLE(ctx) ((image_dispatch_table_t *)(ctx)->_dt)
 
-static int default_format = IMAGE_PNG;
-char *dynamic_backend = NULL;
+static int default_format  = IMAGE_PNG;
+char *     dynamic_backend = NULL;
 
 /*
  * image_set_format
  * Changes the default format for the next
  * uninitialized image canvas
  */
-int image_set_format(int format)
-{
-    if (format <= IMAGE_DEFAULT || format >= IMAGE_FORMAT_MAX) return EINVAL;
+int
+image_set_format(int format) {
+    if (format <= IMAGE_DEFAULT || format >= IMAGE_FORMAT_MAX)
+        return EINVAL;
     default_format = format;
     return 0;
 }
@@ -42,23 +45,32 @@ int image_set_format(int format)
  * Initialize an image context. Must be called
  * before attempting to write any image data
  */
-int image_init(image_ctx_t *ctx, const size_t width, const size_t height, const int model, const int format)
-{
-    int success = 0;
-    image_dispatch_table_t *dt;
+int
+image_init(image_ctx_t * ctx,
+           const size_t  width,
+           const size_t  height,
+           const int     model,
+           const int     format) {
+    int                      success = 0;
+    image_dispatch_table_t * dt;
 
     /* Perform some sanity checking on provided arguments */
-    if (ctx == NULL) return EINVAL;
-    if (width == 0 || height == 0) return EINVAL;
-    if (model < 0 || model > IMAGE_MODEL_MAX) return EINVAL;
-    if (format >= IMAGE_FORMAT_MAX || (format == IMAGE_LIBRARY && dynamic_backend == NULL)) return EINVAL;
+    if (ctx == NULL)
+        return EINVAL;
+    if (width == 0 || height == 0)
+        return EINVAL;
+    if (model < 0 || model > IMAGE_MODEL_MAX)
+        return EINVAL;
+    if (format >= IMAGE_FORMAT_MAX
+        || (format == IMAGE_LIBRARY && dynamic_backend == NULL))
+        return EINVAL;
 
     memset(ctx, 0x00, sizeof(image_ctx_t));
 
     /* Assign the initialize values to the processing context */
-    ctx->width = width;
+    ctx->width  = width;
     ctx->height = height;
-    ctx->model = model;
+    ctx->model  = model;
     if (format == IMAGE_DEFAULT)
         ctx->format = default_format;
     else
@@ -96,45 +108,67 @@ int image_init(image_ctx_t *ctx, const size_t width, const size_t height, const 
  * takes an open file handle and writes image data to it.
  * These functions simply wrap the underlying format-specific functions
  */
-int image_add_pixel(image_ctx_t *ctx, const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a)
-{
-    if (ctx->initialized != 1) return EINVAL;
+int
+image_add_pixel(image_ctx_t * ctx,
+                const uint8_t r,
+                const uint8_t g,
+                const uint8_t b,
+                const uint8_t a) {
+    if (ctx->initialized != 1)
+        return EINVAL;
     return DISPATCH_TABLE(ctx)->add_pixel(ctx, r, g, b, a);
 }
-int image_set_pixel(image_ctx_t *ctx, const size_t x, const size_t y, const uint8_t r, const uint8_t g, const uint8_t b,
-                    const uint8_t a)
-{
+int
+image_set_pixel(image_ctx_t * ctx,
+                const size_t  x,
+                const size_t  y,
+                const uint8_t r,
+                const uint8_t g,
+                const uint8_t b,
+                const uint8_t a) {
     size_t block_size;
-    if (ctx->initialized != 1) return EINVAL;
+    if (ctx->initialized != 1)
+        return EINVAL;
     /* Image format handlers have the option to specify a _set_pixel handler */
     if (DISPATCH_TABLE(ctx)->set_pixel != NULL) {
         return DISPATCH_TABLE(ctx)->set_pixel(ctx, x, y, r, g, b, a);
     }
-    block_size = ctx->model == IMAGE_RGB ? RGB_SIZE : RGBA_SIZE;
+    block_size      = ctx->model == IMAGE_RGB ? RGB_SIZE : RGBA_SIZE;
     ctx->next_pixel = ctx->canvas + PIXEL_OFFSET(x, y, ctx->width, block_size);
     return DISPATCH_TABLE(ctx)->add_pixel(ctx, r, g, b, a);
 }
-int image_get_pixel(image_ctx_t *ctx, const size_t x, const size_t y, const uint8_t *r, const uint8_t *g, const uint8_t *b,
-                    const uint8_t *a)
-{
-    if (ctx->initialized != 1) return EINVAL;
-    if (DISPATCH_TABLE(ctx)->get_pixel != NULL) return DISPATCH_TABLE(ctx)->get_pixel(ctx, x, y, r, g, b, a);
+int
+image_get_pixel(image_ctx_t *   ctx,
+                const size_t    x,
+                const size_t    y,
+                const uint8_t * r,
+                const uint8_t * g,
+                const uint8_t * b,
+                const uint8_t * a) {
+    if (ctx->initialized != 1)
+        return EINVAL;
+    if (DISPATCH_TABLE(ctx)->get_pixel != NULL)
+        return DISPATCH_TABLE(ctx)->get_pixel(ctx, x, y, r, g, b, a);
     return ENOSYS;
 }
-int image_write(image_ctx_t *ctx, std::vector<char> *out)
-{
-    if (ctx->initialized != 1) return EINVAL;
+int
+image_write(image_ctx_t * ctx, std::vector<char> * out) {
+    if (ctx->initialized != 1)
+        return EINVAL;
     return DISPATCH_TABLE(ctx)->write(ctx, out);
 }
 
-void image_free(image_ctx_t *ctx)
-{
-    if (ctx->initialized != 1) return;
+void
+image_free(image_ctx_t * ctx) {
+    if (ctx->initialized != 1)
+        return;
     if (DISPATCH_TABLE(ctx)->free != NULL) {
         DISPATCH_TABLE(ctx)->free(ctx);
     }
-    if (ctx->canvas != NULL) free(ctx->canvas);
-    if (ctx->_dt != NULL) free(ctx->_dt);
+    if (ctx->canvas != NULL)
+        free(ctx->canvas);
+    if (ctx->_dt != NULL)
+        free(ctx->_dt);
 }
 
 /*
@@ -143,20 +177,21 @@ void image_free(image_ctx_t *ctx)
  * by the user. If the extension is already correct, return
  * that; if not append if there is space
  */
-int image_get_filename(image_ctx_t *ctx, char *out, size_t len_out, char *in)
-{
+int
+image_get_filename(image_ctx_t * ctx, char * out, size_t len_out, char * in) {
     size_t len_src;
     size_t len_ext;
-    int success = 0;
+    int    success = 0;
 
-    if (ctx->initialized != 1) return EINVAL;
+    if (ctx->initialized != 1)
+        return EINVAL;
 
     /* Get various lengths */
     len_src = strlen(in);
     len_ext = strlen(ctx->extension);
 
     if (len_src == 0) {
-        in = (char *)"output";
+        in      = (char *)"output";
         len_src = 6;
     }
 
@@ -166,17 +201,14 @@ int image_get_filename(image_ctx_t *ctx, char *out, size_t len_out, char *in)
             strncpy(in, out, len_out);
         else
             success = ENOMEM;
-    }
-    else if (len_src > len_ext) {
+    } else if (len_src > len_ext) {
         /* Doesn't have correct extension and fits */
         if (len_src + len_ext < len_out) {
             strncpy(out, in, len_out);
             strncat(out, ctx->extension, len_out);
-        }
-        else
+        } else
             success = ENOMEM;
-    }
-    else {
+    } else {
         /* The input buffer plus an extension cannot fit in the output buffer */
         fprintf(stderr, "Error building image output filename\n");
         success = ENOMEM;
@@ -189,23 +221,23 @@ int image_get_filename(image_ctx_t *ctx, char *out, size_t len_out, char *in)
  * Load the dispatch table for the specified image
  * format. Currently only pixmap supported.
  */
-int get_dt(image_dispatch_table_t *dt, int format)
-{
+int
+get_dt(image_dispatch_table_t * dt, int format) {
     int success = 0;
 
     memset((void *)dt, 0x00, sizeof(image_dispatch_table_t));
     switch (format) {
-        case IMAGE_PPM:
-            *dt = ppm_dt;
-            break;
-        case IMAGE_PNG:
-            *dt = png_dt;
-            break;
-        case IMAGE_LIBRARY:
-            success = load_library(dt);
-            break;
-        default:
-            success = EINVAL;
+    case IMAGE_PPM:
+        *dt = ppm_dt;
+        break;
+    case IMAGE_PNG:
+        *dt = png_dt;
+        break;
+    case IMAGE_LIBRARY:
+        success = load_library(dt);
+        break;
+    default:
+        success = EINVAL;
     }
     return success;
 }
@@ -221,18 +253,19 @@ int get_dt(image_dispatch_table_t *dt, int format)
  * image_set_library
  * Set the library to use for generating images
  */
-int image_set_library(char *library)
-{
-    char *libname;
+int
+image_set_library(char * library) {
+    char * libname;
     size_t length;
 
-    length = strlen(library) + 1;
+    length  = strlen(library) + 1;
     libname = (char *)calloc(length, sizeof(char));
-    if (libname == NULL) return ENOMEM;
+    if (libname == NULL)
+        return ENOMEM;
     strcpy(libname, library);
 
     dynamic_backend = libname;
-    default_format = IMAGE_LIBRARY;
+    default_format  = IMAGE_LIBRARY;
     return 0;
 }
 /*
@@ -240,7 +273,10 @@ int image_set_library(char *library)
  * Returns the current saved image rendering
  * library
  */
-char *image_get_library() { return dynamic_backend; }
+char *
+image_get_library() {
+    return dynamic_backend;
+}
 
 /*
  * load_library
@@ -248,14 +284,15 @@ char *image_get_library() { return dynamic_backend; }
  * Load an external library to perform image processing
  * It must be a custom compatible library
  */
-int load_library(image_dispatch_table_t *dt)
-{
-    void *hndl;
-    int success = 0;
+int
+load_library(image_dispatch_table_t * dt) {
+    void * hndl;
+    int    success = 0;
 
     /* Validate object file */
     if (dynamic_backend == NULL || strlen(dynamic_backend) == 0) {
-        fprintf(stderr, "Custom image processor requested without specification\n");
+        fprintf(stderr,
+                "Custom image processor requested without specification\n");
         return EINVAL;
     }
 
@@ -266,10 +303,12 @@ int load_library(image_dispatch_table_t *dt)
         return EINVAL;
     }
     /* Perform symbol lookup */
-    if ((dt->init = (_init *)dlsym(hndl, "lib_init")) == NULL ||
-        (dt->add_pixel = (_add_pixel *)dlsym(hndl, "lib_add_pixel")) == NULL ||
-        (dt->write = (_write *)dlsym(hndl, "lib_write")) == NULL) {
-        fprintf(stderr, "Invalid image processing module specified\n\t%s", dlerror());
+    if ((dt->init = (_init *)dlsym(hndl, "lib_init")) == NULL
+        || (dt->add_pixel = (_add_pixel *)dlsym(hndl, "lib_add_pixel")) == NULL
+        || (dt->write = (_write *)dlsym(hndl, "lib_write")) == NULL) {
+        fprintf(stderr,
+                "Invalid image processing module specified\n\t%s",
+                dlerror());
         success = EINVAL;
         (void)dlclose(hndl);
     }
@@ -277,7 +316,7 @@ int load_library(image_dispatch_table_t *dt)
     if (success == 0) {
         dt->get_pixel = (_get_pixel *)dlsym(hndl, "lib_get_pixel");
         dt->set_pixel = (_set_pixel *)dlsym(hndl, "lib_set_pixel");
-        dt->free = (_free *)dlsym(hndl, "lib_free");
+        dt->free      = (_free *)dlsym(hndl, "lib_free");
     }
 
     return success;

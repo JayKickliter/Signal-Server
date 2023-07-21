@@ -16,8 +16,8 @@
 
 #include <math.h>
 
-double PlaneEarthLoss(float d, float TxH, float RxH)
-{
+double
+PlaneEarthLoss(float d, float TxH, float RxH) {
     /*
     Plane Earth Loss model
     Frequency: N/A
