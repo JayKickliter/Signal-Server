@@ -512,7 +512,7 @@ int LoadSDF_BSDF(char *name, struct output *out)
         /* Hold read lock on G_dem while iterating through the vec. */
         std::shared_lock r_lock(G_dem_mtx);
 
-        for (auto &dem : G_dem) {
+        for (auto const &dem : G_dem) {
             if (minlat == dem->min_north && minlon == dem->min_west && maxlat == dem->max_north && maxlon == dem->max_west) {
                 found = 1;
 
@@ -770,7 +770,7 @@ int LoadSDF(char *name, struct output *out)
         {
             /* Hold an RAII read lock on G_dem while iterating through the vec. */
             std::shared_lock r_lock(G_dem_mtx);
-            for (auto &dem : G_dem) {
+            for (auto const &dem : G_dem) {
                 if (minlat == dem->min_north && minlon == dem->min_west && maxlat == dem->max_north &&
                     maxlon == dem->max_west) {
                     found = 1;

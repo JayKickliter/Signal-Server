@@ -167,7 +167,7 @@ int PutMask(struct output *out, double lat, double lon, int value)
     // if we couldn't find it in the output vector, find the right DEM
     // and create a corresponding output vector entry
     if (!found) {
-        for (auto &dem : G_dem) {
+        for (auto const &dem : G_dem) {
             x = (int)rint(G_ppd * (lat - dem->min_north));
             y = G_mpi - (int)rint(G_yppd * (LonDiff(dem->max_west, lon)));
 
@@ -220,7 +220,7 @@ int OrMask(struct output *out, double lat, double lon, int value)
     // if we couldn't find it in the output vector, find the right DEM
     // and create a corresponding output vector entry
     if (!found) {
-        for (auto &dem : G_dem) {
+        for (auto const &dem : G_dem) {
             x = (int)rint(G_ppd * (lat - dem->min_north));
             y = G_mpi - (int)rint(G_yppd * (LonDiff(dem->max_west, lon)));
 
@@ -299,7 +299,7 @@ void PutSignal(struct output *out, double lat, double lon, unsigned char signal)
     // if we couldn't find it in the output vector, find the right DEM
     // and create a corresponding output vector entry
     if (!found) {
-        for (auto &dem : G_dem) {
+        for (auto const &dem : G_dem) {
             x = (int)rint(G_ppd * (lat - dem->min_north));
             y = G_mpi - (int)rint(G_yppd * (LonDiff(dem->max_west, lon)));
 
@@ -365,7 +365,7 @@ double GetElevation(struct site location)
     double elevation;
     std::shared_ptr<const dem> found;
 
-    for (auto &dem : G_dem) {
+    for (auto const &dem : G_dem) {
         x = (int)rint(G_ppd * (location.lat - dem->min_north));
         y = G_mpi - (int)rint(G_yppd * (LonDiff(dem->max_west, location.lon)));
 
@@ -393,7 +393,7 @@ int AddElevation(double lat, double lon, double height, int size)
     int i, j, x = 0, y = 0;
     std::shared_ptr<const dem> found;
 
-    for (auto &dem : G_dem) {
+    for (auto const &dem : G_dem) {
         x = (int)rint(G_ppd * (lat - dem->min_north));
         y = G_mpi - (int)rint(G_yppd * (LonDiff(dem->max_west, lon)));
 
