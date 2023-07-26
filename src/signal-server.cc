@@ -967,7 +967,7 @@ int init(const char *sdf_path, bool debug)
 int handle_args(int argc, char *argv[], output &out)
 {
     /* Scan for command line arguments */
-    int x, y, z = 0, propmodel, knifeedge = 0, ppa = 0, normalise = 0, haf = 0, pmenv = 1, result;
+    int x, y, z = 0, propmodel, knifeedge = 0, ppa = 0, normalise = 1, haf = 0, pmenv = 1, result;
 
     double min_lat, min_lon, max_lat, max_lon, rxlat, rxlon, txlat, txlon, west_min, west_max, nortRxHin, nortRxHax;
 

@@ -1230,6 +1230,7 @@ void SeriesData(struct site source, struct site destination, unsigned char fresn
                     fpt6_zone = 0.0, nm = 0.0, nb = 0.0, ed = 0.0, es = 0.0, r = 0.0, d = 0.0, d1 = 0.0, terrain, azimuth,
                     distance, minterrain = 100000.0, minearth = 100000.0;
     struct site remote;
+    struct site mp;
 
     bool has_clutter = false, has_fresnel = false;
 
@@ -1237,6 +1238,8 @@ void SeriesData(struct site source, struct site destination, unsigned char fresn
     azimuth = Azimuth(destination, source);
     distance = Distance(destination, source);
     refangle = ElevationAngle(destination, source);
+    printf("refangle is %f\n", refangle);
+    refangle = 0.0;
     b = GetElevation(destination) + destination.alt + G_earthradius;
 
     if (G_debug) {
@@ -1264,15 +1267,36 @@ void SeriesData(struct site source, struct site destination, unsigned char fresn
         has_fresnel = true;
     }
 
+
+    int midpoint = out->path.length / 2;
+    printf("midpoint is %d\n", midpoint);
+    mp.lat = out->path.lat[midpoint - 1];
+    mp.lon = out->path.lon[midpoint - 1];
+    mp.alt = 0.0;
+
+    refangle = ElevationAngle(destination, mp);
+    refangle = 0.0;
+    printf("refangle is %f\n", refangle);
+
     for (x = 0; x < out->path.length - 1; x++) {
         remote.lat = out->path.lat[x];
         remote.lon = out->path.lon[x];
         remote.alt = 0.0;
         terrain = GetElevation(remote);
         if (x == 0) terrain += destination.alt; /* RX antenna spike */
+        if (x == out->path.length - 1) terrain += source.alt; /* TX antenna spike */
 
         a = terrain + G_earthradius;
+        /*if (x == midpoint) {
+            refangle = ElevationAngle(mp, source);
+            printf("refangle is %f\n", refangle);
+        }*/
+        //    cangle = 180;
+        //} else if (x < midpoint) {
         cangle = FEET_PER_MILE * Distance(destination, remote) / G_earthradius;
+        //} else {
+        //    cangle = FEET_PER_MILE * Distance(source, remote) / G_earthradius;
+        //}
         c = b * sin(refangle * DEG2RAD + HALFPI) / sin(HALFPI - refangle * DEG2RAD - cangle);
         height = a - c;
 
@@ -1298,6 +1322,8 @@ void SeriesData(struct site source, struct site destination, unsigned char fresn
             if ((lr.frq_mhz >= 20.0) && (lr.frq_mhz <= 100000.0) && fresnel_plot) {
                 f_zone += r;
                 fpt6_zone += r;
+                f_zone += (height - terrain);
+                fpt6_zone += (height - terrain);
             }
         }
 
@@ -1353,36 +1379,53 @@ void SeriesData(struct site source, struct site destination, unsigned char fresn
         if ((height - terrain) < minearth) minearth = height - terrain;
     }  // End of loop
 
-    if (normalised)
-        r = -(nm * out->path.distance[out->path.length - 1]) - nb;
-    else
+    distance = Distance(destination, source);
+    printf("distance %f\n", distance);
+    terrain = GetElevation(source);
+    terrain += source.alt; /* TX antenna spike */
+    printf("elevation at source %f\n", terrain);
+
+    a = terrain + G_earthradius;
+    cangle = FEET_PER_MILE * Distance(destination, source) / G_earthradius;
+    c = b * sin(refangle * DEG2RAD + HALFPI) / sin(HALFPI - refangle * DEG2RAD - cangle);
+    height = a - c;
+
+    printf("height %f\n", height);
+
+
+    if (normalised) {
+        r = -(nm * distance) - nb;
+        height += r;
+    } else {
         r = 0.0;
+    }
+
+
+    printf("r %f\n", r);
 
     if (lr.metric) {
-        out->distancevec.push_back(KM_PER_MILE * out->path.distance[out->path.length - 1]);
-        out->profilevec.push_back(METERS_PER_FOOT * r);
+        out->distancevec.push_back(KM_PER_MILE * distance);
+        out->profilevec.push_back(METERS_PER_FOOT * height);
         out->referencevec.push_back(METERS_PER_FOOT * r);
+        out->curvaturevec.push_back(METERS_PER_FOOT * (height - terrain));
     }
 
     else {
-        out->distancevec.push_back(r);
-        out->profilevec.push_back(r);
+        out->distancevec.push_back(distance);
+        out->profilevec.push_back(height);
         out->referencevec.push_back(r);
+        out->curvaturevec.push_back(height - terrain);
     }
 
     if (has_fresnel) {
         if (lr.metric) {
-            out->fresnelvec.push_back(METERS_PER_FOOT);
-            out->fresnel60vec.push_back(METERS_PER_FOOT * r);
+            out->fresnelvec.push_back(METERS_PER_FOOT * height);
+            out->fresnel60vec.push_back(METERS_PER_FOOT * height);
         }
 
         else {
-            out->fresnelvec.push_back(r);
-            out->fresnel60vec.push_back(r);
+            out->fresnelvec.push_back(height);
+            out->fresnel60vec.push_back(height);
         }
     }
-
-    if (r > maxheight) maxheight = r;
-
-    if (r < minheight) minheight = r;
 }
