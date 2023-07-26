@@ -1238,7 +1238,9 @@ void SeriesData(struct site source, struct site destination, unsigned char fresn
     azimuth = Azimuth(destination, source);
     distance = Distance(destination, source);
     refangle = ElevationAngle(destination, source);
-    printf("refangle is %f\n", refangle);
+    if (G_debug) {
+        fprintf(stderr, "refangle is %f\n", refangle);
+    }
     refangle = 0.0;
     b = GetElevation(destination) + destination.alt + G_earthradius;
 
@@ -1267,23 +1269,26 @@ void SeriesData(struct site source, struct site destination, unsigned char fresn
         has_fresnel = true;
     }
 
-
     int midpoint = out->path.length / 2;
-    printf("midpoint is %d\n", midpoint);
+    if (G_debug) {
+        fprintf(stderr, "midpoint is %d\n", midpoint);
+    }
     mp.lat = out->path.lat[midpoint - 1];
     mp.lon = out->path.lon[midpoint - 1];
     mp.alt = 0.0;
 
     refangle = ElevationAngle(destination, mp);
     refangle = 0.0;
-    printf("refangle is %f\n", refangle);
+    if (G_debug) {
+        fprintf(stderr, "refangle is %f\n", refangle);
+    }
 
     for (x = 0; x < out->path.length - 1; x++) {
         remote.lat = out->path.lat[x];
         remote.lon = out->path.lon[x];
         remote.alt = 0.0;
         terrain = GetElevation(remote);
-        if (x == 0) terrain += destination.alt; /* RX antenna spike */
+        if (x == 0) terrain += destination.alt;               /* RX antenna spike */
         if (x == out->path.length - 1) terrain += source.alt; /* TX antenna spike */
 
         a = terrain + G_earthradius;
@@ -1380,28 +1385,35 @@ void SeriesData(struct site source, struct site destination, unsigned char fresn
     }  // End of loop
 
     distance = Distance(destination, source);
-    printf("distance %f\n", distance);
+    if (G_debug) {
+        fprintf(stderr, "distance %f\n", distance);
+    }
     terrain = GetElevation(source);
     terrain += source.alt; /* TX antenna spike */
-    printf("elevation at source %f\n", terrain);
-
+    if (G_debug) {
+        fprintf(stderr, "elevation at source %f\n", terrain);
+    }
     a = terrain + G_earthradius;
+
     cangle = FEET_PER_MILE * Distance(destination, source) / G_earthradius;
     c = b * sin(refangle * DEG2RAD + HALFPI) / sin(HALFPI - refangle * DEG2RAD - cangle);
     height = a - c;
 
-    printf("height %f\n", height);
-
+    if (G_debug) {
+        fprintf(stderr, "height %f\n", height);
+    }
 
     if (normalised) {
         r = -(nm * distance) - nb;
         height += r;
-    } else {
+    }
+    else {
         r = 0.0;
     }
 
-
-    printf("r %f\n", r);
+    if (G_debug) {
+        fprintf(stderr, "r %f\n", r);
+    }
 
     if (lr.metric) {
         out->distancevec.push_back(KM_PER_MILE * distance);
