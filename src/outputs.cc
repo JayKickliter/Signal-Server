@@ -1288,7 +1288,7 @@ void SeriesData(struct site source, struct site destination, unsigned char fresn
         remote.lon = out->path.lon[x];
         remote.alt = 0.0;
         terrain = GetElevation(remote);
-        if (x == 0) terrain += destination.alt;               /* RX antenna spike */
+        if (x == 0) terrain += destination.alt; /* RX antenna spike */
 
         a = terrain + G_earthradius;
         /*if (x == midpoint) {
