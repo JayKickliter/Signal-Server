@@ -1800,9 +1800,8 @@ int handle_args(int argc, char *argv[], output &out)
         strncpy(out.tx_site[0].name, "Tx", 3);
         strncpy(out.tx_site[1].name, "Rx", 3);
         PlotPath(&out, out.tx_site[0], out.tx_site[1], 1, &lr);
-        /* PathReport(out.tx_site[0], out.tx_site[1], NULL, 0, propmodel, pmenv, rxGain, &out, lr); */
         // Order flipped for benefit of graph. Makes no difference to data.
-        SeriesData(out.tx_site[1], out.tx_site[0], 1, normalise, &out, lr);
+        SeriesData(out.tx_site[1], out.tx_site[0], 1, 1, &out, lr);
     }
     fflush(stderr);
 
