@@ -1264,12 +1264,20 @@ void SeriesData(struct site source, struct site destination, unsigned char fresn
         has_fresnel = true;
     }
 
-    for (x = 0; x < out->path.length - 1; x++) {
+    for (x = 0; x < out->path.length; x++) {
         remote.lat = out->path.lat[x];
         remote.lon = out->path.lon[x];
         remote.alt = 0.0;
         terrain = GetElevation(remote);
-        if (x == 0) terrain += destination.alt; /* RX antenna spike */
+
+        if (x == 0) {
+            /* RX antenna spike */
+            terrain += destination.alt;
+        }
+        else if (x == out->path.length - 1) {
+            /* TX antenna spike */
+            terrain += source.alt;
+        }
 
         a = terrain + G_earthradius;
         cangle = FEET_PER_MILE * Distance(destination, remote) / G_earthradius;
@@ -1284,7 +1292,6 @@ void SeriesData(struct site source, struct site destination, unsigned char fresn
          * where H is the distance from the LOS
          * path to the first Fresnel zone boundary.
          */
-
         if ((lr.frq_mhz >= 20.0) && (lr.frq_mhz <= 100000.0) && fresnel_plot) {
             d1 = FEET_PER_MILE * out->path.distance[x];
             f_zone = -1.0 * sqrt(lambda * d1 * (d - d1) / d);
@@ -1352,37 +1359,4 @@ void SeriesData(struct site source, struct site destination, unsigned char fresn
 
         if ((height - terrain) < minearth) minearth = height - terrain;
     }  // End of loop
-
-    if (normalised)
-        r = -(nm * out->path.distance[out->path.length - 1]) - nb;
-    else
-        r = 0.0;
-
-    if (lr.metric) {
-        out->distancevec.push_back(KM_PER_MILE * out->path.distance[out->path.length - 1]);
-        out->profilevec.push_back(METERS_PER_FOOT * r);
-        out->referencevec.push_back(METERS_PER_FOOT * r);
-    }
-
-    else {
-        out->distancevec.push_back(r);
-        out->profilevec.push_back(r);
-        out->referencevec.push_back(r);
-    }
-
-    if (has_fresnel) {
-        if (lr.metric) {
-            out->fresnelvec.push_back(METERS_PER_FOOT);
-            out->fresnel60vec.push_back(METERS_PER_FOOT * r);
-        }
-
-        else {
-            out->fresnelvec.push_back(r);
-            out->fresnel60vec.push_back(r);
-        }
-    }
-
-    if (r > maxheight) maxheight = r;
-
-    if (r < minheight) minheight = r;
 }
