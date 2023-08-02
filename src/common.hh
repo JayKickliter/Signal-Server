@@ -154,7 +154,7 @@ extern int IPPD;
 extern int G_ippd;
 extern int G_mpi;
 
-extern double G_earthradius;
+extern double G_earthradius_ft;
 extern double G_dpp;
 extern double G_ppd;
 extern double G_yppd;
