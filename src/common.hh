@@ -59,6 +59,8 @@ struct site {
     double lat;
     double lon;
     float alt;
+    /* TODO: remove the following fields. They use a huge amount of
+       stack and conflate IO with baseness logic. */
     char name[50];
     char filename[255];
 };
