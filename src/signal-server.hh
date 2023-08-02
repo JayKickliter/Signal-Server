@@ -13,7 +13,7 @@ int OrMask(struct output *out, double lat, double lon, int value);
 int GetMask(struct output *out, double lat, double lon);
 void PutSignal(struct output *out, double lat, double lon, unsigned char signal);
 unsigned char GetSignal(struct output *out, double lat, double lon);
-double GetElevation(struct site location);
+double GetElevation(site const& location);
 int AddElevation(double lat, double lon, double height, int size);
 double Distance(site const &site1, site const &site2);
 double Azimuth(struct site source, struct site destination);

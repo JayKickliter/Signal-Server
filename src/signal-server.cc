@@ -358,7 +358,7 @@ unsigned char GetSignal(struct output *out, double lat, double lon)
         return 0;
 }
 
-double GetElevation(struct site location)
+double GetElevation(site const& location)
 {
     /* This function returns the elevation (in feet) of any location
        represented by the digital elevation model data in memory.
