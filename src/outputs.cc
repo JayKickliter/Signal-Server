@@ -1228,7 +1228,6 @@ void SeriesData(struct site source, struct site destination, bool fresnel_plot, 
 
     ReadPath(source, destination, out);
     const double azimuth = Azimuth(source, destination);
-    const double distance_miles = Distance(source, destination);
     const double elevation_angle = ElevationAngle(source, destination);
     const double b = GetElevation(source) + source.alt + G_earthradius;
     const bool has_clutter = lr.clutter > 0.0;
