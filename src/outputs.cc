@@ -1224,9 +1224,11 @@ void PathReport(struct site source, struct site destination, char *name, char /*
 void SeriesData(site const &src, site const &dst, bool fresnel_plot, bool normalised, struct output *out, LR const &lr)
 {
     ReadPath(src, dst, out);
+    const double src_elev_ft = GetElevation(src);
+    const double dst_elev_ft = GetElevation(dst);
     const double elevation_angle_deg = ElevationAngle(src, dst);
     const double total_great_circle_ft = FEET_PER_MILE * out->path.distance[out->path.length - 1];
-    const double src_radius_ft = GetElevation(src) + src.alt + G_earthradius_ft;
+    const double src_radius_ft = src_elev_ft + src.alt + G_earthradius_ft;
     const bool has_clutter = lr.clutter > 0.0;
 
     double wavelength_ft = 0.0;
@@ -1247,8 +1249,6 @@ void SeriesData(site const &src, site const &dst, bool fresnel_plot, bool normal
     double nm = 0.0;
 
     if (normalised) {
-        const double src_elev_ft = GetElevation(src);
-        const double dst_elev_ft = GetElevation(dst);
         nb = -src.alt - src_elev_ft;
         nm = (-dst.alt - dst_elev_ft - nb) / (out->path.distance[out->path.length - 1]);
     }
@@ -1257,9 +1257,8 @@ void SeriesData(site const &src, site const &dst, bool fresnel_plot, bool normal
         struct site remote;
         remote.lat = out->path.lat[x];
         remote.lon = out->path.lon[x];
-        remote.alt = 0.0;
 
-        double terrain_ft = GetElevation(remote);
+        double terrain_ft = out->path.elevation[x];
         if (x == 0) {
             /* RX antenna spike */
             terrain_ft += src.alt;
