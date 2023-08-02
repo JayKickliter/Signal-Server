@@ -358,7 +358,7 @@ unsigned char GetSignal(struct output *out, double lat, double lon)
         return 0;
 }
 
-double GetElevation(site const& location)
+double GetElevation(site const &location)
 {
     /* This function returns the elevation (in feet) of any location
        represented by the digital elevation model data in memory.
@@ -462,7 +462,7 @@ double Distance(site const &site1, site const &site2)
     return distance;
 }
 
-double Azimuth(struct site source, struct site destination)
+double Azimuth(site const &source, site const &destination)
 {
     /* This function returns the azimuth (in degrees) to the
        destination as seen from the location of the source. */
