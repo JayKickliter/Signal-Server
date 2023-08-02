@@ -17,7 +17,7 @@ double GetElevation(site const &location);
 int AddElevation(double lat, double lon, double height, int size);
 double Distance(site const &site1, site const &site2);
 double Azimuth(site const &source, site const &destination);
-double ElevationAngle(struct site source, struct site destination);
+double ElevationAngle(site const &source, site const &destination);
 void ReadPath(struct site source, struct site destination, struct output *out);
 double ElevationAngle2(struct site source, struct site destination, double er, struct output *out, LR const &lr);
 double ReadBearing(char *input);

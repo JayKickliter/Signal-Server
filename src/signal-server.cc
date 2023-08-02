@@ -508,7 +508,7 @@ double Azimuth(site const &source, site const &destination)
     return (azimuth / DEG2RAD);
 }
 
-double ElevationAngle(struct site source, struct site destination)
+double ElevationAngle(site const &source, site const &destination)
 {
     /* This function returns the angle of elevation (in degrees)
        of the destination as seen from the source location.
