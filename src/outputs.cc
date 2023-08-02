@@ -1224,25 +1224,20 @@ void PathReport(struct site source, struct site destination, char *name, char /*
 void SeriesData(struct site source, struct site destination, bool fresnel_plot, bool normalised, struct output *out,
                 LR const &lr)
 {
-    double nm = 0.0, nb = 0.0, d = 0.0;
+    double d = 0.0;
 
     bool has_clutter = false;
 
     ReadPath(source, destination, out);
     const double azimuth = Azimuth(source, destination);
-    const double distance = Distance(source, destination);
-    const double refangle = ElevationAngle(source, destination);
+    const double distance_miles = Distance(source, destination);
+    const double elevation_angle = ElevationAngle(source, destination);
     const double b = GetElevation(source) + source.alt + G_earthradius;
 
-    if (G_debug) {
-        fprintf(stderr, "SeriesData: az = %lf, dist = %lf, ref = %lf, b = %lf\n", azimuth, distance, refangle, b);
-        fflush(stderr);
-    }
-
-    double lambda = 0.0;
+    double wavelength = 0.0;
     if (fresnel_plot) {
         if ((lr.frq_mhz >= 20.0) && (lr.frq_mhz <= 100000.0)) {
-            lambda = 9.8425e8 / (lr.frq_mhz * 1e6);
+            wavelength = 9.8425e8 / (lr.frq_mhz * 1e6);
             d = FEET_PER_MILE * out->path.distance[out->path.length - 1];
         }
         else {
@@ -1253,6 +1248,9 @@ void SeriesData(struct site source, struct site destination, bool fresnel_plot, 
             }
         }
     }
+
+    double nb = 0.0;
+    double nm = 0.0;
 
     if (normalised) {
         const double ed = GetElevation(source);
@@ -1285,7 +1283,7 @@ void SeriesData(struct site source, struct site destination, bool fresnel_plot, 
         double fpt6_zone = 0.0;
         const double a = terrain + G_earthradius;
         const double cangle = FEET_PER_MILE * Distance(source, remote) / G_earthradius;
-        const double c = b * sin(refangle * DEG2RAD + HALFPI) / sin(HALFPI - refangle * DEG2RAD - cangle);
+        const double c = b * sin(elevation_angle * DEG2RAD + HALFPI) / sin(HALFPI - elevation_angle * DEG2RAD - cangle);
         double height = a - c;
 
         /* Per Fink and Christiansen, Electronics
@@ -1298,7 +1296,7 @@ void SeriesData(struct site source, struct site destination, bool fresnel_plot, 
          */
         if (fresnel_plot) {
             const double d1 = FEET_PER_MILE * out->path.distance[x];
-            f_zone = -1.0 * sqrt(lambda * d1 * (d - d1) / d);
+            f_zone = -1.0 * sqrt(wavelength * d1 * (d - d1) / d);
             fpt6_zone = f_zone * G_fzone_clearance;
         }
 
