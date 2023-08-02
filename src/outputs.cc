@@ -1224,8 +1224,7 @@ void PathReport(struct site source, struct site destination, char *name, char /*
 void SeriesData(struct site source, struct site destination, bool fresnel_plot, bool normalised, struct output *out,
                 LR const &lr)
 {
-    double maxheight = -100000.0, minheight = 100000.0, lambda = 0.0, fpt6_zone = 0.0, nm = 0.0, nb = 0.0, d = 0.0,
-           minterrain = 100000.0, minearth = 100000.0;
+    double nm = 0.0, nb = 0.0, d = 0.0;
 
     bool has_clutter = false;
 
@@ -1240,6 +1239,7 @@ void SeriesData(struct site source, struct site destination, bool fresnel_plot, 
         fflush(stderr);
     }
 
+    double lambda = 0.0;
     if (fresnel_plot) {
         if ((lr.frq_mhz >= 20.0) && (lr.frq_mhz <= 100000.0)) {
             lambda = 9.8425e8 / (lr.frq_mhz * 1e6);
@@ -1282,6 +1282,7 @@ void SeriesData(struct site source, struct site destination, bool fresnel_plot, 
         }
 
         double f_zone = 0.0;
+        double fpt6_zone = 0.0;
         const double a = terrain + G_earthradius;
         const double cangle = FEET_PER_MILE * Distance(source, remote) / G_earthradius;
         const double c = b * sin(refangle * DEG2RAD + HALFPI) / sin(HALFPI - refangle * DEG2RAD - cangle);
@@ -1349,18 +1350,6 @@ void SeriesData(struct site source, struct site destination, bool fresnel_plot, 
                 out->fresnelvec.push_back(f_zone);
                 out->fresnel60vec.push_back(fpt6_zone);
             }
-
-            if (f_zone < minheight) minheight = f_zone;
         }
-
-        if ((height + lr.clutter) > maxheight) maxheight = height + lr.clutter;
-
-        if (height < minheight) minheight = height;
-
-        if (r > maxheight) maxheight = r;
-
-        if (terrain < minterrain) minterrain = terrain;
-
-        if ((height - terrain) < minearth) minearth = height - terrain;
     }  // End of loop
 }
