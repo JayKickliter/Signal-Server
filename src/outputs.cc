@@ -1251,10 +1251,10 @@ void SeriesData(struct site source, struct site destination, bool fresnel_plot, 
     double nm = 0.0;
 
     if (normalised) {
-        const double ed = GetElevation(source);
-        const double es = GetElevation(destination);
-        nb = -source.alt - ed;
-        nm = (-destination.alt - es - nb) / (out->path.distance[out->path.length - 1]);
+        const double src_elev = GetElevation(source);
+        const double dst_elev = GetElevation(destination);
+        nb = -source.alt - src_elev;
+        nm = (-destination.alt - dst_elev - nb) / (out->path.distance[out->path.length - 1]);
     }
 
     for (int x = 0; x < out->path.length; x++) {
