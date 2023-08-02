@@ -1221,14 +1221,13 @@ void PathReport(struct site source, struct site destination, char *name, char /*
     }
 }
 
-void SeriesData(struct site source, struct site destination, bool fresnel_plot, bool normalised, struct output *out,
-                LR const &lr)
+void SeriesData(site const &src, site const &dst, bool fresnel_plot, bool normalised, struct output *out, LR const &lr)
 {
     double d = 0.0;
 
-    ReadPath(source, destination, out);
-    const double elevation_angle = ElevationAngle(source, destination);
-    const double b = GetElevation(source) + source.alt + G_earthradius;
+    ReadPath(src, dst, out);
+    const double elevation_angle = ElevationAngle(src, dst);
+    const double b = GetElevation(src) + src.alt + G_earthradius;
     const bool has_clutter = lr.clutter > 0.0;
 
     double wavelength = 0.0;
@@ -1250,10 +1249,10 @@ void SeriesData(struct site source, struct site destination, bool fresnel_plot, 
     double nm = 0.0;
 
     if (normalised) {
-        const double src_elev = GetElevation(source);
-        const double dst_elev = GetElevation(destination);
-        nb = -source.alt - src_elev;
-        nm = (-destination.alt - dst_elev - nb) / (out->path.distance[out->path.length - 1]);
+        const double src_elev = GetElevation(src);
+        const double dst_elev = GetElevation(dst);
+        nb = -src.alt - src_elev;
+        nm = (-dst.alt - dst_elev - nb) / (out->path.distance[out->path.length - 1]);
     }
 
     for (int x = 0; x < out->path.length; x++) {
@@ -1265,17 +1264,17 @@ void SeriesData(struct site source, struct site destination, bool fresnel_plot, 
         double terrain = GetElevation(remote);
         if (x == 0) {
             /* RX antenna spike */
-            terrain += source.alt;
+            terrain += src.alt;
         }
         else if (x == out->path.length - 1) {
             /* TX antenna spike */
-            terrain += destination.alt;
+            terrain += dst.alt;
         }
 
         double f_zone = 0.0;
         double fpt6_zone = 0.0;
         const double a = terrain + G_earthradius;
-        const double cangle = FEET_PER_MILE * Distance(source, remote) / G_earthradius;
+        const double cangle = FEET_PER_MILE * Distance(src, remote) / G_earthradius;
         const double c = b * sin(elevation_angle * DEG2RAD + HALFPI) / sin(HALFPI - elevation_angle * DEG2RAD - cangle);
         double height = a - c;
 
