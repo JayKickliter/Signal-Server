@@ -445,7 +445,7 @@ double dist(double lat1, double lon1, double lat2, double lon2)
     return asin(sqrt(dx * dx + dy * dy + dz * dz) / 2) * 2 * earthRadius;
 }
 
-double Distance(struct site site1, struct site site2)
+double Distance(site const &site1, site const &site2)
 {
     /* This function returns the great circle distance
        in miles between any two site locations. */

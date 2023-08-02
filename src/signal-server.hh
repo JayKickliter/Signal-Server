@@ -15,7 +15,7 @@ void PutSignal(struct output *out, double lat, double lon, unsigned char signal)
 unsigned char GetSignal(struct output *out, double lat, double lon);
 double GetElevation(struct site location);
 int AddElevation(double lat, double lon, double height, int size);
-double Distance(struct site site1, struct site site2);
+double Distance(site const &site1, site const &site2);
 double Azimuth(struct site source, struct site destination);
 double ElevationAngle(struct site source, struct site destination);
 void ReadPath(struct site source, struct site destination, struct output *out);
