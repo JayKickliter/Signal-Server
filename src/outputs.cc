@@ -1224,10 +1224,10 @@ void PathReport(struct site source, struct site destination, char *name, char /*
 void SeriesData(struct site source, struct site destination, bool fresnel_plot, bool normalised, struct output *out,
                 LR const &lr)
 {
-    double maxheight = -100000.0, minheight = 100000.0, lambda = 0.0, f_zone = 0.0, fpt6_zone = 0.0, nm = 0.0, nb = 0.0,
-           d = 0.0, minterrain = 100000.0, minearth = 100000.0;
+    double maxheight = -100000.0, minheight = 100000.0, lambda = 0.0, fpt6_zone = 0.0, nm = 0.0, nb = 0.0, d = 0.0,
+           minterrain = 100000.0, minearth = 100000.0;
 
-    bool has_clutter = false, has_fresnel = false;
+    bool has_clutter = false;
 
     ReadPath(source, destination, out);
     const double azimuth = Azimuth(source, destination);
@@ -1241,8 +1241,17 @@ void SeriesData(struct site source, struct site destination, bool fresnel_plot, 
     }
 
     if (fresnel_plot) {
-        lambda = 9.8425e8 / (lr.frq_mhz * 1e6);
-        d = FEET_PER_MILE * out->path.distance[out->path.length - 1];
+        if ((lr.frq_mhz >= 20.0) && (lr.frq_mhz <= 100000.0)) {
+            lambda = 9.8425e8 / (lr.frq_mhz * 1e6);
+            d = FEET_PER_MILE * out->path.distance[out->path.length - 1];
+        }
+        else {
+            fresnel_plot = false;
+            if (G_debug) {
+                fprintf(stderr, "[SeriesData] frequency is out of bounds for fresnel plot, f: %f\n", lr.frq_mhz);
+                fflush(stderr);
+            }
+        }
     }
 
     if (normalised) {
@@ -1254,10 +1263,6 @@ void SeriesData(struct site source, struct site destination, bool fresnel_plot, 
 
     if (lr.clutter > 0.0) {
         has_clutter = true;
-    }
-
-    if ((lr.frq_mhz >= 20.0) && (lr.frq_mhz <= 100000.0) && fresnel_plot) {
-        has_fresnel = true;
     }
 
     for (int x = 0; x < out->path.length; x++) {
@@ -1276,6 +1281,7 @@ void SeriesData(struct site source, struct site destination, bool fresnel_plot, 
             terrain += destination.alt;
         }
 
+        double f_zone = 0.0;
         const double a = terrain + G_earthradius;
         const double cangle = FEET_PER_MILE * Distance(source, remote) / G_earthradius;
         const double c = b * sin(refangle * DEG2RAD + HALFPI) / sin(HALFPI - refangle * DEG2RAD - cangle);
@@ -1289,7 +1295,7 @@ void SeriesData(struct site source, struct site destination, bool fresnel_plot, 
          * where H is the distance from the LOS
          * path to the first Fresnel zone boundary.
          */
-        if ((lr.frq_mhz >= 20.0) && (lr.frq_mhz <= 100000.0) && fresnel_plot) {
+        if (fresnel_plot) {
             const double d1 = FEET_PER_MILE * out->path.distance[x];
             f_zone = -1.0 * sqrt(lambda * d1 * (d - d1) / d);
             fpt6_zone = f_zone * G_fzone_clearance;
@@ -1300,7 +1306,7 @@ void SeriesData(struct site source, struct site destination, bool fresnel_plot, 
             r = -(nm * out->path.distance[x]) - nb;
             height += r;
 
-            if ((lr.frq_mhz >= 20.0) && (lr.frq_mhz <= 100000.0) && fresnel_plot) {
+            if (fresnel_plot) {
                 f_zone += r;
                 fpt6_zone += r;
             }
@@ -1333,7 +1339,7 @@ void SeriesData(struct site source, struct site destination, bool fresnel_plot, 
             out->curvaturevec.push_back(height - terrain);
         }
 
-        if (has_fresnel) {
+        if (fresnel_plot) {
             if (lr.metric) {
                 out->fresnelvec.push_back(METERS_PER_FOOT * f_zone);
                 out->fresnel60vec.push_back(METERS_PER_FOOT * fpt6_zone);
