@@ -18,7 +18,7 @@ int AddElevation(double lat, double lon, double height, int size);
 double Distance(site const &site1, site const &site2);
 double Azimuth(site const &source, site const &destination);
 double ElevationAngle(site const &source, site const &destination);
-void ReadPath(struct site source, struct site destination, struct output *out);
+void ReadPath(site const &source, site const &destination, struct output *out);
 double ElevationAngle2(struct site source, struct site destination, double er, struct output *out, LR const &lr);
 double ReadBearing(char *input);
 void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f, FILE *outfile, struct output *out, LR const &lr);

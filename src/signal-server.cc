@@ -529,7 +529,7 @@ double ElevationAngle(site const &source, site const &destination)
     return ((180.0 * (acos(((b * b) + (dx * dx) - (a * a)) / (2.0 * b * dx))) / PI) - 90.0);
 }
 
-void ReadPath(struct site source, struct site destination, struct output *out)
+void ReadPath(site const &source, site const &destination, struct output *out)
 {
     /* This function generates a sequence of latitude and
        longitude positions between source and destination
