@@ -976,7 +976,9 @@ int init(const char *sdf_path, bool debug)
 int handle_args(int argc, char *argv[], output &out)
 {
     /* Scan for command line arguments */
-    int x, y, z = 0, propmodel, knifeedge = 0, ppa = 0, normalise = 0, haf = 0, pmenv = 1, result;
+    int x, y, z = 0, propmodel, knifeedge = 0, ppa = 0, haf = 0, pmenv = 1, result;
+    bool normalise = true;
+    bool fresnel_plot = true;
 
     double min_lat, min_lon, max_lat, max_lon, rxlat, rxlon, txlat, txlon, west_min, west_max, nortRxHin, nortRxHax;
 
@@ -1425,8 +1427,9 @@ int handle_args(int argc, char *argv[], output &out)
         // Normalise Path Profile chart
         if (strcmp(argv[x], "-ng") == 0) {
             z = x + 1;
-            normalise = 1;
+            normalise = true;
         }
+
         // Halve the problem
         if (strcmp(argv[x], "-haf") == 0) {
             z = x + 1;
@@ -1810,7 +1813,7 @@ int handle_args(int argc, char *argv[], output &out)
         strncpy(out.tx_site[1].name, "Rx", 3);
         PlotPath(&out, out.tx_site[0], out.tx_site[1], 1, &lr);
         // Order flipped for benefit of graph. Makes no difference to data.
-        SeriesData(out.tx_site[1], out.tx_site[0], 1, 1, &out, lr);
+        SeriesData(out.tx_site[1], out.tx_site[0], fresnel_plot, normalise, &out, lr);
     }
     fflush(stderr);
 

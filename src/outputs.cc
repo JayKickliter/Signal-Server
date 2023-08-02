@@ -1222,8 +1222,8 @@ void PathReport(struct site source, struct site destination, char *name, char /*
     }
 }
 
-void SeriesData(struct site source, struct site destination, unsigned char fresnel_plot, unsigned char normalised,
-                struct output *out, LR const &lr)
+void SeriesData(struct site source, struct site destination, bool fresnel_plot, bool normalised, struct output *out,
+                LR const &lr)
 {
     int x;
     double a, b, c, height = 0.0, refangle, cangle, maxheight = -100000.0, minheight = 100000.0, lambda = 0.0, f_zone = 0.0,
