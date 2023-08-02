@@ -43,7 +43,7 @@ pub(crate) mod ffi {
         field_strength: f64,
         distancevec: Vec<f64>,
         cluttervec: Vec<f64>,
-        referencevec: Vec<f64>,
+        line_of_sight: Vec<f64>,
         fresnelvec: Vec<f64>,
         fresnel60vec: Vec<f64>,
         curvaturevec: Vec<f64>,

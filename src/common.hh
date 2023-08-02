@@ -133,7 +133,7 @@ struct output {
     struct site tx_site[2];
     std::vector<double> distancevec;
     std::vector<double> cluttervec;
-    std::vector<double> referencevec;
+    std::vector<double> line_of_sight;
     std::vector<double> fresnelvec;
     std::vector<double> fresnel60vec;
     std::vector<double> curvaturevec;

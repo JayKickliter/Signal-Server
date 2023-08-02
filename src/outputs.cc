@@ -1227,7 +1227,6 @@ void SeriesData(struct site source, struct site destination, bool fresnel_plot, 
     double d = 0.0;
 
     ReadPath(source, destination, out);
-    const double azimuth = Azimuth(source, destination);
     const double elevation_angle = ElevationAngle(source, destination);
     const double b = GetElevation(source) + source.alt + G_earthradius;
     const bool has_clutter = lr.clutter > 0.0;
@@ -1294,19 +1293,19 @@ void SeriesData(struct site source, struct site destination, bool fresnel_plot, 
             fpt6_zone = f_zone * G_fzone_clearance;
         }
 
-        double r;
+        /* This value serves as both the referee point for adjusting
+         * all others, and the line-of-sight path between src and
+         * dst */
+        double line_of_sight = 0.0;
         if (normalised) {
-            r = -(nm * out->path.distance[x]) - nb;
-            height += r;
+            line_of_sight = -(nm * out->path.distance[x]) - nb;
+            height += line_of_sight;
 
             if (fresnel_plot) {
-                f_zone += r;
-                fpt6_zone += r;
+                f_zone += line_of_sight;
+                fpt6_zone += line_of_sight;
             }
         }
-
-        else
-            r = 0.0;
 
         if (lr.metric) {
             out->distancevec.push_back(KM_PER_MILE * out->path.distance[x]);
@@ -1316,10 +1315,9 @@ void SeriesData(struct site source, struct site destination, bool fresnel_plot, 
                 out->cluttervec.push_back(METERS_PER_FOOT * (terrain == 0.0 ? height : (height + lr.clutter)));
             }
 
-            out->referencevec.push_back(METERS_PER_FOOT * r);
+            out->line_of_sight.push_back(METERS_PER_FOOT * line_of_sight);
             out->curvaturevec.push_back(METERS_PER_FOOT * (height - terrain));
         }
-
         else {
             out->distancevec.push_back(out->path.distance[x]);
             out->profilevec.push_back(height);
@@ -1328,7 +1326,7 @@ void SeriesData(struct site source, struct site destination, bool fresnel_plot, 
                 out->cluttervec.push_back((terrain == 0.0 ? height : (height + lr.clutter)));
             }
 
-            out->referencevec.push_back(r);
+            out->line_of_sight.push_back(line_of_sight);
             out->curvaturevec.push_back(height - terrain);
         }
 
@@ -1337,7 +1335,6 @@ void SeriesData(struct site source, struct site destination, bool fresnel_plot, 
                 out->fresnelvec.push_back(METERS_PER_FOOT * f_zone);
                 out->fresnel60vec.push_back(METERS_PER_FOOT * fpt6_zone);
             }
-
             else {
                 out->fresnelvec.push_back(f_zone);
                 out->fresnel60vec.push_back(fpt6_zone);
