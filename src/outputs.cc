@@ -6,7 +6,6 @@
 #include <string.h>
 #include <zlib.h>
 
-#include <tuple>
 #include <vector>
 
 #include "common.hh"
@@ -1225,19 +1224,16 @@ void PathReport(struct site source, struct site destination, char *name, char /*
 void SeriesData(struct site source, struct site destination, bool fresnel_plot, bool normalised, struct output *out,
                 LR const &lr)
 {
-    int x;
-    double a, b, c, height = 0.0, refangle, cangle, maxheight = -100000.0, minheight = 100000.0, lambda = 0.0, f_zone = 0.0,
-                    fpt6_zone = 0.0, nm = 0.0, nb = 0.0, ed = 0.0, es = 0.0, r = 0.0, d = 0.0, d1 = 0.0, terrain, azimuth,
-                    distance, minterrain = 100000.0, minearth = 100000.0;
-    struct site remote;
+    double maxheight = -100000.0, minheight = 100000.0, lambda = 0.0, f_zone = 0.0, fpt6_zone = 0.0, nm = 0.0, nb = 0.0,
+           d = 0.0, minterrain = 100000.0, minearth = 100000.0;
 
     bool has_clutter = false, has_fresnel = false;
 
     ReadPath(source, destination, out);
-    azimuth = Azimuth(source, destination);
-    distance = Distance(source, destination);
-    refangle = ElevationAngle(source, destination);
-    b = GetElevation(source) + source.alt + G_earthradius;
+    const double azimuth = Azimuth(source, destination);
+    const double distance = Distance(source, destination);
+    const double refangle = ElevationAngle(source, destination);
+    const double b = GetElevation(source) + source.alt + G_earthradius;
 
     if (G_debug) {
         fprintf(stderr, "SeriesData: az = %lf, dist = %lf, ref = %lf, b = %lf\n", azimuth, distance, refangle, b);
@@ -1250,8 +1246,8 @@ void SeriesData(struct site source, struct site destination, bool fresnel_plot, 
     }
 
     if (normalised) {
-        ed = GetElevation(source);
-        es = GetElevation(destination);
+        const double ed = GetElevation(source);
+        const double es = GetElevation(destination);
         nb = -source.alt - ed;
         nm = (-destination.alt - es - nb) / (out->path.distance[out->path.length - 1]);
     }
@@ -1264,12 +1260,13 @@ void SeriesData(struct site source, struct site destination, bool fresnel_plot, 
         has_fresnel = true;
     }
 
-    for (x = 0; x < out->path.length; x++) {
+    for (int x = 0; x < out->path.length; x++) {
+        struct site remote;
         remote.lat = out->path.lat[x];
         remote.lon = out->path.lon[x];
         remote.alt = 0.0;
-        terrain = GetElevation(remote);
 
+        double terrain = GetElevation(remote);
         if (x == 0) {
             /* RX antenna spike */
             terrain += source.alt;
@@ -1279,10 +1276,10 @@ void SeriesData(struct site source, struct site destination, bool fresnel_plot, 
             terrain += destination.alt;
         }
 
-        a = terrain + G_earthradius;
-        cangle = FEET_PER_MILE * Distance(source, remote) / G_earthradius;
-        c = b * sin(refangle * DEG2RAD + HALFPI) / sin(HALFPI - refangle * DEG2RAD - cangle);
-        height = a - c;
+        const double a = terrain + G_earthradius;
+        const double cangle = FEET_PER_MILE * Distance(source, remote) / G_earthradius;
+        const double c = b * sin(refangle * DEG2RAD + HALFPI) / sin(HALFPI - refangle * DEG2RAD - cangle);
+        double height = a - c;
 
         /* Per Fink and Christiansen, Electronics
          * Engineers' Handbook, 1989:
@@ -1293,11 +1290,12 @@ void SeriesData(struct site source, struct site destination, bool fresnel_plot, 
          * path to the first Fresnel zone boundary.
          */
         if ((lr.frq_mhz >= 20.0) && (lr.frq_mhz <= 100000.0) && fresnel_plot) {
-            d1 = FEET_PER_MILE * out->path.distance[x];
+            const double d1 = FEET_PER_MILE * out->path.distance[x];
             f_zone = -1.0 * sqrt(lambda * d1 * (d - d1) / d);
             fpt6_zone = f_zone * G_fzone_clearance;
         }
 
+        double r;
         if (normalised) {
             r = -(nm * out->path.distance[x]) - nb;
             height += r;
