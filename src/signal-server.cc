@@ -1813,7 +1813,7 @@ int handle_args(int argc, char *argv[], output &out)
         strncpy(out.tx_site[1].name, "Rx", 3);
         PlotPath(&out, out.tx_site[0], out.tx_site[1], 1, &lr);
         // Order flipped for benefit of graph. Makes no difference to data.
-        SeriesData(out.tx_site[1], out.tx_site[0], fresnel_plot, normalise, &out, lr);
+        SeriesData(out.tx_site[0], out.tx_site[1], fresnel_plot, normalise, &out, lr);
     }
     fflush(stderr);
 

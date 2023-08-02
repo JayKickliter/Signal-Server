@@ -1233,11 +1233,11 @@ void SeriesData(struct site source, struct site destination, bool fresnel_plot, 
 
     bool has_clutter = false, has_fresnel = false;
 
-    ReadPath(destination, source, out);
-    azimuth = Azimuth(destination, source);
-    distance = Distance(destination, source);
-    refangle = ElevationAngle(destination, source);
-    b = GetElevation(destination) + destination.alt + G_earthradius;
+    ReadPath(source, destination, out);
+    azimuth = Azimuth(source, destination);
+    distance = Distance(source, destination);
+    refangle = ElevationAngle(source, destination);
+    b = GetElevation(source) + source.alt + G_earthradius;
 
     if (G_debug) {
         fprintf(stderr, "SeriesData: az = %lf, dist = %lf, ref = %lf, b = %lf\n", azimuth, distance, refangle, b);
@@ -1250,10 +1250,10 @@ void SeriesData(struct site source, struct site destination, bool fresnel_plot, 
     }
 
     if (normalised) {
-        ed = GetElevation(destination);
-        es = GetElevation(source);
-        nb = -destination.alt - ed;
-        nm = (-source.alt - es - nb) / (out->path.distance[out->path.length - 1]);
+        ed = GetElevation(source);
+        es = GetElevation(destination);
+        nb = -source.alt - ed;
+        nm = (-destination.alt - es - nb) / (out->path.distance[out->path.length - 1]);
     }
 
     if (lr.clutter > 0.0) {
@@ -1272,15 +1272,15 @@ void SeriesData(struct site source, struct site destination, bool fresnel_plot, 
 
         if (x == 0) {
             /* RX antenna spike */
-            terrain += destination.alt;
+            terrain += source.alt;
         }
         else if (x == out->path.length - 1) {
             /* TX antenna spike */
-            terrain += source.alt;
+            terrain += destination.alt;
         }
 
         a = terrain + G_earthradius;
-        cangle = FEET_PER_MILE * Distance(destination, remote) / G_earthradius;
+        cangle = FEET_PER_MILE * Distance(source, remote) / G_earthradius;
         c = b * sin(refangle * DEG2RAD + HALFPI) / sin(HALFPI - refangle * DEG2RAD - cangle);
         height = a - c;
 
