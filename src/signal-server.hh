@@ -21,7 +21,7 @@ double ElevationAngle(site const &source, site const &destination);
 void ReadPath(site const &source, site const &destination, struct output *out);
 double ElevationAngle2(site const &source, site const &destination, double er, struct output *out, LR const &lr);
 double ReadBearing(char *input);
-void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f, FILE *outfile, struct output *out, LR const &lr);
+void ObstructionAnalysis(site const &xmtr, site const &rcvr, double f, FILE *outfile, struct output *out, LR const &lr);
 void resize_elev(struct output &out);
 void resize_path(struct path &path);
 int handle_args(int argc, char *argv[], output &ret_out);

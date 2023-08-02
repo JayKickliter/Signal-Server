@@ -761,7 +761,7 @@ double ReadBearing(char *input)
     return bearing;
 }
 
-void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f, FILE *outfile, struct output *out, LR const &lr)
+void ObstructionAnalysis(site const &xmtr, site const &rcvr, double f, FILE *outfile, struct output *out, LR const &lr)
 {
     /* Perform an obstruction analysis along the
        path between receiver and transmitter. */
