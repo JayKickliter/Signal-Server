@@ -1226,13 +1226,12 @@ void SeriesData(struct site source, struct site destination, bool fresnel_plot, 
 {
     double d = 0.0;
 
-    bool has_clutter = false;
-
     ReadPath(source, destination, out);
     const double azimuth = Azimuth(source, destination);
     const double distance_miles = Distance(source, destination);
     const double elevation_angle = ElevationAngle(source, destination);
     const double b = GetElevation(source) + source.alt + G_earthradius;
+    const bool has_clutter = lr.clutter > 0.0;
 
     double wavelength = 0.0;
     if (fresnel_plot) {
@@ -1257,10 +1256,6 @@ void SeriesData(struct site source, struct site destination, bool fresnel_plot, 
         const double es = GetElevation(destination);
         nb = -source.alt - ed;
         nm = (-destination.alt - es - nb) / (out->path.distance[out->path.length - 1]);
-    }
-
-    if (lr.clutter > 0.0) {
-        has_clutter = true;
     }
 
     for (int x = 0; x < out->path.length; x++) {
