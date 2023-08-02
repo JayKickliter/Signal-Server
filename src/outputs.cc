@@ -1254,10 +1254,6 @@ void SeriesData(site const &src, site const &dst, bool fresnel_plot, bool normal
     }
 
     for (int x = 0; x < out->path.length; x++) {
-        struct site remote;
-        remote.lat = out->path.lat[x];
-        remote.lon = out->path.lon[x];
-
         double terrain_ft = out->path.elevation[x];
         if (x == 0) {
             /* RX antenna spike */
@@ -1271,7 +1267,7 @@ void SeriesData(site const &src, site const &dst, bool fresnel_plot, bool normal
         double fresnel_ft = 0.0;
         double fresnel60_ft = 0.0;
         const double radius_ft = terrain_ft + G_earthradius_ft;
-        const double chord_angle_deg = FEET_PER_MILE * Distance(src, remote) / G_earthradius_ft;
+        const double chord_angle_deg = FEET_PER_MILE * out->path.distance[x] / G_earthradius_ft;
         const double c_unk_unit = src_radius_ft * sin(elevation_angle_deg * DEG2RAD + HALFPI) /
                                   sin(HALFPI - elevation_angle_deg * DEG2RAD - chord_angle_deg);
         double height_ft = radius_ft - c_unk_unit;
