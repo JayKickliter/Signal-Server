@@ -19,7 +19,7 @@ double Distance(site const &site1, site const &site2);
 double Azimuth(site const &source, site const &destination);
 double ElevationAngle(site const &source, site const &destination);
 void ReadPath(site const &source, site const &destination, struct output *out);
-double ElevationAngle2(struct site source, struct site destination, double er, struct output *out, LR const &lr);
+double ElevationAngle2(site const &source, site const &destination, double er, struct output *out, LR const &lr);
 double ReadBearing(char *input);
 void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f, FILE *outfile, struct output *out, LR const &lr);
 void resize_elev(struct output &out);

@@ -636,7 +636,7 @@ void ReadPath(site const &source, site const &destination, struct output *out)
         out->path.length = ARRAYSIZE - 1;
 }
 
-double ElevationAngle2(struct site source, struct site destination, double er, struct output *out, LR const &lr)
+double ElevationAngle2(site const &source, site const &destination, double er, struct output *out, LR const &lr)
 {
     /* This function returns the angle of elevation (in degrees)
        of the destination as seen from the source location, UNLESS
