@@ -65,14 +65,14 @@ struct site {
     char filename[255];
 };
 
-struct path {
+struct Path {
     std::vector<double> lat;
     std::vector<double> lon;
     std::vector<double> elevation;
     std::vector<double> distance;
-    ssize_t ssize();
-    path() = default;
-    path(site const &src, site const &dst);
+    ssize_t ssize() const;
+    Path() = default;
+    Path(site const &src, site const &dst);
 };
 
 class antenna_pattern {
@@ -114,7 +114,6 @@ struct output {
     int height;
     int min_elevation;
     int max_elevation;
-    struct path path;
     double min_north;
     double max_north;
     double min_west;

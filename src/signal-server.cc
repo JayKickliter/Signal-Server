@@ -530,7 +530,7 @@ double ElevationAngle(site const &source, site const &destination)
     return ((180.0 * (acos(((b * b) + (dx * dx) - (a * a)) / (2.0 * b * dx))) / PI) - 90.0);
 }
 
-path::path(site const &src, site const &dst)
+Path::Path(site const &src, site const &dst)
 {
     /* This function generates a sequence of latitude and
        longitude positions between source and destination
@@ -633,9 +633,9 @@ path::path(site const &src, site const &dst)
     assert(lat.size() == lon.size() && lon.size() == elevation.size() && elevation.size() == distance.size());
 }
 
-ssize_t path::ssize() { return lat.size(); }
+ssize_t Path::ssize() const { return lat.size(); }
 
-double ElevationAngle2(site const &source, site const &destination, double er, struct output *out, LR const &lr)
+double ElevationAngle2(Path const &path, site const &source, site const &destination, double er, LR const &lr)
 {
     /* This function returns the angle of elevation (in degrees)
        of the destination as seen from the source location, UNLESS
@@ -647,9 +647,6 @@ double ElevationAngle2(site const &source, site const &destination, double er, s
     char block = 0;
     double source_alt, destination_alt, cos_xmtr_angle, cos_test_angle, test_alt, elevation, distance, source_alt2,
         first_obstruction_angle = 0.0;
-
-    path temp = out->path;
-    out->path = path(source, destination);
 
     distance = FEET_PER_MILE * Distance(source, destination);
     source_alt = er + source.alt + GetElevation(source);
@@ -668,11 +665,10 @@ double ElevationAngle2(site const &source, site const &destination, double er, s
        at the source since we're interested in identifying the FIRST
        obstruction along the path between source and destination. */
 
-    for (x = 2, block = 0; x < out->path.ssize() && block == 0; x++) {
-        distance = FEET_PER_MILE * out->path.distance[x];
+    for (x = 2, block = 0; x < path.ssize() && block == 0; x++) {
+        distance = FEET_PER_MILE * path.distance[x];
 
-        test_alt =
-            G_earthradius_ft + (out->path.elevation[x] == 0.0 ? out->path.elevation[x] : out->path.elevation[x] + lr.clutter);
+        test_alt = G_earthradius_ft + (path.elevation[x] == 0.0 ? path.elevation[x] : path.elevation[x] + lr.clutter);
 
         cos_test_angle = ((source_alt2) + (distance * distance) - (test_alt * test_alt)) / (2.0 * source_alt * distance);
 
@@ -695,8 +691,6 @@ double ElevationAngle2(site const &source, site const &destination, double er, s
 
     else
         elevation = ((acos(cos_xmtr_angle)) / DEG2RAD) - 90.0;
-
-    out->path = temp;
 
     return elevation;
 }
@@ -758,7 +752,7 @@ double ReadBearing(char *input)
     return bearing;
 }
 
-void ObstructionAnalysis(site const &xmtr, site const &rcvr, double f, FILE *outfile, struct output *out, LR const &lr)
+void ObstructionAnalysis(Path const &path, site const &xmtr, site const &rcvr, double f, FILE *outfile, LR const &lr)
 {
     /* Perform an obstruction analysis along the
        path between receiver and transmitter. */
@@ -769,7 +763,6 @@ void ObstructionAnalysis(site const &xmtr, site const &rcvr, double f, FILE *out
         h_r_fpt6, h_f, h_los, lambda = 0.0;
     char string[255], string_fpt6[255], string_f1[255];
 
-    out->path = path(xmtr, rcvr);
     h_r = GetElevation(rcvr) + rcvr.alt + G_earthradius_ft;
     h_r_f1 = h_r;
     h_r_fpt6 = h_r;
@@ -807,9 +800,9 @@ void ObstructionAnalysis(site const &xmtr, site const &rcvr, double f, FILE *out
        acos().  However, note the inverted comparison: if
        acos(A) > acos(B), then B > A. */
 
-    for (x = out->path.ssize() - 1; x > 0; x--) {
-        site_x.lat = out->path.lat[x];
-        site_x.lon = out->path.lon[x];
+    for (x = path.ssize() - 1; x > 0; x--) {
+        site_x.lat = path.lat[x];
+        site_x.lon = path.lon[x];
         site_x.alt = 0.0;
 
         h_x = GetElevation(site_x) + G_earthradius_ft + lr.clutter;
@@ -1796,10 +1789,11 @@ int handle_args(int argc, char *argv[], output &out)
         }
     }
     else {
+        Path path(out.tx_site[0], out.tx_site[1]);
         strncpy(out.tx_site[0].name, "Tx", 3);
         strncpy(out.tx_site[1].name, "Rx", 3);
-        PlotPath(&out, out.tx_site[0], out.tx_site[1], 1, &lr);
-        SeriesData(out.tx_site[0], out.tx_site[1], fresnel_plot, normalise, &out, lr);
+        PlotPath(path, &out, out.tx_site[0], out.tx_site[1], 1, &lr);
+        SeriesData(path, out.tx_site[0], out.tx_site[1], fresnel_plot, normalise, &out, lr);
     }
     fflush(stderr);
 

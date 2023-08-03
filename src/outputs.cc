@@ -703,8 +703,8 @@ void DoLOS(struct output *out, unsigned char kml, unsigned char ngs, struct site
     image_free(&ctx);
 }
 
-void PathReport(struct site source, struct site destination, char *name, char /* graph_it */, int propmodel, int pmenv,
-                double rxGain, struct output *out, LR const &lr)
+void PathReport(Path const &path, struct site source, struct site destination, char *name, char /* graph_it */, int propmodel,
+                int pmenv, double rxGain, struct output *out, LR const &lr)
 {
     /* This function writes a PPA Path Report (name.txt) to
        the filesystem.  If (graph_it == 1), then gnuplot is invoked
@@ -761,7 +761,7 @@ void PathReport(struct site source, struct site destination, char *name, char /*
 
     azimuth = Azimuth(source, destination);
     angle1 = ElevationAngle(source, destination);
-    angle2 = ElevationAngle2(source, destination, G_earthradius_ft, out, lr);
+    angle2 = ElevationAngle2(path, source, destination, G_earthradius_ft, lr);
 
     if (G_got_azimuth_pattern || G_got_elevation_pattern) {
         x = (int)rint(10.0 * (10.0 - angle2));
@@ -824,7 +824,7 @@ void PathReport(struct site source, struct site destination, char *name, char /*
     azimuth = Azimuth(destination, source);
 
     angle1 = ElevationAngle(destination, source);
-    angle2 = ElevationAngle2(destination, source, G_earthradius_ft, out, lr);
+    angle2 = ElevationAngle2(path, destination, source, G_earthradius_ft, lr);
 
     fprintf(fd2, "Azimuth to %s: %.2f degrees grid\n", source.name, azimuth);
 
@@ -966,27 +966,25 @@ void PathReport(struct site source, struct site destination, char *name, char /*
         if (patterndB != 0.0)
             fprintf(fd2, "%s antenna pattern towards %s: %.3f (%.2f dB)\n", source.name, destination.name, pattern, patterndB);
 
-        out->path = path(source, destination); /* source=TX, destination=RX */
-
         /* Copy elevations plus clutter along
            path into the elev[] array. */
 
-        for (x = 1; x < out->path.ssize() - 1; x++)
-            out->elev[x + 2] = METERS_PER_FOOT *
-                               (out->path.elevation[x] == 0.0 ? out->path.elevation[x] : (lr.clutter + out->path.elevation[x]));
+        for (x = 1; x < path.ssize() - 1; x++)
+            out->elev[x + 2] =
+                METERS_PER_FOOT * (path.elevation[x] == 0.0 ? path.elevation[x] : (lr.clutter + path.elevation[x]));
 
         /* Copy ending points without clutter */
 
-        out->elev[2] = out->path.elevation[0] * METERS_PER_FOOT;
-        out->elev[out->path.ssize() + 1] = out->path.elevation[out->path.ssize() - 1] * METERS_PER_FOOT;
+        out->elev[2] = path.elevation[0] * METERS_PER_FOOT;
+        out->elev[path.ssize() + 1] = path.elevation[path.ssize() - 1] * METERS_PER_FOOT;
 
         azimuth = rint(Azimuth(source, destination));
 
-        for (y = 2; y < (out->path.ssize() - 1); y++) { /* path.length-1 avoids LR error */
-            distance = FEET_PER_MILE * out->path.distance[y];
+        for (y = 2; y < (path.ssize() - 1); y++) { /* path.length-1 avoids LR error */
+            distance = FEET_PER_MILE * path.distance[y];
 
-            source_alt = four_thirds_earth + source.alt + out->path.elevation[0];
-            dest_alt = four_thirds_earth + destination.alt + out->path.elevation[y];
+            source_alt = four_thirds_earth + source.alt + path.elevation[0];
+            dest_alt = four_thirds_earth + destination.alt + path.elevation[y];
             dest_alt2 = dest_alt * dest_alt;
             source_alt2 = source_alt * source_alt;
 
@@ -1001,8 +999,8 @@ void PathReport(struct site source, struct site destination, char *name, char /*
                    the first obstruction along the path. */
 
                 for (x = 2, block = 0; x < y && block == 0; x++) {
-                    distance = FEET_PER_MILE * (out->path.distance[y] - out->path.distance[x]);
-                    test_alt = four_thirds_earth + out->path.elevation[x];
+                    distance = FEET_PER_MILE * (path.distance[y] - path.distance[x]);
+                    test_alt = four_thirds_earth + path.elevation[x];
 
                     /* Calculate the cosine of the elevation
                        angle of the terrain (test point)
@@ -1036,7 +1034,7 @@ void PathReport(struct site source, struct site destination, char *name, char /*
 
             /* Distance between elevation samples */
 
-            out->elev[1] = METERS_PER_MILE * (out->path.distance[y] - out->path.distance[y - 1]);
+            out->elev[1] = METERS_PER_MILE * (path.distance[y] - path.distance[y - 1]);
 
             /*
                point_to_point(elev, source.alt*METERS_PER_FOOT,
@@ -1056,26 +1054,26 @@ void PathReport(struct site source, struct site destination, char *name, char /*
                     break;
                 case 3:
                     // HATA 1, 2 & 3
-                    out->loss = HATApathLoss(lr.frq_mhz, source.alt * METERS_PER_FOOT,
-                                             (out->path.elevation[y] * METERS_PER_FOOT) + (destination.alt * METERS_PER_FOOT),
-                                             dkm, pmenv);
+                    out->loss =
+                        HATApathLoss(lr.frq_mhz, source.alt * METERS_PER_FOOT,
+                                     (path.elevation[y] * METERS_PER_FOOT) + (destination.alt * METERS_PER_FOOT), dkm, pmenv);
                     break;
                 case 4:
                     // COST231-HATA
-                    out->loss = ECC33pathLoss(lr.frq_mhz, source.alt * METERS_PER_FOOT,
-                                              (out->path.elevation[y] * METERS_PER_FOOT) + (destination.alt * METERS_PER_FOOT),
-                                              dkm, pmenv);
+                    out->loss =
+                        ECC33pathLoss(lr.frq_mhz, source.alt * METERS_PER_FOOT,
+                                      (path.elevation[y] * METERS_PER_FOOT) + (destination.alt * METERS_PER_FOOT), dkm, pmenv);
                     break;
                 case 5:
                     // SUI
-                    out->loss = SUIpathLoss(lr.frq_mhz, source.alt * METERS_PER_FOOT,
-                                            (out->path.elevation[y] * METERS_PER_FOOT) + (destination.alt * METERS_PER_FOOT),
-                                            dkm, pmenv);
+                    out->loss =
+                        SUIpathLoss(lr.frq_mhz, source.alt * METERS_PER_FOOT,
+                                    (path.elevation[y] * METERS_PER_FOOT) + (destination.alt * METERS_PER_FOOT), dkm, pmenv);
                     break;
                 case 6:
-                    out->loss = COST231pathLoss(
-                        lr.frq_mhz, source.alt * METERS_PER_FOOT,
-                        (out->path.elevation[y] * METERS_PER_FOOT) + (destination.alt * METERS_PER_FOOT), dkm, pmenv);
+                    out->loss = COST231pathLoss(lr.frq_mhz, source.alt * METERS_PER_FOOT,
+                                                (path.elevation[y] * METERS_PER_FOOT) + (destination.alt * METERS_PER_FOOT),
+                                                dkm, pmenv);
                     break;
                 case 7:
                     // ITU-R P.525 Free space path loss
@@ -1089,9 +1087,9 @@ void PathReport(struct site source, struct site destination, char *name, char /*
                     break;
                 case 9:
                     // Ericsson
-                    out->loss = EricssonpathLoss(
-                        lr.frq_mhz, source.alt * METERS_PER_FOOT,
-                        (out->path.elevation[y] * METERS_PER_FOOT) + (destination.alt * METERS_PER_FOOT), dkm, pmenv);
+                    out->loss = EricssonpathLoss(lr.frq_mhz, source.alt * METERS_PER_FOOT,
+                                                 (path.elevation[y] * METERS_PER_FOOT) + (destination.alt * METERS_PER_FOOT),
+                                                 dkm, pmenv);
                     break;
 
                 default:
@@ -1210,7 +1208,7 @@ void PathReport(struct site source, struct site destination, char *name, char /*
         }
     }
 
-    ObstructionAnalysis(source, destination, lr.frq_mhz, fd2, out, lr);
+    ObstructionAnalysis(path, source, destination, lr.frq_mhz, fd2, lr);
     fclose(fd2);
 
     /*fprintf(stderr,
@@ -1221,13 +1219,13 @@ void PathReport(struct site source, struct site destination, char *name, char /*
     }
 }
 
-void SeriesData(site const &src, site const &dst, bool fresnel_plot, bool normalised, struct output *out, LR const &lr)
+void SeriesData(Path const &path, site const &src, site const &dst, bool fresnel_plot, bool normalised, struct output *out,
+                LR const &lr)
 {
-    out->path = path(src, dst);
     const double src_elev_ft = GetElevation(src);
     const double dst_elev_ft = GetElevation(dst);
     const double elevation_angle_deg = ElevationAngle(src, dst);
-    const double total_great_circle_ft = FEET_PER_MILE * out->path.distance[out->path.ssize() - 1];
+    const double total_great_circle_ft = FEET_PER_MILE * path.distance[path.ssize() - 1];
     const double src_radius_ft = src_elev_ft + src.alt + G_earthradius_ft;
     const bool has_clutter = lr.clutter > 0.0;
 
@@ -1250,16 +1248,16 @@ void SeriesData(site const &src, site const &dst, bool fresnel_plot, bool normal
 
     if (normalised) {
         nb = -src.alt - src_elev_ft;
-        nm = (-dst.alt - dst_elev_ft - nb) / (out->path.distance[out->path.ssize() - 1]);
+        nm = (-dst.alt - dst_elev_ft - nb) / (path.distance[path.ssize() - 1]);
     }
 
-    for (int x = 0; x < out->path.ssize(); x++) {
-        double terrain_ft = out->path.elevation[x];
+    for (int x = 0; x < path.ssize(); x++) {
+        double terrain_ft = path.elevation[x];
         if (x == 0) {
             /* RX antenna spike */
             terrain_ft += src.alt;
         }
-        else if (x == out->path.ssize() - 1) {
+        else if (x == path.ssize() - 1) {
             /* TX antenna spike */
             terrain_ft += dst.alt;
         }
@@ -1267,7 +1265,7 @@ void SeriesData(site const &src, site const &dst, bool fresnel_plot, bool normal
         double fresnel_ft = 0.0;
         double fresnel60_ft = 0.0;
         const double radius_ft = terrain_ft + G_earthradius_ft;
-        const double chord_angle_deg = FEET_PER_MILE * out->path.distance[x] / G_earthradius_ft;
+        const double chord_angle_deg = FEET_PER_MILE * path.distance[x] / G_earthradius_ft;
         const double c_unk_unit = src_radius_ft * sin(elevation_angle_deg * DEG2RAD + HALFPI) /
                                   sin(HALFPI - elevation_angle_deg * DEG2RAD - chord_angle_deg);
         double height_ft = radius_ft - c_unk_unit;
@@ -1281,7 +1279,7 @@ void SeriesData(site const &src, site const &dst, bool fresnel_plot, bool normal
          * path to the first Fresnel zone boundary.
          */
         if (fresnel_plot) {
-            const double d1 = FEET_PER_MILE * out->path.distance[x];
+            const double d1 = FEET_PER_MILE * path.distance[x];
             fresnel_ft = -1.0 * sqrt(wavelength_ft * d1 * (total_great_circle_ft - d1) / total_great_circle_ft);
             fresnel60_ft = fresnel_ft * G_fzone_clearance;
         }
@@ -1291,7 +1289,7 @@ void SeriesData(site const &src, site const &dst, bool fresnel_plot, bool normal
          * dst */
         double line_of_sight_ft = 0.0;
         if (normalised) {
-            line_of_sight_ft = -(nm * out->path.distance[x]) - nb;
+            line_of_sight_ft = -(nm * path.distance[x]) - nb;
             height_ft += line_of_sight_ft;
 
             if (fresnel_plot) {
@@ -1301,10 +1299,10 @@ void SeriesData(site const &src, site const &dst, bool fresnel_plot, bool normal
         }
 
         if (lr.metric) {
-            out->distancevec.push_back(KM_PER_MILE * out->path.distance[x]);
+            out->distancevec.push_back(KM_PER_MILE * path.distance[x]);
             out->profilevec.push_back(METERS_PER_FOOT * height_ft);
 
-            if (has_clutter && x > 0 && x < out->path.ssize() - 2) {
+            if (has_clutter && x > 0 && x < path.ssize() - 2) {
                 out->cluttervec.push_back(METERS_PER_FOOT * (terrain_ft == 0.0 ? height_ft : (height_ft + lr.clutter)));
             }
 
@@ -1312,10 +1310,10 @@ void SeriesData(site const &src, site const &dst, bool fresnel_plot, bool normal
             out->curvaturevec.push_back(METERS_PER_FOOT * (height_ft - terrain_ft));
         }
         else {
-            out->distancevec.push_back(out->path.distance[x]);
+            out->distancevec.push_back(path.distance[x]);
             out->profilevec.push_back(height_ft);
 
-            if (has_clutter && x > 0 && x < out->path.ssize() - 2) {
+            if (has_clutter && x > 0 && x < path.ssize() - 2) {
                 out->cluttervec.push_back((terrain_ft == 0.0 ? height_ft : (height_ft + lr.clutter)));
             }
 
