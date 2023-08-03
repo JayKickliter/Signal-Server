@@ -50,7 +50,7 @@ char G_sdf_path[255], G_gpsav = 0;
 
 int G_ippd, G_mpi, G_debug = 0;
 
-double G_earthradius_ft, G_dpp, G_ppd, G_yppd, G_fzone_clearance = 0.6, G_delta = 0;
+double G_dpp, G_ppd, G_yppd, G_fzone_clearance = 0.6, G_delta = 0;
 
 char *G_color_file = NULL;
 
@@ -520,8 +520,8 @@ double ElevationAngle(site const &source, site const &destination)
 
     double a, b, dx;
 
-    a = GetElevation(destination) + destination.alt + G_earthradius_ft;
-    b = GetElevation(source) + source.alt + G_earthradius_ft;
+    a = GetElevation(destination) + destination.alt + EARTHRADIUS_FT;
+    b = GetElevation(source) + source.alt + EARTHRADIUS_FT;
 
     dx = FEET_PER_MILE * Distance(source, destination);
 
@@ -668,7 +668,7 @@ double ElevationAngle2(Path const &path, site const &source, site const &destina
     for (x = 2, block = 0; x < path.ssize() && block == 0; x++) {
         distance = FEET_PER_MILE * path.distance[x];
 
-        test_alt = G_earthradius_ft + (path.elevation[x] == 0.0 ? path.elevation[x] : path.elevation[x] + lr.clutter);
+        test_alt = EARTHRADIUS_FT + (path.elevation[x] == 0.0 ? path.elevation[x] : path.elevation[x] + lr.clutter);
 
         cos_test_angle = ((source_alt2) + (distance * distance) - (test_alt * test_alt)) / (2.0 * source_alt * distance);
 
@@ -763,11 +763,11 @@ void ObstructionAnalysis(Path const &path, site const &xmtr, site const &rcvr, d
         h_r_fpt6, h_f, h_los, lambda = 0.0;
     char string[255], string_fpt6[255], string_f1[255];
 
-    h_r = GetElevation(rcvr) + rcvr.alt + G_earthradius_ft;
+    h_r = GetElevation(rcvr) + rcvr.alt + EARTHRADIUS_FT;
     h_r_f1 = h_r;
     h_r_fpt6 = h_r;
     h_r_orig = h_r;
-    h_t = GetElevation(xmtr) + xmtr.alt + G_earthradius_ft;
+    h_t = GetElevation(xmtr) + xmtr.alt + EARTHRADIUS_FT;
     d_tx = FEET_PER_MILE * Distance(rcvr, xmtr);
     cos_tx_angle = ((h_r * h_r) + (d_tx * d_tx) - (h_t * h_t)) / (2.0 * h_r * d_tx);
     cos_tx_angle_f1 = cos_tx_angle;
@@ -805,7 +805,7 @@ void ObstructionAnalysis(Path const &path, site const &xmtr, site const &rcvr, d
         site_x.lon = path.lon[x];
         site_x.alt = 0.0;
 
-        h_x = GetElevation(site_x) + G_earthradius_ft + lr.clutter;
+        h_x = GetElevation(site_x) + EARTHRADIUS_FT + lr.clutter;
         d_x = FEET_PER_MILE * Distance(rcvr, site_x);
 
         /* Deal with the LOS path first. */
@@ -819,19 +819,19 @@ void ObstructionAnalysis(Path const &path, site const &xmtr, site const &rcvr, d
             if (site_x.lat >= 0.0) {
                 if (lr.metric)
                     fprintf(outfile, "   %8.4f N,%9.4f W, %5.2f kilometers, %6.2f meters AMSL\n", site_x.lat, site_x.lon,
-                            KM_PER_MILE * (d_x / FEET_PER_MILE), METERS_PER_FOOT * (h_x - G_earthradius_ft));
+                            KM_PER_MILE * (d_x / FEET_PER_MILE), METERS_PER_FOOT * (h_x - EARTHRADIUS_FT));
                 else
                     fprintf(outfile, "   %8.4f N,%9.4f W, %5.2f miles, %6.2f feet AMSL\n", site_x.lat, site_x.lon,
-                            d_x / FEET_PER_MILE, h_x - G_earthradius_ft);
+                            d_x / FEET_PER_MILE, h_x - EARTHRADIUS_FT);
             }
 
             else {
                 if (lr.metric)
                     fprintf(outfile, "   %8.4f S,%9.4f W, %5.2f kilometers, %6.2f meters AMSL\n", -site_x.lat, site_x.lon,
-                            KM_PER_MILE * (d_x / FEET_PER_MILE), METERS_PER_FOOT * (h_x - G_earthradius_ft));
+                            KM_PER_MILE * (d_x / FEET_PER_MILE), METERS_PER_FOOT * (h_x - EARTHRADIUS_FT));
                 else
                     fprintf(outfile, "   %8.4f S,%9.4f W, %5.2f miles, %6.2f feet AMSL\n", -site_x.lat, site_x.lon,
-                            d_x / FEET_PER_MILE, h_x - G_earthradius_ft);
+                            d_x / FEET_PER_MILE, h_x - EARTHRADIUS_FT);
             }
         }
 
@@ -874,11 +874,11 @@ void ObstructionAnalysis(Path const &path, site const &xmtr, site const &rcvr, d
         if (lr.metric)
             snprintf(string, 150,
                      "\nAntenna at %s must be raised to at least %.2f meters AGL\nto clear all obstructions detected.\n",
-                     rcvr.name, METERS_PER_FOOT * (h_r - GetElevation(rcvr) - G_earthradius_ft));
+                     rcvr.name, METERS_PER_FOOT * (h_r - GetElevation(rcvr) - EARTHRADIUS_FT));
         else
             snprintf(string, 150,
                      "\nAntenna at %s must be raised to at least %.2f feet AGL\nto clear all obstructions detected.\n",
-                     rcvr.name, h_r - GetElevation(rcvr) - G_earthradius_ft);
+                     rcvr.name, h_r - GetElevation(rcvr) - EARTHRADIUS_FT);
     }
 
     else
@@ -890,14 +890,14 @@ void ObstructionAnalysis(Path const &path, site const &xmtr, site const &rcvr, d
                 snprintf(
                     string_fpt6, 150,
                     "\nAntenna at %s must be raised to at least %.2f meters AGL\nto clear %.0f%c of the first Fresnel zone.\n",
-                    rcvr.name, METERS_PER_FOOT * (h_r_fpt6 - GetElevation(rcvr) - G_earthradius_ft), G_fzone_clearance * 100.0,
+                    rcvr.name, METERS_PER_FOOT * (h_r_fpt6 - GetElevation(rcvr) - EARTHRADIUS_FT), G_fzone_clearance * 100.0,
                     37);
 
             else
                 snprintf(
                     string_fpt6, 150,
                     "\nAntenna at %s must be raised to at least %.2f feet AGL\nto clear %.0f%c of the first Fresnel zone.\n",
-                    rcvr.name, h_r_fpt6 - GetElevation(rcvr) - G_earthradius_ft, G_fzone_clearance * 100.0, 37);
+                    rcvr.name, h_r_fpt6 - GetElevation(rcvr) - EARTHRADIUS_FT, G_fzone_clearance * 100.0, 37);
         }
 
         else
@@ -907,12 +907,12 @@ void ObstructionAnalysis(Path const &path, site const &xmtr, site const &rcvr, d
             if (lr.metric)
                 snprintf(string_f1, 150,
                          "\nAntenna at %s must be raised to at least %.2f meters AGL\nto clear the first Fresnel zone.\n",
-                         rcvr.name, METERS_PER_FOOT * (h_r_f1 - GetElevation(rcvr) - G_earthradius_ft));
+                         rcvr.name, METERS_PER_FOOT * (h_r_f1 - GetElevation(rcvr) - EARTHRADIUS_FT));
 
             else
                 snprintf(string_f1, 150,
                          "\nAntenna at %s must be raised to at least %.2f feet AGL\nto clear the first Fresnel zone.\n",
-                         rcvr.name, h_r_f1 - GetElevation(rcvr) - G_earthradius_ft);
+                         rcvr.name, h_r_f1 - GetElevation(rcvr) - EARTHRADIUS_FT);
         }
 
         else
@@ -935,7 +935,6 @@ int init(const char *sdf_path, bool debug)
     G_gpsav = 0;
     G_sdf_path[0] = 0;
     G_fzone_clearance = 0.6;
-    G_earthradius_ft = EARTHRADIUS;
     G_ippd = IPPD;  // default resolution
     // leave these as globals
     G_ppd = (double)G_ippd;

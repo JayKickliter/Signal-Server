@@ -723,7 +723,7 @@ void PathReport(Path const &path, struct site source, struct site destination, c
     FILE *fd2 = NULL;
 
     snprintf(report_name, 80, "%s.txt%c", name, 0);
-    four_thirds_earth = FOUR_THIRDS * EARTHRADIUS;
+    four_thirds_earth = FOUR_THIRDS * EARTHRADIUS_FT;
 
     fd2 = fopen(report_name, "w");
 
@@ -761,7 +761,7 @@ void PathReport(Path const &path, struct site source, struct site destination, c
 
     azimuth = Azimuth(source, destination);
     angle1 = ElevationAngle(source, destination);
-    angle2 = ElevationAngle2(path, source, destination, G_earthradius_ft, lr);
+    angle2 = ElevationAngle2(path, source, destination, EARTHRADIUS_FT, lr);
 
     if (G_got_azimuth_pattern || G_got_elevation_pattern) {
         x = (int)rint(10.0 * (10.0 - angle2));
@@ -824,7 +824,7 @@ void PathReport(Path const &path, struct site source, struct site destination, c
     azimuth = Azimuth(destination, source);
 
     angle1 = ElevationAngle(destination, source);
-    angle2 = ElevationAngle2(path, destination, source, G_earthradius_ft, lr);
+    angle2 = ElevationAngle2(path, destination, source, EARTHRADIUS_FT, lr);
 
     fprintf(fd2, "Azimuth to %s: %.2f degrees grid\n", source.name, azimuth);
 
@@ -1226,7 +1226,7 @@ void SeriesData(Path const &path, site const &src, site const &dst, bool fresnel
     const double dst_elev_ft = GetElevation(dst);
     const double elevation_angle_deg = ElevationAngle(src, dst);
     const double total_great_circle_ft = FEET_PER_MILE * path.distance[path.ssize() - 1];
-    const double src_radius_ft = src_elev_ft + src.alt + G_earthradius_ft;
+    const double src_radius_ft = src_elev_ft + src.alt + EARTHRADIUS_FT;
     const bool has_clutter = lr.clutter > 0.0;
 
     double wavelength_ft = 0.0;
@@ -1264,8 +1264,8 @@ void SeriesData(Path const &path, site const &src, site const &dst, bool fresnel
 
         double fresnel_ft = 0.0;
         double fresnel60_ft = 0.0;
-        const double radius_ft = terrain_ft + G_earthradius_ft;
-        const double chord_angle_deg = FEET_PER_MILE * path.distance[x] / G_earthradius_ft;
+        const double radius_ft = terrain_ft + EARTHRADIUS_FT;
+        const double chord_angle_deg = FEET_PER_MILE * path.distance[x] / EARTHRADIUS_FT;
         const double c_unk_unit = src_radius_ft * sin(elevation_angle_deg * DEG2RAD + HALFPI) /
                                   sin(HALFPI - elevation_angle_deg * DEG2RAD - chord_angle_deg);
         double height_ft = radius_ft - c_unk_unit;

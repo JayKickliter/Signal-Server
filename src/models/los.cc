@@ -250,10 +250,10 @@ void PlotLOSPath(output *out, struct site source, struct site destination, char 
     iCounter = 0;
 
     /* altitude limit of 32808 feets or 10000 meters */
-    limit_alt = G_earthradius_ft + 32808.0;
+    limit_alt = EARTHRADIUS_FT + 32808.0;
     limit_alt2 = limit_alt * limit_alt;
 
-    tx_alt = G_earthradius_ft + source.alt + path.elevation[0];
+    tx_alt = EARTHRADIUS_FT + source.alt + path.elevation[0];
     tx_alt2 = tx_alt * tx_alt;
 
     for (x = 0; (bStop == false) && (x < (path.ssize() - 1)) && (path.distance[x] <= lr->max_range); x++) {
@@ -261,7 +261,7 @@ void PlotLOSPath(output *out, struct site source, struct site destination, char 
             distance = FEET_PER_MILE * path.distance[x];
             distance2 = distance * distance;
 
-            rx_alt = G_earthradius_ft + destination.alt + path.elevation[x];
+            rx_alt = EARTHRADIUS_FT + destination.alt + path.elevation[x];
             rx_alt2 = rx_alt * rx_alt;
 
             /* Calculate the cosine of the elevation between
@@ -277,7 +277,7 @@ void PlotLOSPath(output *out, struct site source, struct site destination, char 
                 cos_angle = -1.0;
             }
 
-            test_alt = G_earthradius_ft + (path.elevation[x] == 0.0 ? path.elevation[x] : path.elevation[x] + lr->clutter);
+            test_alt = EARTHRADIUS_FT + (path.elevation[x] == 0.0 ? path.elevation[x] : path.elevation[x] + lr->clutter);
             test_alt2 = test_alt * test_alt;
 
             /* Calculate the cosine of the elevation between
@@ -345,7 +345,7 @@ void PlotPropPath(struct output *out, struct site source, struct site destinatio
     struct site temp;
     float dkm;
 
-    four_thirds_earth = FOUR_THIRDS * EARTHRADIUS;
+    four_thirds_earth = FOUR_THIRDS * EARTHRADIUS_FT;
 
     for (x = 1; x < path.ssize() - 1; x++)
         out->elev[x + 2] = (path.elevation[x] == 0.0 ? path.elevation[x] * METERS_PER_FOOT
@@ -815,8 +815,8 @@ void PlotPath(Path const &path, output *out, struct site source, struct site des
 
         if ((GetMask(out, path.lat[y], path.lon[y]) & mask_value) == 0) {
             distance = FEET_PER_MILE * path.distance[y];
-            tx_alt = G_earthradius_ft + source.alt + path.elevation[0];
-            rx_alt = G_earthradius_ft + destination.alt + path.elevation[y];
+            tx_alt = EARTHRADIUS_FT + source.alt + path.elevation[0];
+            rx_alt = EARTHRADIUS_FT + destination.alt + path.elevation[y];
 
             /* Calculate the cosine of the elevation of the
                transmitter as seen at the temp rx point. */
@@ -825,7 +825,7 @@ void PlotPath(Path const &path, output *out, struct site source, struct site des
 
             for (x = y, block = 0; x >= 0 && block == 0; x--) {
                 distance = FEET_PER_MILE * (path.distance[y] - path.distance[x]);
-                test_alt = G_earthradius_ft + (path.elevation[x] == 0.0 ? path.elevation[x] : path.elevation[x] + lr->clutter);
+                test_alt = EARTHRADIUS_FT + (path.elevation[x] == 0.0 ? path.elevation[x] : path.elevation[x] + lr->clutter);
 
                 cos_test_angle =
                     ((rx_alt * rx_alt) + (distance * distance) - (test_alt * test_alt)) / (2.0 * rx_alt * distance);
