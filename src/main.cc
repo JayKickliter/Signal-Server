@@ -77,7 +77,6 @@ int main(int argc, char *argv[])
     G_gpsav = 0;
     G_sdf_path[0] = 0;
     G_fzone_clearance = 0.6;
-    G_earthradius = EARTHRADIUS;
     G_ippd = IPPD;  // default resolution
     // leave these as globals
     G_ppd = (double)G_ippd;

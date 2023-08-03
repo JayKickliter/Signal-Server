@@ -30,6 +30,7 @@
 #include <unistd.h>
 #include <zlib.h>
 
+#include <cassert>
 #include <limits>
 #include <vector>
 
@@ -49,7 +50,7 @@ char G_sdf_path[255], G_gpsav = 0;
 
 int G_ippd, G_mpi, G_debug = 0;
 
-double G_earthradius, G_dpp, G_ppd, G_yppd, G_fzone_clearance = 0.6, G_delta = 0;
+double G_dpp, G_ppd, G_yppd, G_fzone_clearance = 0.6, G_delta = 0;
 
 char *G_color_file = NULL;
 
@@ -358,7 +359,7 @@ unsigned char GetSignal(struct output *out, double lat, double lon)
         return 0;
 }
 
-double GetElevation(struct site location)
+double GetElevation(site const &location)
 {
     /* This function returns the elevation (in feet) of any location
        represented by the digital elevation model data in memory.
@@ -445,7 +446,7 @@ double dist(double lat1, double lon1, double lat2, double lon2)
     return asin(sqrt(dx * dx + dy * dy + dz * dz) / 2) * 2 * earthRadius;
 }
 
-double Distance(struct site site1, struct site site2)
+double Distance(site const &site1, site const &site2)
 {
     /* This function returns the great circle distance
        in miles between any two site locations. */
@@ -462,7 +463,7 @@ double Distance(struct site site1, struct site site2)
     return distance;
 }
 
-double Azimuth(struct site source, struct site destination)
+double Azimuth(site const &source, site const &destination)
 {
     /* This function returns the azimuth (in degrees) to the
        destination as seen from the location of the source. */
@@ -508,7 +509,7 @@ double Azimuth(struct site source, struct site destination)
     return (azimuth / DEG2RAD);
 }
 
-double ElevationAngle(struct site source, struct site destination)
+double ElevationAngle(site const &source, site const &destination)
 {
     /* This function returns the angle of elevation (in degrees)
        of the destination as seen from the source location.
@@ -519,8 +520,8 @@ double ElevationAngle(struct site source, struct site destination)
 
     double a, b, dx;
 
-    a = GetElevation(destination) + destination.alt + G_earthradius;
-    b = GetElevation(source) + source.alt + G_earthradius;
+    a = GetElevation(destination) + destination.alt + EARTHRADIUS_FT;
+    b = GetElevation(source) + source.alt + EARTHRADIUS_FT;
 
     dx = FEET_PER_MILE * Distance(source, destination);
 
@@ -529,7 +530,7 @@ double ElevationAngle(struct site source, struct site destination)
     return ((180.0 * (acos(((b * b) + (dx * dx) - (a * a)) / (2.0 * b * dx))) / PI) - 90.0);
 }
 
-void ReadPath(struct site source, struct site destination, struct output *out)
+Path::Path(site const &src, site const &dst)
 {
     /* This function generates a sequence of latitude and
        longitude positions between source and destination
@@ -538,20 +539,20 @@ void ReadPath(struct site source, struct site destination, struct output *out)
        along that path in the "path" structure. */
 
     int c;
-    double azimuth, distance, lat1, lon1, beta, den, num, lat2, lon2, total_distance, dx, dy, path_length, miles_per_sample,
+    double azimuth, distance_, lat1, lon1, beta, den, num, lat2, lon2, total_distance, dx, dy, path_length, miles_per_sample,
         samples_per_radian = 68755.0;
     struct site tempsite;
 
-    lat1 = source.lat * DEG2RAD;
-    lon1 = source.lon * DEG2RAD;
-    lat2 = destination.lat * DEG2RAD;
-    lon2 = destination.lon * DEG2RAD;
+    lat1 = src.lat * DEG2RAD;
+    lon1 = src.lon * DEG2RAD;
+    lat2 = dst.lat * DEG2RAD;
+    lon2 = dst.lon * DEG2RAD;
     samples_per_radian = G_ppd * 57.295833;
-    azimuth = Azimuth(source, destination) * DEG2RAD;
+    azimuth = Azimuth(src, dst) * DEG2RAD;
 
     // printf("reading path  %f,%f - %f,%f\n", source.lat, source.lon, destination.lat, destination.lon);
 
-    total_distance = Distance(source, destination);
+    total_distance = Distance(src, dst);
 
     if (total_distance > (30.0 / G_ppd)) {
         dx = samples_per_radian * acos(cos(lon1 - lon2));
@@ -571,15 +572,15 @@ void ReadPath(struct site source, struct site destination, struct output *out)
         lat1 = lat1 / DEG2RAD;
         lon1 = lon1 / DEG2RAD;
 
-        out->path.lat[c] = lat1;
-        out->path.lon[c] = lon1;
-        out->path.elevation[c] = GetElevation(source);
-        out->path.distance[c] = 0.0;
+        lat.push_back(lat1);
+        lon.push_back(lon1);
+        elevation.push_back(GetElevation(src));
+        distance.push_back(0.0);
     }
 
-    for (distance = 0.0, c = 0; (total_distance != 0.0 && distance <= total_distance && c < ARRAYSIZE);
-         c++, distance = miles_per_sample * (double)c) {
-        beta = distance / 3959.0;
+    for (distance_ = 0.0, c = 0; (total_distance != 0.0 && distance_ <= total_distance && c < ARRAYSIZE);
+         c++, distance_ = miles_per_sample * (double)c) {
+        beta = distance_ / 3959.0;
         lat2 = asin(sin(lat1) * cos(beta) + cos(azimuth) * sin(beta) * cos(lat1));
         num = cos(beta) - (sin(lat1) * sin(lat2));
         den = cos(lat1) * cos(lat2);
@@ -607,36 +608,34 @@ void ReadPath(struct site source, struct site destination, struct output *out)
         lat2 = lat2 / DEG2RAD;
         lon2 = lon2 / DEG2RAD;
 
-        out->path.lat[c] = lat2;
-        out->path.lon[c] = lon2;
+        lat.push_back(lat2);
+        lon.push_back(lon2);
         tempsite.lat = lat2;
         tempsite.lon = lon2;
         tempsite.alt = std::numeric_limits<float>::min();
-        out->path.elevation[c] = GetElevation(tempsite);
+        elevation.push_back(GetElevation(tempsite));
         // fix for tile gaps in multi-tile LIDAR plots
-        if (out->path.elevation[c] == 0 && out->path.elevation[c - 1] > 10) {
-            out->path.elevation[c] = out->path.elevation[c - 1];
+        if (elevation[c] == 0 && elevation[c - 1] > 10) {
+            elevation[c] = elevation[c - 1];
         }
-        out->path.distance[c] = distance;
+        distance.push_back(distance_);
     }
 
     /* Make sure exact destination point is recorded at path.length-1 */
 
     if (c < ARRAYSIZE) {
-        out->path.lat[c] = destination.lat;
-        out->path.lon[c] = destination.lon;
-        out->path.elevation[c] = GetElevation(destination);
-        out->path.distance[c] = total_distance;
+        lat.push_back(dst.lat);
+        lon.push_back(dst.lon);
+        elevation.push_back(GetElevation(dst));
+        distance.push_back(total_distance);
         c++;
     }
-
-    if (c < ARRAYSIZE)
-        out->path.length = c;
-    else
-        out->path.length = ARRAYSIZE - 1;
+    assert(lat.size() == lon.size() && lon.size() == elevation.size() && elevation.size() == distance.size());
 }
 
-double ElevationAngle2(struct site source, struct site destination, double er, struct output *out, LR const &lr)
+ssize_t Path::ssize() const { return lat.size(); }
+
+double ElevationAngle2(Path const &path, site const &source, site const &destination, double er, LR const &lr)
 {
     /* This function returns the angle of elevation (in degrees)
        of the destination as seen from the source location, UNLESS
@@ -648,11 +647,6 @@ double ElevationAngle2(struct site source, struct site destination, double er, s
     char block = 0;
     double source_alt, destination_alt, cos_xmtr_angle, cos_test_angle, test_alt, elevation, distance, source_alt2,
         first_obstruction_angle = 0.0;
-    struct path temp;
-
-    temp = out->path;
-
-    ReadPath(source, destination, out);
 
     distance = FEET_PER_MILE * Distance(source, destination);
     source_alt = er + source.alt + GetElevation(source);
@@ -671,11 +665,10 @@ double ElevationAngle2(struct site source, struct site destination, double er, s
        at the source since we're interested in identifying the FIRST
        obstruction along the path between source and destination. */
 
-    for (x = 2, block = 0; x < out->path.length && block == 0; x++) {
-        distance = FEET_PER_MILE * out->path.distance[x];
+    for (x = 2, block = 0; x < path.ssize() && block == 0; x++) {
+        distance = FEET_PER_MILE * path.distance[x];
 
-        test_alt =
-            G_earthradius + (out->path.elevation[x] == 0.0 ? out->path.elevation[x] : out->path.elevation[x] + lr.clutter);
+        test_alt = EARTHRADIUS_FT + (path.elevation[x] == 0.0 ? path.elevation[x] : path.elevation[x] + lr.clutter);
 
         cos_test_angle = ((source_alt2) + (distance * distance) - (test_alt * test_alt)) / (2.0 * source_alt * distance);
 
@@ -698,8 +691,6 @@ double ElevationAngle2(struct site source, struct site destination, double er, s
 
     else
         elevation = ((acos(cos_xmtr_angle)) / DEG2RAD) - 90.0;
-
-    out->path = temp;
 
     return elevation;
 }
@@ -761,7 +752,7 @@ double ReadBearing(char *input)
     return bearing;
 }
 
-void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f, FILE *outfile, struct output *out, LR const &lr)
+void ObstructionAnalysis(Path const &path, site const &xmtr, site const &rcvr, double f, FILE *outfile, LR const &lr)
 {
     /* Perform an obstruction analysis along the
        path between receiver and transmitter. */
@@ -772,12 +763,11 @@ void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f, FILE *out
         h_r_fpt6, h_f, h_los, lambda = 0.0;
     char string[255], string_fpt6[255], string_f1[255];
 
-    ReadPath(xmtr, rcvr, out);
-    h_r = GetElevation(rcvr) + rcvr.alt + G_earthradius;
+    h_r = GetElevation(rcvr) + rcvr.alt + EARTHRADIUS_FT;
     h_r_f1 = h_r;
     h_r_fpt6 = h_r;
     h_r_orig = h_r;
-    h_t = GetElevation(xmtr) + xmtr.alt + G_earthradius;
+    h_t = GetElevation(xmtr) + xmtr.alt + EARTHRADIUS_FT;
     d_tx = FEET_PER_MILE * Distance(rcvr, xmtr);
     cos_tx_angle = ((h_r * h_r) + (d_tx * d_tx) - (h_t * h_t)) / (2.0 * h_r * d_tx);
     cos_tx_angle_f1 = cos_tx_angle;
@@ -810,12 +800,12 @@ void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f, FILE *out
        acos().  However, note the inverted comparison: if
        acos(A) > acos(B), then B > A. */
 
-    for (x = out->path.length - 1; x > 0; x--) {
-        site_x.lat = out->path.lat[x];
-        site_x.lon = out->path.lon[x];
+    for (x = path.ssize() - 1; x > 0; x--) {
+        site_x.lat = path.lat[x];
+        site_x.lon = path.lon[x];
         site_x.alt = 0.0;
 
-        h_x = GetElevation(site_x) + G_earthradius + lr.clutter;
+        h_x = GetElevation(site_x) + EARTHRADIUS_FT + lr.clutter;
         d_x = FEET_PER_MILE * Distance(rcvr, site_x);
 
         /* Deal with the LOS path first. */
@@ -829,19 +819,19 @@ void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f, FILE *out
             if (site_x.lat >= 0.0) {
                 if (lr.metric)
                     fprintf(outfile, "   %8.4f N,%9.4f W, %5.2f kilometers, %6.2f meters AMSL\n", site_x.lat, site_x.lon,
-                            KM_PER_MILE * (d_x / FEET_PER_MILE), METERS_PER_FOOT * (h_x - G_earthradius));
+                            KM_PER_MILE * (d_x / FEET_PER_MILE), METERS_PER_FOOT * (h_x - EARTHRADIUS_FT));
                 else
                     fprintf(outfile, "   %8.4f N,%9.4f W, %5.2f miles, %6.2f feet AMSL\n", site_x.lat, site_x.lon,
-                            d_x / FEET_PER_MILE, h_x - G_earthradius);
+                            d_x / FEET_PER_MILE, h_x - EARTHRADIUS_FT);
             }
 
             else {
                 if (lr.metric)
                     fprintf(outfile, "   %8.4f S,%9.4f W, %5.2f kilometers, %6.2f meters AMSL\n", -site_x.lat, site_x.lon,
-                            KM_PER_MILE * (d_x / FEET_PER_MILE), METERS_PER_FOOT * (h_x - G_earthradius));
+                            KM_PER_MILE * (d_x / FEET_PER_MILE), METERS_PER_FOOT * (h_x - EARTHRADIUS_FT));
                 else
                     fprintf(outfile, "   %8.4f S,%9.4f W, %5.2f miles, %6.2f feet AMSL\n", -site_x.lat, site_x.lon,
-                            d_x / FEET_PER_MILE, h_x - G_earthradius);
+                            d_x / FEET_PER_MILE, h_x - EARTHRADIUS_FT);
             }
         }
 
@@ -884,11 +874,11 @@ void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f, FILE *out
         if (lr.metric)
             snprintf(string, 150,
                      "\nAntenna at %s must be raised to at least %.2f meters AGL\nto clear all obstructions detected.\n",
-                     rcvr.name, METERS_PER_FOOT * (h_r - GetElevation(rcvr) - G_earthradius));
+                     rcvr.name, METERS_PER_FOOT * (h_r - GetElevation(rcvr) - EARTHRADIUS_FT));
         else
             snprintf(string, 150,
                      "\nAntenna at %s must be raised to at least %.2f feet AGL\nto clear all obstructions detected.\n",
-                     rcvr.name, h_r - GetElevation(rcvr) - G_earthradius);
+                     rcvr.name, h_r - GetElevation(rcvr) - EARTHRADIUS_FT);
     }
 
     else
@@ -900,14 +890,14 @@ void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f, FILE *out
                 snprintf(
                     string_fpt6, 150,
                     "\nAntenna at %s must be raised to at least %.2f meters AGL\nto clear %.0f%c of the first Fresnel zone.\n",
-                    rcvr.name, METERS_PER_FOOT * (h_r_fpt6 - GetElevation(rcvr) - G_earthradius), G_fzone_clearance * 100.0,
+                    rcvr.name, METERS_PER_FOOT * (h_r_fpt6 - GetElevation(rcvr) - EARTHRADIUS_FT), G_fzone_clearance * 100.0,
                     37);
 
             else
                 snprintf(
                     string_fpt6, 150,
                     "\nAntenna at %s must be raised to at least %.2f feet AGL\nto clear %.0f%c of the first Fresnel zone.\n",
-                    rcvr.name, h_r_fpt6 - GetElevation(rcvr) - G_earthradius, G_fzone_clearance * 100.0, 37);
+                    rcvr.name, h_r_fpt6 - GetElevation(rcvr) - EARTHRADIUS_FT, G_fzone_clearance * 100.0, 37);
         }
 
         else
@@ -917,12 +907,12 @@ void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f, FILE *out
             if (lr.metric)
                 snprintf(string_f1, 150,
                          "\nAntenna at %s must be raised to at least %.2f meters AGL\nto clear the first Fresnel zone.\n",
-                         rcvr.name, METERS_PER_FOOT * (h_r_f1 - GetElevation(rcvr) - G_earthradius));
+                         rcvr.name, METERS_PER_FOOT * (h_r_f1 - GetElevation(rcvr) - EARTHRADIUS_FT));
 
             else
                 snprintf(string_f1, 150,
                          "\nAntenna at %s must be raised to at least %.2f feet AGL\nto clear the first Fresnel zone.\n",
-                         rcvr.name, h_r_f1 - GetElevation(rcvr) - G_earthradius);
+                         rcvr.name, h_r_f1 - GetElevation(rcvr) - EARTHRADIUS_FT);
         }
 
         else
@@ -939,22 +929,12 @@ void ObstructionAnalysis(struct site xmtr, struct site rcvr, double f, FILE *out
 
 void resize_elev(struct output &out) { out.elev.resize(ARRAYSIZE + 10, 0.0); }
 
-void resize_path(struct path &path)
-{
-    path.length = 0;
-    path.lat.resize(ARRAYSIZE, 0.0);
-    path.lon.resize(ARRAYSIZE, 0.0);
-    path.elevation.resize(ARRAYSIZE, 0.0);
-    path.distance.resize(ARRAYSIZE, 0.0);
-}
-
 int init(const char *sdf_path, bool debug)
 {
     // these can stay globals
     G_gpsav = 0;
     G_sdf_path[0] = 0;
     G_fzone_clearance = 0.6;
-    G_earthradius = EARTHRADIUS;
     G_ippd = IPPD;  // default resolution
     // leave these as globals
     G_ppd = (double)G_ippd;
@@ -975,8 +955,12 @@ int init(const char *sdf_path, bool debug)
 
 int handle_args(int argc, char *argv[], output &out)
 {
+    out.dBm = -12345;
+
     /* Scan for command line arguments */
-    int x, y, z = 0, propmodel, knifeedge = 0, ppa = 0, normalise = 0, haf = 0, pmenv = 1, result;
+    int x, y, z = 0, propmodel, knifeedge = 0, ppa = 0, haf = 0, pmenv = 1, result;
+    bool normalise = true;
+    bool fresnel_plot = true;
 
     double min_lat, min_lon, max_lat, max_lon, rxlat, rxlon, txlat, txlon, west_min, west_max, nortRxHin, nortRxHax;
 
@@ -1055,7 +1039,6 @@ int handle_args(int argc, char *argv[], output &out)
     out.min_north = 90;
     out.max_north = -90;
 
-    resize_path(out.path);
     resize_elev(out);
 
     for (x = 0; x <= y; x++) {
@@ -1425,8 +1408,9 @@ int handle_args(int argc, char *argv[], output &out)
         // Normalise Path Profile chart
         if (strcmp(argv[x], "-ng") == 0) {
             z = x + 1;
-            normalise = 1;
+            normalise = true;
         }
+
         // Halve the problem
         if (strcmp(argv[x], "-haf") == 0) {
             z = x + 1;
@@ -1806,11 +1790,13 @@ int handle_args(int argc, char *argv[], output &out)
         }
     }
     else {
+        Path path(out.tx_site[0], out.tx_site[1]);
         strncpy(out.tx_site[0].name, "Tx", 3);
         strncpy(out.tx_site[1].name, "Rx", 3);
-        PlotPath(&out, out.tx_site[0], out.tx_site[1], 1, &lr);
-        // Order flipped for benefit of graph. Makes no difference to data.
-        SeriesData(out.tx_site[1], out.tx_site[0], 1, 1, &out, lr);
+        /* TODO:  refactor PathReport so overall loss can be calculated without all the IO noise. */
+        /* PathReport(path, out.tx_site[0], out.tx_site[1], NULL, 0, propmodel, pmenv, rxGain, &out, lr); */
+        PlotPath(path, &out, out.tx_site[0], out.tx_site[1], 1, &lr);
+        SeriesData(path, out.tx_site[0], out.tx_site[1], fresnel_plot, normalise, &out, lr);
     }
     fflush(stderr);
 

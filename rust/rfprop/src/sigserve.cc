@@ -27,8 +27,8 @@ Report handle_args(int argc, char *argv[])
     report.cluttervec.reserve(out.cluttervec.size());
     std::copy(out.cluttervec.begin(), out.cluttervec.end(), std::back_inserter(report.cluttervec));
 
-    report.referencevec.reserve(out.referencevec.size());
-    std::copy(out.referencevec.begin(), out.referencevec.end(), std::back_inserter(report.referencevec));
+    report.line_of_sight.reserve(out.line_of_sight.size());
+    std::copy(out.line_of_sight.begin(), out.line_of_sight.end(), std::back_inserter(report.line_of_sight));
 
     report.fresnelvec.reserve(out.fresnelvec.size());
     std::copy(out.fresnelvec.begin(), out.fresnelvec.end(), std::back_inserter(report.fresnelvec));

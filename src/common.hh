@@ -23,7 +23,7 @@
 #endif
 
 #define DEG2RAD 1.74532925199e-02
-#define EARTHRADIUS 20902230.97
+#define EARTHRADIUS_FT 20902230.97
 #define METERS_PER_MILE 1609.344
 #define METERS_PER_FOOT 0.3048
 #define KM_PER_MILE 1.609344
@@ -59,16 +59,20 @@ struct site {
     double lat;
     double lon;
     float alt;
+    /* TODO: remove the following fields. They use a huge amount of
+       stack and conflate IO with baseness logic. */
     char name[50];
     char filename[255];
 };
 
-struct path {
+struct Path {
     std::vector<double> lat;
     std::vector<double> lon;
     std::vector<double> elevation;
     std::vector<double> distance;
-    int length;
+    ssize_t ssize() const;
+    Path() = default;
+    Path(site const &src, site const &dst);
 };
 
 class antenna_pattern {
@@ -110,7 +114,6 @@ struct output {
     int height;
     int min_elevation;
     int max_elevation;
-    struct path path;
     double min_north;
     double max_north;
     double min_west;
@@ -131,7 +134,7 @@ struct output {
     struct site tx_site[2];
     std::vector<double> distancevec;
     std::vector<double> cluttervec;
-    std::vector<double> referencevec;
+    std::vector<double> line_of_sight;
     std::vector<double> fresnelvec;
     std::vector<double> fresnel60vec;
     std::vector<double> curvaturevec;
@@ -152,7 +155,7 @@ extern int IPPD;
 extern int G_ippd;
 extern int G_mpi;
 
-extern double G_earthradius;
+extern double G_earthradius_ft;
 extern double G_dpp;
 extern double G_ppd;
 extern double G_yppd;
