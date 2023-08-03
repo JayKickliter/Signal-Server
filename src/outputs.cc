@@ -966,23 +966,23 @@ void PathReport(struct site source, struct site destination, char *name, char /*
         if (patterndB != 0.0)
             fprintf(fd2, "%s antenna pattern towards %s: %.3f (%.2f dB)\n", source.name, destination.name, pattern, patterndB);
 
-        ReadPath(source, destination, out); /* source=TX, destination=RX */
+        out->path = path(source, destination); /* source=TX, destination=RX */
 
         /* Copy elevations plus clutter along
            path into the elev[] array. */
 
-        for (x = 1; x < out->path.length - 1; x++)
+        for (x = 1; x < out->path.ssize() - 1; x++)
             out->elev[x + 2] = METERS_PER_FOOT *
                                (out->path.elevation[x] == 0.0 ? out->path.elevation[x] : (lr.clutter + out->path.elevation[x]));
 
         /* Copy ending points without clutter */
 
         out->elev[2] = out->path.elevation[0] * METERS_PER_FOOT;
-        out->elev[out->path.length + 1] = out->path.elevation[out->path.length - 1] * METERS_PER_FOOT;
+        out->elev[out->path.ssize() + 1] = out->path.elevation[out->path.ssize() - 1] * METERS_PER_FOOT;
 
         azimuth = rint(Azimuth(source, destination));
 
-        for (y = 2; y < (out->path.length - 1); y++) { /* path.length-1 avoids LR error */
+        for (y = 2; y < (out->path.ssize() - 1); y++) { /* path.length-1 avoids LR error */
             distance = FEET_PER_MILE * out->path.distance[y];
 
             source_alt = four_thirds_earth + source.alt + out->path.elevation[0];
@@ -1223,11 +1223,11 @@ void PathReport(struct site source, struct site destination, char *name, char /*
 
 void SeriesData(site const &src, site const &dst, bool fresnel_plot, bool normalised, struct output *out, LR const &lr)
 {
-    ReadPath(src, dst, out);
+    out->path = path(src, dst);
     const double src_elev_ft = GetElevation(src);
     const double dst_elev_ft = GetElevation(dst);
     const double elevation_angle_deg = ElevationAngle(src, dst);
-    const double total_great_circle_ft = FEET_PER_MILE * out->path.distance[out->path.length - 1];
+    const double total_great_circle_ft = FEET_PER_MILE * out->path.distance[out->path.ssize() - 1];
     const double src_radius_ft = src_elev_ft + src.alt + G_earthradius_ft;
     const bool has_clutter = lr.clutter > 0.0;
 
@@ -1250,16 +1250,16 @@ void SeriesData(site const &src, site const &dst, bool fresnel_plot, bool normal
 
     if (normalised) {
         nb = -src.alt - src_elev_ft;
-        nm = (-dst.alt - dst_elev_ft - nb) / (out->path.distance[out->path.length - 1]);
+        nm = (-dst.alt - dst_elev_ft - nb) / (out->path.distance[out->path.ssize() - 1]);
     }
 
-    for (int x = 0; x < out->path.length; x++) {
+    for (int x = 0; x < out->path.ssize(); x++) {
         double terrain_ft = out->path.elevation[x];
         if (x == 0) {
             /* RX antenna spike */
             terrain_ft += src.alt;
         }
-        else if (x == out->path.length - 1) {
+        else if (x == out->path.ssize() - 1) {
             /* TX antenna spike */
             terrain_ft += dst.alt;
         }
@@ -1304,7 +1304,7 @@ void SeriesData(site const &src, site const &dst, bool fresnel_plot, bool normal
             out->distancevec.push_back(KM_PER_MILE * out->path.distance[x]);
             out->profilevec.push_back(METERS_PER_FOOT * height_ft);
 
-            if (has_clutter && x > 0 && x < out->path.length - 2) {
+            if (has_clutter && x > 0 && x < out->path.ssize() - 2) {
                 out->cluttervec.push_back(METERS_PER_FOOT * (terrain_ft == 0.0 ? height_ft : (height_ft + lr.clutter)));
             }
 
@@ -1315,7 +1315,7 @@ void SeriesData(site const &src, site const &dst, bool fresnel_plot, bool normal
             out->distancevec.push_back(out->path.distance[x]);
             out->profilevec.push_back(height_ft);
 
-            if (has_clutter && x > 0 && x < out->path.length - 2) {
+            if (has_clutter && x > 0 && x < out->path.ssize() - 2) {
                 out->cluttervec.push_back((terrain_ft == 0.0 ? height_ft : (height_ft + lr.clutter)));
             }
 

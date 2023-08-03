@@ -30,6 +30,7 @@
 #include <unistd.h>
 #include <zlib.h>
 
+#include <cassert>
 #include <limits>
 #include <vector>
 
@@ -529,7 +530,7 @@ double ElevationAngle(site const &source, site const &destination)
     return ((180.0 * (acos(((b * b) + (dx * dx) - (a * a)) / (2.0 * b * dx))) / PI) - 90.0);
 }
 
-void ReadPath(site const &source, site const &destination, struct output *out)
+path::path(site const &src, site const &dst)
 {
     /* This function generates a sequence of latitude and
        longitude positions between source and destination
@@ -538,20 +539,20 @@ void ReadPath(site const &source, site const &destination, struct output *out)
        along that path in the "path" structure. */
 
     int c;
-    double azimuth, distance, lat1, lon1, beta, den, num, lat2, lon2, total_distance, dx, dy, path_length, miles_per_sample,
+    double azimuth, distance_, lat1, lon1, beta, den, num, lat2, lon2, total_distance, dx, dy, path_length, miles_per_sample,
         samples_per_radian = 68755.0;
     struct site tempsite;
 
-    lat1 = source.lat * DEG2RAD;
-    lon1 = source.lon * DEG2RAD;
-    lat2 = destination.lat * DEG2RAD;
-    lon2 = destination.lon * DEG2RAD;
+    lat1 = src.lat * DEG2RAD;
+    lon1 = src.lon * DEG2RAD;
+    lat2 = dst.lat * DEG2RAD;
+    lon2 = dst.lon * DEG2RAD;
     samples_per_radian = G_ppd * 57.295833;
-    azimuth = Azimuth(source, destination) * DEG2RAD;
+    azimuth = Azimuth(src, dst) * DEG2RAD;
 
     // printf("reading path  %f,%f - %f,%f\n", source.lat, source.lon, destination.lat, destination.lon);
 
-    total_distance = Distance(source, destination);
+    total_distance = Distance(src, dst);
 
     if (total_distance > (30.0 / G_ppd)) {
         dx = samples_per_radian * acos(cos(lon1 - lon2));
@@ -571,15 +572,15 @@ void ReadPath(site const &source, site const &destination, struct output *out)
         lat1 = lat1 / DEG2RAD;
         lon1 = lon1 / DEG2RAD;
 
-        out->path.lat[c] = lat1;
-        out->path.lon[c] = lon1;
-        out->path.elevation[c] = GetElevation(source);
-        out->path.distance[c] = 0.0;
+        lat.push_back(lat1);
+        lon.push_back(lon1);
+        elevation.push_back(GetElevation(src));
+        distance.push_back(0.0);
     }
 
-    for (distance = 0.0, c = 0; (total_distance != 0.0 && distance <= total_distance && c < ARRAYSIZE);
-         c++, distance = miles_per_sample * (double)c) {
-        beta = distance / 3959.0;
+    for (distance_ = 0.0, c = 0; (total_distance != 0.0 && distance_ <= total_distance && c < ARRAYSIZE);
+         c++, distance_ = miles_per_sample * (double)c) {
+        beta = distance_ / 3959.0;
         lat2 = asin(sin(lat1) * cos(beta) + cos(azimuth) * sin(beta) * cos(lat1));
         num = cos(beta) - (sin(lat1) * sin(lat2));
         den = cos(lat1) * cos(lat2);
@@ -607,34 +608,32 @@ void ReadPath(site const &source, site const &destination, struct output *out)
         lat2 = lat2 / DEG2RAD;
         lon2 = lon2 / DEG2RAD;
 
-        out->path.lat[c] = lat2;
-        out->path.lon[c] = lon2;
+        lat.push_back(lat2);
+        lon.push_back(lon2);
         tempsite.lat = lat2;
         tempsite.lon = lon2;
         tempsite.alt = std::numeric_limits<float>::min();
-        out->path.elevation[c] = GetElevation(tempsite);
+        elevation.push_back(GetElevation(tempsite));
         // fix for tile gaps in multi-tile LIDAR plots
-        if (out->path.elevation[c] == 0 && out->path.elevation[c - 1] > 10) {
-            out->path.elevation[c] = out->path.elevation[c - 1];
+        if (elevation[c] == 0 && elevation[c - 1] > 10) {
+            elevation[c] = elevation[c - 1];
         }
-        out->path.distance[c] = distance;
+        distance.push_back(distance_);
     }
 
     /* Make sure exact destination point is recorded at path.length-1 */
 
     if (c < ARRAYSIZE) {
-        out->path.lat[c] = destination.lat;
-        out->path.lon[c] = destination.lon;
-        out->path.elevation[c] = GetElevation(destination);
-        out->path.distance[c] = total_distance;
+        lat.push_back(dst.lat);
+        lon.push_back(dst.lon);
+        elevation.push_back(GetElevation(dst));
+        distance.push_back(total_distance);
         c++;
     }
-
-    if (c < ARRAYSIZE)
-        out->path.length = c;
-    else
-        out->path.length = ARRAYSIZE - 1;
+    assert(lat.size() == lon.size() && lon.size() == elevation.size() && elevation.size() == distance.size());
 }
+
+ssize_t path::ssize() { return lat.size(); }
 
 double ElevationAngle2(site const &source, site const &destination, double er, struct output *out, LR const &lr)
 {
@@ -648,11 +647,9 @@ double ElevationAngle2(site const &source, site const &destination, double er, s
     char block = 0;
     double source_alt, destination_alt, cos_xmtr_angle, cos_test_angle, test_alt, elevation, distance, source_alt2,
         first_obstruction_angle = 0.0;
-    struct path temp;
 
-    temp = out->path;
-
-    ReadPath(source, destination, out);
+    path temp = out->path;
+    out->path = path(source, destination);
 
     distance = FEET_PER_MILE * Distance(source, destination);
     source_alt = er + source.alt + GetElevation(source);
@@ -671,7 +668,7 @@ double ElevationAngle2(site const &source, site const &destination, double er, s
        at the source since we're interested in identifying the FIRST
        obstruction along the path between source and destination. */
 
-    for (x = 2, block = 0; x < out->path.length && block == 0; x++) {
+    for (x = 2, block = 0; x < out->path.ssize() && block == 0; x++) {
         distance = FEET_PER_MILE * out->path.distance[x];
 
         test_alt =
@@ -772,7 +769,7 @@ void ObstructionAnalysis(site const &xmtr, site const &rcvr, double f, FILE *out
         h_r_fpt6, h_f, h_los, lambda = 0.0;
     char string[255], string_fpt6[255], string_f1[255];
 
-    ReadPath(xmtr, rcvr, out);
+    out->path = path(xmtr, rcvr);
     h_r = GetElevation(rcvr) + rcvr.alt + G_earthradius_ft;
     h_r_f1 = h_r;
     h_r_fpt6 = h_r;
@@ -810,7 +807,7 @@ void ObstructionAnalysis(site const &xmtr, site const &rcvr, double f, FILE *out
        acos().  However, note the inverted comparison: if
        acos(A) > acos(B), then B > A. */
 
-    for (x = out->path.length - 1; x > 0; x--) {
+    for (x = out->path.ssize() - 1; x > 0; x--) {
         site_x.lat = out->path.lat[x];
         site_x.lon = out->path.lon[x];
         site_x.alt = 0.0;
@@ -939,15 +936,6 @@ void ObstructionAnalysis(site const &xmtr, site const &rcvr, double f, FILE *out
 
 void resize_elev(struct output &out) { out.elev.resize(ARRAYSIZE + 10, 0.0); }
 
-void resize_path(struct path &path)
-{
-    path.length = 0;
-    path.lat.resize(ARRAYSIZE, 0.0);
-    path.lon.resize(ARRAYSIZE, 0.0);
-    path.elevation.resize(ARRAYSIZE, 0.0);
-    path.distance.resize(ARRAYSIZE, 0.0);
-}
-
 int init(const char *sdf_path, bool debug)
 {
     // these can stay globals
@@ -1057,7 +1045,6 @@ int handle_args(int argc, char *argv[], output &out)
     out.min_north = 90;
     out.max_north = -90;
 
-    resize_path(out.path);
     resize_elev(out);
 
     for (x = 0; x <= y; x++) {

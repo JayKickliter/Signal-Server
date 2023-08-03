@@ -70,7 +70,9 @@ struct path {
     std::vector<double> lon;
     std::vector<double> elevation;
     std::vector<double> distance;
-    int length;
+    ssize_t ssize();
+    path() = default;
+    path(site const &src, site const &dst);
 };
 
 class antenna_pattern {

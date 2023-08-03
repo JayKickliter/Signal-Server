@@ -236,7 +236,7 @@ void PlotLOSPath(struct output *out, struct site source, struct site destination
     double cos_angle, cos_test_angle, cos_horizon_angle, cos_limit_angle, rx_alt2;
     double distance, rx_alt, tx_alt, limit_alt, distance2, tx_alt2, test_alt, test_alt2, limit_alt2;
 
-    ReadPath(source, destination, out);
+    out->path = path(source, destination);
 
     distance = 0.0;
     tx_alt = 0.0;
@@ -257,7 +257,7 @@ void PlotLOSPath(struct output *out, struct site source, struct site destination
     tx_alt = G_earthradius_ft + source.alt + out->path.elevation[0];
     tx_alt2 = tx_alt * tx_alt;
 
-    for (x = 0; (bStop == false) && (x < (out->path.length - 1)) && (out->path.distance[x] <= lr->max_range); x++) {
+    for (x = 0; (bStop == false) && (x < (out->path.ssize() - 1)) && (out->path.distance[x] <= lr->max_range); x++) {
         if (x > 0) {
             distance = FEET_PER_MILE * out->path.distance[x];
             distance2 = distance * distance;
@@ -346,11 +346,11 @@ void PlotPropPath(struct output *out, struct site source, struct site destinatio
     struct site temp;
     float dkm;
 
-    ReadPath(source, destination, out);
+    out->path = path(source, destination);
 
     four_thirds_earth = FOUR_THIRDS * EARTHRADIUS;
 
-    for (x = 1; x < out->path.length - 1; x++)
+    for (x = 1; x < out->path.ssize() - 1; x++)
         out->elev[x + 2] = (out->path.elevation[x] == 0.0 ? out->path.elevation[x] * METERS_PER_FOOT
                                                           : (lr->clutter + out->path.elevation[x]) * METERS_PER_FOOT);
 
@@ -358,7 +358,7 @@ void PlotPropPath(struct output *out, struct site source, struct site destinatio
 
     out->elev[2] = out->path.elevation[0] * METERS_PER_FOOT;
 
-    out->elev[out->path.length + 1] = out->path.elevation[out->path.length - 1] * METERS_PER_FOOT;
+    out->elev[out->path.ssize() + 1] = out->path.elevation[out->path.ssize() - 1] * METERS_PER_FOOT;
 
     /* Since the only energy the Longley-Rice model considers
        reaching the destination is based on what is scattered
@@ -372,7 +372,7 @@ void PlotPropPath(struct output *out, struct site source, struct site destinatio
     // if(debug)
     //	fprintf(stderr,"four_thirds_earth %.1f source.alt %.1f path.elevation[0]
     //%.1f\n",four_thirds_earth,source.alt,path.elevation[0]);
-    for (y = 2; (y < (out->path.length - 1) && out->path.distance[y] <= lr->max_range); y++) {
+    for (y = 2; (y < (out->path.ssize() - 1) && out->path.distance[y] <= lr->max_range); y++) {
         /* Process this point only if it
            has not already been processed. */
 
@@ -815,9 +815,9 @@ void PlotPath(struct output *out, struct site source, struct site destination, c
     double cos_xmtr_angle, cos_test_angle, test_alt;
     double distance, rx_alt, tx_alt;
 
-    ReadPath(source, destination, out);
+    out->path = path(source, destination);
 
-    for (y = 0; y < out->path.length; y++) {
+    for (y = 0; y < out->path.ssize(); y++) {
         /* Test this point only if it hasn't been already
            tested and found to be free of obstructions. */
 
