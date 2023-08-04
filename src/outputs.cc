@@ -6,6 +6,7 @@
 #include <string.h>
 #include <zlib.h>
 
+#include <cassert>
 #include <vector>
 
 #include "common.hh"
@@ -1330,6 +1331,100 @@ void SeriesData(Path const &path, site const &src, site const &dst, bool fresnel
                 out->fresnelvec.push_back(fresnel_ft);
                 out->fresnel60vec.push_back(fresnel60_ft);
             }
+        }
+    }  // End of loop
+}
+
+Point2Point::Point2Point(site const &src, site const &dst, Path const &path, double freq_mhz, bool normalised,
+                         bool metric) noexcept
+    : _distance(path.ssize()),
+      _los(path.ssize()),
+      _fresnel(path.ssize()),
+      _fresnel60(path.ssize()),
+      _curvature(path.ssize()),
+      _terrain(path.ssize())
+{
+    assert((freq_mhz >= 20.0) && (freq_mhz <= 100000.0));
+    const double src_elev_ft = GetElevation(src);
+    const double dst_elev_ft = GetElevation(dst);
+    const double elevation_angle_deg = ElevationAngle(src, dst);
+    const double total_great_circle_ft = FEET_PER_MILE * path.distance[path.ssize() - 1];
+    const double src_radius_ft = src_elev_ft + src.alt + EARTHRADIUS_FT;
+    const double wavelength_ft = 9.8425e8 / (freq_mhz * 1e6);
+
+    double nb = 0.0;
+    double nm = 0.0;
+
+    if (normalised) {
+        nb = -src.alt - src_elev_ft;
+        nm = (-dst.alt - dst_elev_ft - nb) / (path.distance[path.ssize() - 1]);
+    }
+
+    for (int x = 0; x < path.ssize(); x++) {
+        double terrain_ft = path.elevation[x];
+        if (x == 0) {
+            /* RX antenna spike */
+            terrain_ft += src.alt;
+        }
+        else if (x == path.ssize() - 1) {
+            /* TX antenna spike */
+            terrain_ft += dst.alt;
+        }
+
+        double fresnel_ft = 0.0;
+        double fresnel60_ft = 0.0;
+        const double radius_ft = terrain_ft + EARTHRADIUS_FT;
+        const double chord_angle_deg = FEET_PER_MILE * path.distance[x] / EARTHRADIUS_FT;
+        const double c_unk_unit = src_radius_ft * sin(elevation_angle_deg * DEG2RAD + HALFPI) /
+                                  sin(HALFPI - elevation_angle_deg * DEG2RAD - chord_angle_deg);
+        double height_ft = radius_ft - c_unk_unit;
+
+        /* Per Fink and Christiansen, Electronics
+         * Engineers' Handbook, 1989:
+         *
+         *   H = sqrt(lamba * d1 * (d - d1)/d)
+         *
+         * where H is the distance from the LOS
+         * path to the first Fresnel zone boundary.
+         */
+        const double d1 = FEET_PER_MILE * path.distance[x];
+        fresnel_ft = -1.0 * sqrt(wavelength_ft * d1 * (total_great_circle_ft - d1) / total_great_circle_ft);
+        fresnel60_ft = fresnel_ft * G_fzone_clearance;
+
+        /* This value serves as both the referee point for adjusting
+         * all others, and the line-of-sight path between src and
+         * dst */
+        double line_of_sight_ft = 0.0;
+        if (normalised) {
+            line_of_sight_ft = -(nm * path.distance[x]) - nb;
+            height_ft += line_of_sight_ft;
+
+            fresnel_ft += line_of_sight_ft;
+            fresnel60_ft += line_of_sight_ft;
+        }
+
+        if (metric) {
+            _distance.push_back(KM_PER_MILE * path.distance[x]);
+            _terrain.push_back(METERS_PER_FOOT * height_ft);
+
+            _los.push_back(METERS_PER_FOOT * line_of_sight_ft);
+            _curvature.push_back(METERS_PER_FOOT * (height_ft - terrain_ft));
+        }
+        else {
+            _distance.push_back(path.distance[x]);
+            _terrain.push_back(height_ft);
+
+            _los.push_back(line_of_sight_ft);
+            _curvature.push_back(height_ft - terrain_ft);
+        }
+
+        if (metric) {
+            _fresnel.push_back(METERS_PER_FOOT * fresnel_ft);
+            _fresnel60.push_back(METERS_PER_FOOT * fresnel60_ft);
+        }
+        else {
+            _fresnel.push_back(fresnel_ft);
+            _fresnel60.push_back(fresnel60_ft);
         }
     }  // End of loop
 }
