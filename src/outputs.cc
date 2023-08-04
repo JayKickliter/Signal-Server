@@ -1335,22 +1335,22 @@ void SeriesData(Path const &path, site const &src, site const &dst, bool fresnel
     }  // End of loop
 }
 
-Point2Point::Point2Point(site const &src, site const &dst, Path const &path, double freq_mhz, bool normalised,
+Point2Point::Point2Point(site const &src, site const &dst, Path const &path, double freq_hz, bool normalised,
                          bool metric) noexcept
-    : _distance(path.ssize()),
-      _los(path.ssize()),
-      _fresnel(path.ssize()),
-      _fresnel60(path.ssize()),
-      _curvature(path.ssize()),
-      _terrain(path.ssize())
 {
-    assert((freq_mhz >= 20.0) && (freq_mhz <= 100000.0));
+    if (G_debug) {
+        fprintf(stderr, "[Point2Point::Point2Point] src: %f %f %f, dst: %f %f %f, freq_hz: %f, normalised: %d, metric: %d\n",
+                src.lat, src.lon, src.alt, dst.lat, dst.lon, dst.alt, freq_hz, normalised, metric);
+        fflush(stderr);
+    }
+    assert(G_debug);
+    assert((freq_hz >= 20e6) && (freq_hz <= 100e9));
     const double src_elev_ft = GetElevation(src);
     const double dst_elev_ft = GetElevation(dst);
     const double elevation_angle_deg = ElevationAngle(src, dst);
     const double total_great_circle_ft = FEET_PER_MILE * path.distance[path.ssize() - 1];
     const double src_radius_ft = src_elev_ft + src.alt + EARTHRADIUS_FT;
-    const double wavelength_ft = 9.8425e8 / (freq_mhz * 1e6);
+    const double wavelength_ft = 9.8425e8 / freq_hz;
 
     double nb = 0.0;
     double nm = 0.0;
@@ -1398,33 +1398,25 @@ Point2Point::Point2Point(site const &src, site const &dst, Path const &path, dou
         if (normalised) {
             line_of_sight_ft = -(nm * path.distance[x]) - nb;
             height_ft += line_of_sight_ft;
-
             fresnel_ft += line_of_sight_ft;
             fresnel60_ft += line_of_sight_ft;
         }
 
         if (metric) {
-            _distance.push_back(KM_PER_MILE * path.distance[x]);
-            _terrain.push_back(METERS_PER_FOOT * height_ft);
-
-            _los.push_back(METERS_PER_FOOT * line_of_sight_ft);
             _curvature.push_back(METERS_PER_FOOT * (height_ft - terrain_ft));
-        }
-        else {
-            _distance.push_back(path.distance[x]);
-            _terrain.push_back(height_ft);
-
-            _los.push_back(line_of_sight_ft);
-            _curvature.push_back(height_ft - terrain_ft);
-        }
-
-        if (metric) {
+            _distance.push_back(KM_PER_MILE * path.distance[x]);
             _fresnel.push_back(METERS_PER_FOOT * fresnel_ft);
             _fresnel60.push_back(METERS_PER_FOOT * fresnel60_ft);
+            _los.push_back(METERS_PER_FOOT * line_of_sight_ft);
+            _terrain.push_back(METERS_PER_FOOT * height_ft);
         }
         else {
+            _curvature.push_back(height_ft - terrain_ft);
+            _distance.push_back(path.distance[x]);
             _fresnel.push_back(fresnel_ft);
             _fresnel60.push_back(fresnel60_ft);
+            _los.push_back(line_of_sight_ft);
+            _terrain.push_back(height_ft);
         }
     }  // End of loop
 }

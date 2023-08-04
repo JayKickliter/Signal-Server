@@ -31,6 +31,32 @@ pub fn call_sigserve(args: &str) -> Result<ffi::Report, Error> {
     }
 }
 
+pub fn point_to_point(
+    tx_lat: f64,
+    tx_lon: f64,
+    tx_antenna_alt_m: f64,
+    rx_lat: f64,
+    rx_lon: f64,
+    rx_antenna_alt_m: f64,
+    freq_hz: f64,
+    normalize: bool,
+) -> ffi::PointToPointReport {
+    // SAFETY: this returns no error code nor exception
+    unsafe {
+        ffi::point_to_point(
+            tx_lat,
+            tx_lon,
+            tx_antenna_alt_m,
+            rx_lat,
+            rx_lon,
+            rx_antenna_alt_m,
+            freq_hz,
+            normalize,
+            true,
+        )
+    }
+}
+
 #[cxx::bridge(namespace = "sigserve_wrapper")]
 pub(crate) mod ffi {
     #[derive(Default, Debug)]
@@ -55,9 +81,30 @@ pub(crate) mod ffi {
         // end image-mode fields.
     }
 
+    #[derive(Default, Debug)]
+    pub struct PointToPointReport {
+        distance: Vec<f64>,
+        los: Vec<f64>,
+        fresnel: Vec<f64>,
+        fresnel60: Vec<f64>,
+        curvature: Vec<f64>,
+        terrain: Vec<f64>,
+    }
+
     unsafe extern "C++" {
         include!("rfprop/src/sigserve.h");
         unsafe fn init(sdf_path: *const c_char, debug: bool) -> i32;
         unsafe fn handle_args(argc: i32, argv: *mut *mut c_char) -> Report;
+        unsafe fn point_to_point(
+            tx_lat: f64,
+            tx_lon: f64,
+            tx_antenna_alt_m: f64,
+            rx_lat: f64,
+            rx_lon: f64,
+            rx_antenna_alt_m: f64,
+            freq_hz: f64,
+            normalize: bool,
+            metric: bool,
+        ) -> PointToPointReport;
     }
 }

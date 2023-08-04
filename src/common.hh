@@ -26,6 +26,7 @@
 #define EARTHRADIUS_FT 20902230.97
 #define METERS_PER_MILE 1609.344
 #define METERS_PER_FOOT 0.3048
+#define FEET_PER_METER 3.28084
 #define KM_PER_MILE 1.609344
 #define FEET_PER_MILE 5280.0
 #define FOUR_THIRDS 1.3333333333333
@@ -71,18 +72,19 @@ struct Path {
     std::vector<double> elevation;
     std::vector<double> distance;
     ssize_t ssize() const;
+    size_t size() const;
     Path() = default;
     Path(site const &src, site const &dst);
 };
 
 struct Point2Point {
-    std::vector<double> _distance;
-    std::vector<double> _los;
-    std::vector<double> _fresnel;
-    std::vector<double> _fresnel60;
     std::vector<double> _curvature;
+    std::vector<double> _distance;
+    std::vector<double> _fresnel60;
+    std::vector<double> _fresnel;
+    std::vector<double> _los;
     std::vector<double> _terrain;
-    Point2Point(site const &src, site const &dst, Path const &path, double freq_mhz, bool normalised, bool metric) noexcept;
+    Point2Point(site const &src, site const &dst, Path const &path, double freq_hz, bool normalised, bool metric) noexcept;
 };
 
 class antenna_pattern {

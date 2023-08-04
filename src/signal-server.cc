@@ -538,6 +538,10 @@ Path::Path(site const &src, site const &dst)
        elevation and distance information for points
        along that path in the "path" structure. */
 
+    if (G_debug) {
+        fprintf(stderr, "[Path::Path] src: %f %f %f, dst: %f %f %f\n", src.lat, src.lon, src.alt, dst.lat, dst.lon, dst.alt);
+        fflush(stderr);
+    }
     int c;
     double azimuth, distance_, lat1, lon1, beta, den, num, lat2, lon2, total_distance, dx, dy, path_length, miles_per_sample,
         samples_per_radian = 68755.0;
@@ -634,6 +638,8 @@ Path::Path(site const &src, site const &dst)
 }
 
 ssize_t Path::ssize() const { return lat.size(); }
+
+size_t Path::size() const { return lat.size(); }
 
 double ElevationAngle2(Path const &path, site const &source, site const &destination, double er, LR const &lr)
 {
