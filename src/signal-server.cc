@@ -937,6 +937,10 @@ void resize_elev(struct output &out) { out.elev.resize(ARRAYSIZE + 10, 0.0); }
 
 int init(const char *sdf_path, bool debug)
 {
+    // Ensure we never to need resize G_dem by pre-allocing space for
+    // all 26109 files.
+    G_dem.reserve(26109);
+
     // these can stay globals
     G_gpsav = 0;
     G_sdf_path[0] = 0;

@@ -56,8 +56,8 @@ Report handle_args(int argc, char *argv[])
     return report;
 }
 
-PointToPointReport point_to_point(double tx_lat, double tx_lon, double tx_antenna_alt_m, double rx_lat, double rx_lon,
-                                  double rx_antenna_alt_m, double freq_hz, bool normalize, bool metric)
+PointToPointReport point_to_point(double tx_lat, double tx_lon, double tx_antenna_alt, double rx_lat, double rx_lon,
+                                  double rx_antenna_alt, double freq_hz, bool normalize, bool metric)
 {
     double _min_lat = std::floor(std::min(tx_lat, rx_lat));
     double _max_lat = std::floor(std::max(tx_lat, rx_lat));
@@ -75,12 +75,12 @@ PointToPointReport point_to_point(double tx_lat, double tx_lon, double tx_antenn
     site tx_site;
     tx_site.lat = tx_lat;
     tx_site.lon = -tx_lon;
-    tx_site.alt = tx_antenna_alt_m * FEET_PER_METER;
+    tx_site.alt = metric ? tx_antenna_alt * FEET_PER_METER : tx_antenna_alt;
 
     site rx_site;
     rx_site.lat = rx_lat;
     rx_site.lon = -rx_lon;
-    rx_site.alt = rx_antenna_alt_m * FEET_PER_METER;
+    rx_site.alt = metric ? rx_antenna_alt * FEET_PER_METER : rx_antenna_alt;
 
     Path path(tx_site, rx_site);
     fflush(stderr);

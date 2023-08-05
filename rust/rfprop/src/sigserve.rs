@@ -31,6 +31,7 @@ pub fn call_sigserve(args: &str) -> Result<ffi::Report, Error> {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn point_to_point(
     tx_lat: f64,
     tx_lon: f64,
@@ -95,13 +96,14 @@ pub(crate) mod ffi {
         include!("rfprop/src/sigserve.h");
         unsafe fn init(sdf_path: *const c_char, debug: bool) -> i32;
         unsafe fn handle_args(argc: i32, argv: *mut *mut c_char) -> Report;
+        #[allow(clippy::too_many_arguments)]
         unsafe fn point_to_point(
             tx_lat: f64,
             tx_lon: f64,
-            tx_antenna_alt_m: f64,
+            tx_antenna_alt: f64,
             rx_lat: f64,
             rx_lon: f64,
-            rx_antenna_alt_m: f64,
+            rx_antenna_alt: f64,
             freq_hz: f64,
             normalize: bool,
             metric: bool,
