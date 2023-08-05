@@ -30,7 +30,7 @@ double COST231pathLoss(float f, float TxH, float RxH, float d, int mode)
     /*	if (f < 150 || f > 2000) {
                     fprintf
                         (stderr,"Error: COST231 Hata model frequency range 150-2000MHz\n");
-                    exit(EXIT_FAILURE);
+                    return EXIT_FAILURE;
             }
     */
     int C = 3;  // 3dB for Urban

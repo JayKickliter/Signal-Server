@@ -13,7 +13,7 @@ double EricssonpathLoss(float f, float TxH, float RxH, float d, int mode)
     /*	if (f < 150 || f > 1900) {
                     fprintf
                         (stderr,"Error: Ericsson9999 model frequency range 150-1900MHz\n");
-                    exit(EXIT_FAILURE);
+                    return EXIT_FAILURE;
             }
     */
     if (mode == 2) {  // Suburban / Med loss

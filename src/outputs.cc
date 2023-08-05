@@ -21,7 +21,7 @@
 #include "models/sui.hh"
 #include "signal-server.hh"
 
-void DoPathLoss(struct output *out, unsigned char geo, unsigned char kml, unsigned char ngs, struct site *xmtr, LR const &lr)
+int DoPathLoss(struct output *out, unsigned char geo, unsigned char kml, unsigned char ngs, struct site *xmtr, LR const &lr)
 {
     /* This function generates a topographic map in Portable Pix Map
        (PPM) format based on the content of flags held in the mask[][]
@@ -35,19 +35,19 @@ void DoPathLoss(struct output *out, unsigned char geo, unsigned char kml, unsign
     int x, y, z, x0 = 0, y0 = 0, loss, match;
     double lat, lon, conversion, one_over_gamma, minwest;
     image_ctx_t ctx;
-    int success;
+    int res = 0;
 
-    if ((success = image_init(&ctx, out->width, (kml ? out->height : out->height + 30), IMAGE_RGB, IMAGE_DEFAULT)) != 0) {
-        fprintf(stderr, "Error initializing image: %s\n", strerror(success));
-        exit(success);
+    if ((res = image_init(&ctx, out->width, (kml ? out->height : out->height + 30), IMAGE_RGB, IMAGE_DEFAULT)) != 0) {
+        fprintf(stderr, "Error initializing image: %s\n", strerror(res));
+        return res;
     }
 
     one_over_gamma = 1.0 / GAMMA;
     conversion = 255.0 / pow((double)(out->max_elevation - out->min_elevation), one_over_gamma);
 
-    if ((success = LoadLossColors(xmtr[0])) != 0) {
+    if ((res = LoadLossColors(xmtr[0])) != 0) {
         fprintf(stderr, "Error loading loss colors\n");
-        exit(success);  // Now a fatal error!
+        return res;  // Now a fatal error!
     }
 
     minwest = ((double)out->min_west) + G_dpp;
@@ -180,12 +180,14 @@ void DoPathLoss(struct output *out, unsigned char geo, unsigned char kml, unsign
         }
     }
 
-    if ((success = image_write(&ctx, &out->imagedata)) != 0) {
+    if ((res = image_write(&ctx, &out->imagedata)) != 0) {
         fprintf(stderr, "Error writing image\n");
-        exit(success);
+        return res;
     }
 
     image_free(&ctx);
+
+    return res;
 }
 
 int DoSigStr(struct output *out, unsigned char kml, unsigned char ngs, struct site *xmtr, LR const &lr)
@@ -206,7 +208,7 @@ int DoSigStr(struct output *out, unsigned char kml, unsigned char ngs, struct si
 
     if ((success = image_init(&ctx, out->width, (kml ? out->height : out->height + 30), IMAGE_RGB, IMAGE_DEFAULT)) != 0) {
         fprintf(stderr, "Error initializing image: %s\n", strerror(success));
-        exit(success);
+        return success;
     }
 
     one_over_gamma = 1.0 / GAMMA;
@@ -214,7 +216,7 @@ int DoSigStr(struct output *out, unsigned char kml, unsigned char ngs, struct si
 
     if ((success = LoadSignalColors(xmtr[0])) != 0) {
         fprintf(stderr, "Error loading signal colors\n");
-        // exit(success);
+        // return success;
     }
 
     minwest = ((double)out->min_west) + G_dpp;
@@ -349,7 +351,7 @@ int DoSigStr(struct output *out, unsigned char kml, unsigned char ngs, struct si
 
     if ((success = image_write(&ctx, &out->imagedata)) != 0) {
         fprintf(stderr, "Error writing image\n");
-        exit(success);
+        return success;
     }
 
     image_free(&ctx);
@@ -357,7 +359,7 @@ int DoSigStr(struct output *out, unsigned char kml, unsigned char ngs, struct si
     return 0;
 }
 
-void DoRxdPwr(struct output *out, unsigned char kml, unsigned char ngs, struct site *xmtr, LR const &lr)
+int DoRxdPwr(struct output *out, unsigned char kml, unsigned char ngs, struct site *xmtr, LR const &lr)
 {
     /* This function generates a topographic map in Portable Pix Map
        (PPM) format based on the signal power level values held in the
@@ -375,7 +377,7 @@ void DoRxdPwr(struct output *out, unsigned char kml, unsigned char ngs, struct s
 
     if ((success = image_init(&ctx, out->width, (kml ? out->height : out->height + 30), IMAGE_RGB, IMAGE_DEFAULT)) != 0) {
         fprintf(stderr, "Error initializing image: %s\n", strerror(success));
-        exit(success);
+        return success;
     }
 
     one_over_gamma = 1.0 / GAMMA;
@@ -383,7 +385,7 @@ void DoRxdPwr(struct output *out, unsigned char kml, unsigned char ngs, struct s
 
     if ((success = LoadDBMColors(xmtr[0])) != 0) {
         fprintf(stderr, "Error loading DBM colors\n");
-        exit(success);  // Now a fatal error!
+        return success;  // Now a fatal error!
     }
 
     minwest = ((double)out->min_west) + G_dpp;
@@ -519,13 +521,15 @@ void DoRxdPwr(struct output *out, unsigned char kml, unsigned char ngs, struct s
 
     if ((success = image_write(&ctx, &out->imagedata)) != 0) {
         fprintf(stderr, "Error writing image\n");
-        exit(success);
+        return success;
     }
 
     image_free(&ctx);
+
+    return success;
 }
 
-void DoLOS(struct output *out, unsigned char kml, unsigned char ngs, struct site *)
+int DoLOS(struct output *out, unsigned char kml, unsigned char ngs, struct site *)
 {
     /* This function generates a topographic map in Portable Pix Map
        (PPM) format based on the signal power level values held in the
@@ -539,11 +543,11 @@ void DoLOS(struct output *out, unsigned char kml, unsigned char ngs, struct site
     int x, y, x0 = 0, y0 = 0;
     double conversion, one_over_gamma, lat, lon, minwest;
     image_ctx_t ctx;
-    int success;
+    int res;
 
-    if ((success = image_init(&ctx, out->width, (kml ? out->height : out->height + 30), IMAGE_RGB, IMAGE_DEFAULT)) != 0) {
-        fprintf(stderr, "Error initializing image: %s\n", strerror(success));
-        exit(success);
+    if ((res = image_init(&ctx, out->width, (kml ? out->height : out->height + 30), IMAGE_RGB, IMAGE_DEFAULT)) != 0) {
+        fprintf(stderr, "Error initializing image: %s\n", strerror(res));
+        return res;
     }
 
     one_over_gamma = 1.0 / GAMMA;
@@ -696,12 +700,14 @@ void DoLOS(struct output *out, unsigned char kml, unsigned char ngs, struct site
         }
     }
 
-    if ((success = image_write(&ctx, &out->imagedata)) != 0) {
+    if ((res = image_write(&ctx, &out->imagedata)) != 0) {
         fprintf(stderr, "Error writing image\n");
-        exit(success);
+        return res;
     }
 
     image_free(&ctx);
+
+    return res;
 }
 
 void PathReport(struct site source, struct site destination, char *name, char /* graph_it */, int propmodel, int pmenv,

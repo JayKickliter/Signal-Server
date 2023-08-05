@@ -68,7 +68,7 @@ double EgliPathLoss(float f, float h1, float h2, float d)
     else
     {
       fprintf(stderr,"Parameter error: Egli path loss model f=%6.2f h1=%6.2f h2=%6.2f d=%6.2f\n", f, h1, h2, d);
-      exit(EXIT_FAILURE);
+      return EXIT_FAILURE;
     }*/
 
     return (Lp50);

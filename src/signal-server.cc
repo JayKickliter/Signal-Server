@@ -1146,7 +1146,7 @@ int handle_args(int argc, char *argv[], output &out)
                     fprintf(stderr, "Permissions error reading antenna pattern file\n");
                     free(az_filename);
                     free(el_filename);
-                    exit(result);
+                    return result;
                 }
                 free(az_filename);
                 free(el_filename);
@@ -1157,7 +1157,7 @@ int handle_args(int argc, char *argv[], output &out)
             z = x + 1;
             if (image_set_library(argv[z]) != 0) {
                 fprintf(stderr, "Error configuring image processor\n");
-                exit(EINVAL);
+                return EINVAL;
             }
         }
 
@@ -1466,62 +1466,62 @@ int handle_args(int argc, char *argv[], output &out)
     /* ERROR DETECTION */
     if (out.tx_site[0].lat > 90 || out.tx_site[0].lat < -90) {
         fprintf(stderr, "ERROR: Either the lat was missing or out of range!");
-        exit(EINVAL);
+        return EINVAL;
     }
     if (out.tx_site[0].lon > 360 || out.tx_site[0].lon < 0) {
         fprintf(stderr, "ERROR: Either the lon was missing or out of range!");
-        exit(EINVAL);
+        return EINVAL;
     }
     if (lr.frq_mhz < 20 || lr.frq_mhz > 100000) {
         fprintf(stderr, "ERROR: Either the Frequency was missing or out of range!");
-        exit(EINVAL);
+        return EINVAL;
     }
     if (lr.erp > 500000000) {
         fprintf(stderr, "ERROR: Power was out of range!");
-        exit(EINVAL);
+        return EINVAL;
     }
     if (lr.eps_dielect > 80 || lr.eps_dielect < 0.1) {
         fprintf(stderr, "ERROR: Ground Dielectric value out of range!");
-        exit(EINVAL);
+        return EINVAL;
     }
     if (lr.sgm_conductivity > 0.01 || lr.sgm_conductivity < 0.000001) {
         fprintf(stderr, "ERROR: Ground conductivity out of range!");
-        exit(EINVAL);
+        return EINVAL;
     }
 
     if (out.tx_site[0].alt < 0 || out.tx_site[0].alt > 60000) {
         fprintf(stderr, "ERROR: Tx altitude above ground was too high: %f", out.tx_site[0].alt);
-        exit(EINVAL);
+        return EINVAL;
     }
     if (altitudeLR < 0 || altitudeLR > 60000) {
         fprintf(stderr, "ERROR: Rx altitude above ground was too high!");
-        exit(EINVAL);
+        return EINVAL;
     }
 
     /*if (!lidar) {
         if (G_ippd < 300 || G_ippd > 10000) {
             fprintf(stderr, "ERROR: resolution out of range!");
-            exit(EINVAL);
+            return EINVAL;
         }
     }*/
 
     if (lr.contour_threshold < -200 || lr.contour_threshold > 240) {
         fprintf(stderr, "ERROR: Receiver threshold out of range (-200 / +240)");
-        exit(EINVAL);
+        return EINVAL;
     }
     if (propmodel > 2 && propmodel < 7 && lr.frq_mhz < 150) {
         fprintf(stderr, "ERROR: Frequency too low for Propagation model");
-        exit(EINVAL);
+        return EINVAL;
     }
 
     if (to_stdout == true && ppa != 0) {
         fprintf(stderr, "ERROR: Cannot write to stdout in ppa mode");
-        exit(EINVAL);
+        return EINVAL;
     }
 
     if (resample > 10) {
         fprintf(stderr, "ERROR: Cannot resample higher than a factor of 10");
-        exit(EINVAL);
+        return EINVAL;
     }
     if (lr.metric) {
         altitudeLR /= METERS_PER_FOOT; /* 10ft * 0.3 = 3.3m */
@@ -1584,7 +1584,7 @@ int handle_args(int argc, char *argv[], output &out)
                     "lidar files. Please ensure their paths are "
                     "correct and try again.\n");
             fprintf(stderr, "Error %d: %s\n", result, strerror(result));
-            exit(result);
+            return result;
         }
 
         G_ppd = ((double)out.height / (out.max_north - out.min_north));
@@ -1599,7 +1599,7 @@ int handle_args(int argc, char *argv[], output &out)
         if (G_yppd < G_ppd / 4) {
             fprintf(stderr, "yppd is bad! Check longitudes\n");
             fflush(stderr);
-            exit(1);
+            return 1;
         }
 
         if (G_delta > 0) {

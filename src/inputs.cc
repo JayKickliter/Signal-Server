@@ -357,7 +357,7 @@ int loadLIDAR(char *filenames, int resample, struct output *out)
         // sanity check!
         if (new_width > 39e3 || new_height > 39e3) {
             fprintf(stdout, "Not processing a tile with these dimensions: %zu x %zu\n", new_width, new_height);
-            exit(1);
+            return 1;
         }
     }
 
@@ -460,7 +460,7 @@ int loadLIDAR(char *filenames, int resample, struct output *out)
     if (out->width > 3600 * 8) {
         fprintf(stdout, "DEM fault. Contact system administrator: %d\n", out->width);
         fflush(stderr);
-        exit(1);
+        return 1;
     }
 
     if (G_debug) {
@@ -895,7 +895,7 @@ int LoadPAT(char *az_filename, char *el_filename, struct LR &lr)
 
         if (fgets(string, 254, fd) == NULL) {
             // fprintf(stderr,"Azimuth read error\n");
-            // exit(0);
+            // return 0;
         }
         pointer = strchr(string, ';');
 
@@ -916,7 +916,7 @@ int LoadPAT(char *az_filename, char *el_filename, struct LR &lr)
 
         if (fgets(string, 254, fd) == NULL) {
             // fprintf(stderr,"Azimuth read error\n");
-            // exit(0);
+            // return 0;
         }
         pointer = strchr(string, ';');
 
@@ -934,7 +934,7 @@ int LoadPAT(char *az_filename, char *el_filename, struct LR &lr)
 
             if (fgets(string, 254, fd) == NULL) {
                 // fprintf(stderr,"Azimuth read error\n");
-                //  exit(0);
+                //  return 0;
             }
             pointer = strchr(string, ';');
 
@@ -1036,7 +1036,7 @@ int LoadPAT(char *az_filename, char *el_filename, struct LR &lr)
 
         if (fgets(string, 254, fd) == NULL) {
             // fprintf(stderr,"Tilt read error\n");
-            // exit(0);
+            // return 0;
         }
         pointer = strchr(string, ';');
 
@@ -1065,7 +1065,7 @@ int LoadPAT(char *az_filename, char *el_filename, struct LR &lr)
 
         if (fgets(string, 254, fd) == NULL) {
             // fprintf(stderr,"Ant elevation read error\n");
-            // exit(0);
+            // return 0;
         }
         pointer = strchr(string, ';');
 
