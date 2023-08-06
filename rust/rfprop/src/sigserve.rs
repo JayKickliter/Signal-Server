@@ -23,8 +23,11 @@ pub fn call_sigserve(args: &str) -> Result<ffi::Report, Error> {
         .iter()
         .map(|arg| arg.as_ptr() as *mut c_char)
         .collect::<Vec<*mut c_char>>();
+    let start = std::time::Instant::now();
     // SAFETY: See previous safety comment.
     let report = unsafe { ffi::handle_args(c_args.len() as i32, c_args.as_mut_ptr()) };
+    let duration = start.elapsed();
+    println!("call_sigserve took {:?}", duration);
     match report.retcode {
         0 => Ok(report),
         other => Err(Error::Retcode(other)),
@@ -32,7 +35,7 @@ pub fn call_sigserve(args: &str) -> Result<ffi::Report, Error> {
 }
 
 #[allow(clippy::too_many_arguments)]
-pub fn point_to_point(
+pub fn terrain_profile(
     tx_lat: f64,
     tx_lon: f64,
     tx_antenna_alt_m: f64,
@@ -41,10 +44,11 @@ pub fn point_to_point(
     rx_antenna_alt_m: f64,
     freq_hz: f64,
     normalize: bool,
-) -> ffi::PointToPointReport {
+) -> ffi::TerrainProfile {
+    // let start = std::time::Instant::now();
     // SAFETY: this returns no error code nor exception
-    unsafe {
-        ffi::point_to_point(
+    let ret = unsafe {
+        ffi::terrain_profile(
             tx_lat,
             tx_lon,
             tx_antenna_alt_m,
@@ -55,7 +59,10 @@ pub fn point_to_point(
             normalize,
             true,
         )
-    }
+    };
+    // let duration = start.elapsed();
+    // println!("terrain_profile took {:?}", duration);
+    ret
 }
 
 #[cxx::bridge(namespace = "sigserve_wrapper")]
@@ -83,7 +90,7 @@ pub(crate) mod ffi {
     }
 
     #[derive(Default, Debug)]
-    pub struct PointToPointReport {
+    pub struct TerrainProfile {
         distance: Vec<f64>,
         los: Vec<f64>,
         fresnel: Vec<f64>,
@@ -94,10 +101,13 @@ pub(crate) mod ffi {
 
     unsafe extern "C++" {
         include!("rfprop/src/sigserve.h");
+
         unsafe fn init(sdf_path: *const c_char, debug: bool) -> i32;
+
         unsafe fn handle_args(argc: i32, argv: *mut *mut c_char) -> Report;
+
         #[allow(clippy::too_many_arguments)]
-        unsafe fn point_to_point(
+        unsafe fn terrain_profile(
             tx_lat: f64,
             tx_lon: f64,
             tx_antenna_alt: f64,
@@ -107,6 +117,6 @@ pub(crate) mod ffi {
             freq_hz: f64,
             normalize: bool,
             metric: bool,
-        ) -> PointToPointReport;
+        ) -> TerrainProfile;
     }
 }

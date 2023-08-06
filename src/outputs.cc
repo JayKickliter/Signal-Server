@@ -1335,11 +1335,12 @@ void SeriesData(Path const &path, site const &src, site const &dst, bool fresnel
     }  // End of loop
 }
 
-Point2Point::Point2Point(site const &src, site const &dst, Path const &path, double freq_hz, bool normalised,
-                         bool metric) noexcept
+TerrainProfile::TerrainProfile(site const &src, site const &dst, Path const &path, double freq_hz, bool normalised,
+                               bool metric) noexcept
 {
     if (G_debug) {
-        fprintf(stderr, "[Point2Point::Point2Point] src: %f %f %f, dst: %f %f %f, freq_hz: %f, normalised: %d, metric: %d\n",
+        fprintf(stderr,
+                "[TerrainProfile::TerrainProfile] src: %f %f %f, dst: %f %f %f, freq_hz: %f, normalised: %d, metric: %d\n",
                 src.lat, src.lon, src.alt, dst.lat, dst.lon, dst.alt, freq_hz, normalised, metric);
         fflush(stderr);
     }

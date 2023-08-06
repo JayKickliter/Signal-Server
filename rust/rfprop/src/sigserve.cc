@@ -56,8 +56,8 @@ Report handle_args(int argc, char *argv[])
     return report;
 }
 
-PointToPointReport point_to_point(double tx_lat, double tx_lon, double tx_antenna_alt, double rx_lat, double rx_lon,
-                                  double rx_antenna_alt, double freq_hz, bool normalize, bool metric)
+TerrainProfile terrain_profile(double tx_lat, double tx_lon, double tx_antenna_alt, double rx_lat, double rx_lon,
+                               double rx_antenna_alt, double freq_hz, bool normalize, bool metric)
 {
     double _min_lat = std::floor(std::min(tx_lat, rx_lat));
     double _max_lat = std::floor(std::max(tx_lat, rx_lat));
@@ -65,10 +65,6 @@ PointToPointReport point_to_point(double tx_lat, double tx_lon, double tx_antenn
     double _rx_lon = std::floor(-rx_lon);
     double _min_lon = LonDiff(_tx_lon, _rx_lon) < 0.0 ? _tx_lon : _rx_lon;
     double _max_lon = LonDiff(_tx_lon, _rx_lon) < 0.0 ? _rx_lon : _tx_lon;
-
-    std::fprintf(stderr, "_min_lat %f, _max_lat %f, _tx_lon %f, _rx_lon %f, _min_lon %f, _max_lon %f\n", _min_lat, _max_lat,
-                 _tx_lon, _rx_lon, _min_lon, _max_lon);
-    std::fflush(stderr);
 
     LoadTopoData(_max_lon, _min_lon, _max_lat, _min_lat, nullptr);
 
@@ -83,14 +79,11 @@ PointToPointReport point_to_point(double tx_lat, double tx_lon, double tx_antenn
     rx_site.alt = metric ? rx_antenna_alt * FEET_PER_METER : rx_antenna_alt;
 
     Path path(tx_site, rx_site);
-    fflush(stderr);
-    fflush(stdout);
 
-    Point2Point p2p(tx_site, rx_site, path, freq_hz, normalize, metric);
-    fflush(stderr);
-    fflush(stdout);
+    /* Call sigserve's TerrainProfile constructor */
+    ::TerrainProfile p2p(tx_site, rx_site, path, freq_hz, normalize, metric);
 
-    PointToPointReport report;
+    TerrainProfile report;
 
     report.distance.reserve(p2p._distance.size());
     std::copy(p2p._distance.begin(), p2p._distance.end(), std::back_inserter(report.distance));

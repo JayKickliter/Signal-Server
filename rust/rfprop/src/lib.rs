@@ -4,8 +4,8 @@ mod sigserve;
 pub use error::Error;
 pub use sigserve::{
     call_sigserve,
-    ffi::{PointToPointReport, Report},
-    init, point_to_point,
+    ffi::{Report, TerrainProfile},
+    init, terrain_profile,
 };
 
 #[cfg(test)]
