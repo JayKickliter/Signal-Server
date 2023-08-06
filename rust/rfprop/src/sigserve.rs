@@ -1,4 +1,5 @@
 use crate::error::Error;
+use log::debug;
 use std::{
     ffi::{c_char, CString},
     path::Path,
@@ -27,7 +28,7 @@ pub fn call_sigserve(args: &str) -> Result<ffi::Report, Error> {
     // SAFETY: See previous safety comment.
     let report = unsafe { ffi::handle_args(c_args.len() as i32, c_args.as_mut_ptr()) };
     let duration = start.elapsed();
-    println!("call_sigserve took {:?}", duration);
+    debug!("call_sigserve took {:?}", duration);
     match report.retcode {
         0 => Ok(report),
         other => Err(Error::Retcode(other)),
@@ -45,7 +46,7 @@ pub fn terrain_profile(
     freq_hz: f64,
     normalize: bool,
 ) -> ffi::TerrainProfile {
-    // let start = std::time::Instant::now();
+    let start = std::time::Instant::now();
     // SAFETY: this returns no error code nor exception
     let ret = unsafe {
         ffi::terrain_profile(
@@ -60,8 +61,8 @@ pub fn terrain_profile(
             true,
         )
     };
-    // let duration = start.elapsed();
-    // println!("terrain_profile took {:?}", duration);
+    let duration = start.elapsed();
+    debug!("terrain_profile(tx_lat: {tx_lat}, tx_lon: {tx_lon}, tx_antenna_alt_m: {tx_antenna_alt_m}, rx_lat: {rx_lat}, rx_lon: {rx_lon}, rx_antenna_alt_m: {rx_antenna_alt_m}, freq_hz: {freq_hz}, normalize: {normalize}) took {:?}", duration);
     ret
 }
 

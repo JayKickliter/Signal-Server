@@ -1344,7 +1344,6 @@ TerrainProfile::TerrainProfile(site const &src, site const &dst, Path const &pat
                 src.lat, src.lon, src.alt, dst.lat, dst.lon, dst.alt, freq_hz, normalised, metric);
         fflush(stderr);
     }
-    assert(G_debug);
     assert((freq_hz >= 20e6) && (freq_hz <= 100e9));
     const double src_elev_ft = GetElevation(src);
     const double dst_elev_ft = GetElevation(dst);
