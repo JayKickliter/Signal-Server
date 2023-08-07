@@ -100,9 +100,6 @@ TerrainProfile terrain_profile(double tx_lat, double tx_lon, double tx_antenna_a
     double _min_lon = LonDiff(_tx_lon, _rx_lon) < 0.0 ? _tx_lon : _rx_lon;
     double _max_lon = LonDiff(_tx_lon, _rx_lon) < 0.0 ? _rx_lon : _tx_lon;
 
-    printf("_min_lat: %f, _max_lat: %f, _tx_lon: %f, _rx_lon: %f, _min_lon: %f, _max_lon: %f\n", _min_lat, _max_lat, _tx_lon,
-           _rx_lon, _min_lon, _max_lon);
-
     LoadTopoData(_max_lon, _min_lon, _max_lat, _min_lat, nullptr);
 
     site tx_site;
