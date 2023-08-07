@@ -2,7 +2,11 @@ mod error;
 mod sigserve;
 
 pub use error::Error;
-pub use sigserve::{call_sigserve, ffi::Report, init};
+pub use sigserve::{
+    call_sigserve,
+    ffi::{Report, TerrainProfile},
+    init, terrain_profile,
+};
 
 #[cfg(test)]
 mod tests {
@@ -16,7 +20,7 @@ mod tests {
         let bsdf_dir = [env!("CARGO_MANIFEST_DIR"), "..", "..", "data"]
             .iter()
             .collect::<PathBuf>();
-        crate::init(&fs::canonicalize(bsdf_dir).unwrap(), true).unwrap();
+        crate::init(&fs::canonicalize(bsdf_dir).unwrap(), false).unwrap();
 
         println!("Calling signal-server with: {PLOT_ARGS}");
         let plot_report = crate::call_sigserve(PLOT_ARGS);

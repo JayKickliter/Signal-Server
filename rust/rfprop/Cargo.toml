@@ -5,8 +5,9 @@ edition = "2021"
 build = "build.rs"
 
 [dependencies]
-thiserror = "1"
 cxx = "1"
+log = "0.4"
+thiserror = "1"
 
 [build-dependencies]
 cmake = "0.1"

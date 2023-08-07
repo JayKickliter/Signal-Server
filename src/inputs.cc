@@ -516,46 +516,48 @@ int LoadSDF_BSDF(char *name, struct output *out)
             if (minlat == dem->min_north && minlon == dem->min_west && maxlat == dem->max_north && maxlon == dem->max_west) {
                 found = 1;
 
-                // TODO copy-pasted from below, dedup
-                if (dem->min_el < out->min_elevation) out->min_elevation = dem->min_el;
+                if (out) {
+                    // TODO copy-pasted from below, dedup
+                    if (dem->min_el < out->min_elevation) out->min_elevation = dem->min_el;
 
-                if (dem->max_el > out->max_elevation) out->max_elevation = dem->max_el;
+                    if (dem->max_el > out->max_elevation) out->max_elevation = dem->max_el;
 
-                if (out->max_north == -90)
-                    out->max_north = dem->max_north;
+                    if (out->max_north == -90)
+                        out->max_north = dem->max_north;
 
-                else if (dem->max_north > out->max_north)
-                    out->max_north = dem->max_north;
+                    else if (dem->max_north > out->max_north)
+                        out->max_north = dem->max_north;
 
-                if (out->min_north == 90)
-                    out->min_north = dem->min_north;
+                    if (out->min_north == 90)
+                        out->min_north = dem->min_north;
 
-                else if (dem->min_north < out->min_north)
-                    out->min_north = dem->min_north;
+                    else if (dem->min_north < out->min_north)
+                        out->min_north = dem->min_north;
 
-                if (out->max_west == -1)
-                    out->max_west = dem->max_west;
-
-                else {
-                    if (abs(dem->max_west - out->max_west) < 180) {
-                        if (dem->max_west > out->max_west) out->max_west = dem->max_west;
-                    }
+                    if (out->max_west == -1)
+                        out->max_west = dem->max_west;
 
                     else {
-                        if (dem->max_west < out->max_west) out->max_west = dem->max_west;
-                    }
-                }
+                        if (abs(dem->max_west - out->max_west) < 180) {
+                            if (dem->max_west > out->max_west) out->max_west = dem->max_west;
+                        }
 
-                if (out->min_west == 360)
-                    out->min_west = dem->min_west;
-
-                else {
-                    if (fabs(dem->min_west - out->min_west) < 180.0) {
-                        if (dem->min_west < out->min_west) out->min_west = dem->min_west;
+                        else {
+                            if (dem->max_west < out->max_west) out->max_west = dem->max_west;
+                        }
                     }
+
+                    if (out->min_west == 360)
+                        out->min_west = dem->min_west;
 
                     else {
-                        if (dem->min_west > out->min_west) out->min_west = dem->min_west;
+                        if (fabs(dem->min_west - out->min_west) < 180.0) {
+                            if (dem->min_west < out->min_west) out->min_west = dem->min_west;
+                        }
+
+                        else {
+                            if (dem->min_west > out->min_west) out->min_west = dem->min_west;
+                        }
                     }
                 }
                 break;
@@ -674,46 +676,47 @@ int LoadSDF_BSDF(char *name, struct output *out)
         dem.data = (short *)mmap(NULL, sizeof(int16_t) * dem.ippd * dem.ippd, PROT_READ, MAP_PRIVATE, fd, 0);
 
         close(fd);
+        if (out) {
+            if (dem.min_el < out->min_elevation) out->min_elevation = dem.min_el;
 
-        if (dem.min_el < out->min_elevation) out->min_elevation = dem.min_el;
+            if (dem.max_el > out->max_elevation) out->max_elevation = dem.max_el;
 
-        if (dem.max_el > out->max_elevation) out->max_elevation = dem.max_el;
+            if (out->max_north == -90)
+                out->max_north = dem.max_north;
 
-        if (out->max_north == -90)
-            out->max_north = dem.max_north;
+            else if (dem.max_north > out->max_north)
+                out->max_north = dem.max_north;
 
-        else if (dem.max_north > out->max_north)
-            out->max_north = dem.max_north;
+            if (out->min_north == 90)
+                out->min_north = dem.min_north;
 
-        if (out->min_north == 90)
-            out->min_north = dem.min_north;
+            else if (dem.min_north < out->min_north)
+                out->min_north = dem.min_north;
 
-        else if (dem.min_north < out->min_north)
-            out->min_north = dem.min_north;
-
-        if (out->max_west == -1)
-            out->max_west = dem.max_west;
-
-        else {
-            if (abs(dem.max_west - out->max_west) < 180) {
-                if (dem.max_west > out->max_west) out->max_west = dem.max_west;
-            }
+            if (out->max_west == -1)
+                out->max_west = dem.max_west;
 
             else {
-                if (dem.max_west < out->max_west) out->max_west = dem.max_west;
-            }
-        }
+                if (abs(dem.max_west - out->max_west) < 180) {
+                    if (dem.max_west > out->max_west) out->max_west = dem.max_west;
+                }
 
-        if (out->min_west == 360)
-            out->min_west = dem.min_west;
-
-        else {
-            if (fabs(dem.min_west - out->min_west) < 180.0) {
-                if (dem.min_west < out->min_west) out->min_west = dem.min_west;
+                else {
+                    if (dem.max_west < out->max_west) out->max_west = dem.max_west;
+                }
             }
+
+            if (out->min_west == 360)
+                out->min_west = dem.min_west;
 
             else {
-                if (dem.min_west > out->min_west) out->min_west = dem.min_west;
+                if (fabs(dem.min_west - out->min_west) < 180.0) {
+                    if (dem.min_west < out->min_west) out->min_west = dem.min_west;
+                }
+
+                else {
+                    if (dem.min_west > out->min_west) out->min_west = dem.min_west;
+                }
             }
         }
 
@@ -798,47 +801,49 @@ int LoadSDF(char *name, struct output *out)
             dem.data = new short[IPPD * IPPD];
             bzero(dem.data, IPPD * IPPD * sizeof(short));
 
-            if (dem.min_el > 0) dem.min_el = 0;
+            if (out) {
+                if (dem.min_el > 0) dem.min_el = 0;
 
-            if (dem.min_el < out->min_elevation) out->min_elevation = dem.min_el;
+                if (dem.min_el < out->min_elevation) out->min_elevation = dem.min_el;
 
-            if (dem.max_el > out->max_elevation) out->max_elevation = dem.max_el;
+                if (dem.max_el > out->max_elevation) out->max_elevation = dem.max_el;
 
-            if (out->max_north == -90)
-                out->max_north = dem.max_north;
+                if (out->max_north == -90)
+                    out->max_north = dem.max_north;
 
-            else if (dem.max_north > out->max_north)
-                out->max_north = dem.max_north;
+                else if (dem.max_north > out->max_north)
+                    out->max_north = dem.max_north;
 
-            if (out->min_north == 90)
-                out->min_north = dem.min_north;
+                if (out->min_north == 90)
+                    out->min_north = dem.min_north;
 
-            else if (dem.min_north < out->min_north)
-                out->min_north = dem.min_north;
+                else if (dem.min_north < out->min_north)
+                    out->min_north = dem.min_north;
 
-            if (out->max_west == -1)
-                out->max_west = dem.max_west;
-
-            else {
-                if (abs(dem.max_west - out->max_west) < 180) {
-                    if (dem.max_west > out->max_west) out->max_west = dem.max_west;
-                }
+                if (out->max_west == -1)
+                    out->max_west = dem.max_west;
 
                 else {
-                    if (dem.max_west < out->max_west) out->max_west = dem.max_west;
-                }
-            }
+                    if (abs(dem.max_west - out->max_west) < 180) {
+                        if (dem.max_west > out->max_west) out->max_west = dem.max_west;
+                    }
 
-            if (out->min_west == 360)
-                out->min_west = dem.min_west;
-
-            else {
-                if (abs(dem.min_west - out->min_west) < 180) {
-                    if (dem.min_west < out->min_west) out->min_west = dem.min_west;
+                    else {
+                        if (dem.max_west < out->max_west) out->max_west = dem.max_west;
+                    }
                 }
+
+                if (out->min_west == 360)
+                    out->min_west = dem.min_west;
 
                 else {
-                    if (dem.min_west > out->min_west) out->min_west = dem.min_west;
+                    if (abs(dem.min_west - out->min_west) < 180) {
+                        if (dem.min_west < out->min_west) out->min_west = dem.min_west;
+                    }
+
+                    else {
+                        if (dem.min_west > out->min_west) out->min_west = dem.min_west;
+                    }
                 }
             }
 

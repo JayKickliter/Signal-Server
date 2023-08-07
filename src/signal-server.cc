@@ -538,6 +538,10 @@ Path::Path(site const &src, site const &dst)
        elevation and distance information for points
        along that path in the "path" structure. */
 
+    if (G_debug) {
+        fprintf(stderr, "[Path::Path] src: %f %f %f, dst: %f %f %f\n", src.lat, src.lon, src.alt, dst.lat, dst.lon, dst.alt);
+        fflush(stderr);
+    }
     int c;
     double azimuth, distance_, lat1, lon1, beta, den, num, lat2, lon2, total_distance, dx, dy, path_length, miles_per_sample,
         samples_per_radian = 68755.0;
@@ -634,6 +638,8 @@ Path::Path(site const &src, site const &dst)
 }
 
 ssize_t Path::ssize() const { return lat.size(); }
+
+size_t Path::size() const { return lat.size(); }
 
 double ElevationAngle2(Path const &path, site const &source, site const &destination, double er, LR const &lr)
 {
@@ -931,6 +937,10 @@ void resize_elev(struct output &out) { out.elev.resize(ARRAYSIZE + 10, 0.0); }
 
 int init(const char *sdf_path, bool debug)
 {
+    // Ensure we never to need resize G_dem by pre-allocing space for
+    // all 26109 files.
+    G_dem.reserve(26109);
+
     // these can stay globals
     G_gpsav = 0;
     G_sdf_path[0] = 0;
