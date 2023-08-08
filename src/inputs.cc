@@ -796,10 +796,7 @@ int LoadSDF(char *name, struct output *out)
             dem.max_north = maxlat;
             dem.min_el = 0;
             dem.max_el = 0;
-
-            /* Fill DEM with sea-level topography */
-            dem.data = new short[IPPD * IPPD];
-            bzero(dem.data, IPPD * IPPD * sizeof(short));
+            dem.data = nullptr;
 
             if (out) {
                 if (dem.min_el > 0) dem.min_el = 0;

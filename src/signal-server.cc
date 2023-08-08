@@ -366,9 +366,7 @@ double GetElevation(site const &location)
        Function returns -5000.0 for locations not found in memory. */
 
     int x = 0, y = 0;
-    double elevation;
     std::shared_ptr<const dem> found;
-
     {
         std::shared_lock r_lock(G_dem_mtx);
         for (auto const &dem : G_dem) {
@@ -382,10 +380,19 @@ double GetElevation(site const &location)
         }
     }
 
-    if (found)
-        elevation = 3.28084 * found->data[DEM_INDEX(found->ippd, x, y)];
-    else
+    double elevation;
+    if (found && found->data) {
+        elevation = FEET_PER_METER * found->data[DEM_INDEX(found->ippd, x, y)];
+    }
+    else if (found) {
+        // If it's in memory but doesn't have any data, it was
+        // inserted as an ocean place-holder
+        elevation = 0.0;
+    }
+    else {
+        // Return an absurd value when this tile isn't in memory
         elevation = -5000.0;
+    }
 
     return elevation;
 }
