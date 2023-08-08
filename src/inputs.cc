@@ -11,6 +11,7 @@
 #include <zlib.h>
 
 #include <cassert>
+#include <fstream>
 #include <memory>
 
 #include "common.hh"
@@ -488,9 +489,7 @@ int LoadSDF_BSDF(char *name, struct output *out)
        NOTE: On error, this function returns a negative errno */
 
     int x, minlat, minlon, maxlat, maxlon;
-    char found = 0, sdf_file[255], path_plus_name[PATH_MAX];
-
-    int fd;
+    char found = 0, sdf_file[255];
 
     for (x = 0; name[x] != '.' && name[x] != 0 && x < 249; x++) sdf_file[x] = name[x];
 
@@ -567,22 +566,13 @@ int LoadSDF_BSDF(char *name, struct output *out)
 
     if (found == 0) {
         /* Search for SDF file in current working directory first */
+        auto file_path = G_sdf_path / sdf_file;
 
-        strncpy(path_plus_name, sdf_file, sizeof(path_plus_name) - 1);
-
-        if ((fd = open(path_plus_name, O_RDONLY)) == -1) {
-            /* Next, try loading SDF file from path specified
-               in $HOME/.ss_path file or by -d argument */
-
-            strncpy(path_plus_name, G_sdf_path, sizeof(path_plus_name) - 1);
-            strncat(path_plus_name, sdf_file, sizeof(path_plus_name) - 1);
-            if ((fd = open(path_plus_name, O_RDONLY)) == -1) {
-                return -errno;
-            }
-        }
+        std::ifstream file;
+        file.open(file_path);
 
         if (G_debug == 1) {
-            fprintf(stderr, "Loading \"%s\"...\n", path_plus_name);
+            fprintf(stderr, "Loading \"%s\"...\n", sdf_file);
             fflush(stderr);
         }
 
@@ -626,39 +616,26 @@ int LoadSDF_BSDF(char *name, struct output *out)
              * @returns 0 on success
              * @returns a negative value on error
              */
-            int read(int fd)
+            int read(std::ifstream &file)
             {
                 uint16_t version = UINT16_MAX;
-                if (lseek(fd, -2, SEEK_END) == -1) {
-                    return -errno;
-                }
-                if (::read(fd, &version, sizeof(version)) != sizeof(version)) {
-                    return -errno;
-                }
+                file.seekg(-2, std::ios::end);
+                file.read(reinterpret_cast<char *>(&version), sizeof version);
                 if (version != 0) {
                     return -1;
                 }
-                if (lseek(fd, -8, SEEK_END) == -1) {
-                    return -errno;
-                }
-                if (::read(fd, &this->ippd, sizeof(this->ippd)) != sizeof(this->ippd)) {
-                    return -errno;
-                }
+                file.seekg(-8, std::ios::end);
+                file.read(reinterpret_cast<char *>(&ippd), sizeof ippd);
                 assert(this->ippd == 1200 || this->ippd == 3600);
-                if (::read(fd, &this->min_el, sizeof(this->min_el)) != sizeof(this->min_el)) {
-                    return -errno;
-                }
-                if (::read(fd, &this->max_el, sizeof(this->max_el)) != sizeof(this->max_el)) {
-                    return -errno;
-                }
+                file.read(reinterpret_cast<char *>(&min_el), sizeof min_el);
+                file.read(reinterpret_cast<char *>(&max_el), sizeof max_el);
                 return 0;
             }
         };
 
         int parse_res;
         FooterV0 footer;
-        if ((parse_res = footer.read(fd)) != 0) {
-            close(fd);
+        if ((parse_res = footer.read(file)) != 0) {
             return parse_res;
         }
 
@@ -672,10 +649,10 @@ int LoadSDF_BSDF(char *name, struct output *out)
         dem.max_el = footer.max_el;
 
         /* TODO: need to seek before mapping? */
-        lseek(fd, 0, SEEK_SET);
+        file.seekg(0);
+        auto fd = file.rdbuf().fd();
         dem.data = (short *)mmap(NULL, sizeof(int16_t) * dem.ippd * dem.ippd, PROT_READ, MAP_PRIVATE, fd, 0);
 
-        close(fd);
         if (out) {
             if (dem.min_el < out->min_elevation) out->min_elevation = dem.min_el;
 

@@ -31,6 +31,7 @@
 #include <zlib.h>
 
 #include <cassert>
+#include <filesystem>
 #include <limits>
 #include <vector>
 
@@ -46,7 +47,9 @@ int MAXPAGES = 10 * 10;
 int IPPD = 1200;
 int ARRAYSIZE = (MAXPAGES * IPPD) + 10;
 
-char G_sdf_path[255], G_gpsav = 0;
+std::filesystem::path G_sdf_path;
+
+char G_gpsav = 0;
 
 int G_ippd, G_mpi, G_debug = 0;
 
@@ -942,7 +945,7 @@ void ObstructionAnalysis(Path const &path, site const &xmtr, site const &rcvr, d
 
 void resize_elev(struct output &out) { out.elev.resize(ARRAYSIZE + 10, 0.0); }
 
-int init(const char *sdf_path, bool debug)
+int init(std::filesystem::path sdf_path, bool debug)
 {
     // Ensure we never to need resize G_dem by pre-allocing space for
     // all 26109 files.
@@ -960,14 +963,7 @@ int init(const char *sdf_path, bool debug)
     G_dpp = 1 / G_ppd;
     G_mpi = G_ippd - 1;
     G_debug = debug;
-
-    if (sdf_path) {
-        strncpy(G_sdf_path, sdf_path, 253);
-        return 0;
-    }
-    else {
-        return 1;
-    }
+    G_sdf_path = sdf_path;
 }
 
 int handle_args(int argc, char *argv[], output &out)

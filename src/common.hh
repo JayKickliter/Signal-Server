@@ -1,6 +1,7 @@
 #ifndef _COMMON_HH_
 #define _COMMON_HH_
 
+#include <filesystem>
 #include <memory>
 #include <mutex>
 #include <shared_mutex>
@@ -174,8 +175,8 @@ extern double G_yppd;
 extern double G_fzone_clearance;
 extern double G_delta;
 
+extern std::filesystem::path G_sdf_path;
 extern char G_string[];
-extern char G_sdf_path[];
 extern char G_gpsav;
 
 extern unsigned char G_got_elevation_pattern;
