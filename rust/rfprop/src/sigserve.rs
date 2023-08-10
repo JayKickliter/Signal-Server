@@ -98,7 +98,7 @@ pub(crate) mod ffi {
         fresnel60: Vec<f64>,
         curvature: Vec<f64>,
         terrain: Vec<f64>,
-        tx_site_over_water: bool
+        tx_site_over_water: bool,
     }
 
     unsafe extern "C++" {

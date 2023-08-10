@@ -84,7 +84,7 @@ struct TerrainProfile {
     std::vector<double> _fresnel;
     std::vector<double> _los;
     std::vector<double> _terrain;
-    bool                _tx_site_over_water;
+    bool _tx_site_over_water;
     TerrainProfile(site const &src, site const &dst, Path const &path, double freq_hz, bool normalised, bool metric) noexcept;
 };
 
