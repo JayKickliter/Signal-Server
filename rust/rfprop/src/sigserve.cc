@@ -137,6 +137,8 @@ TerrainProfile terrain_profile(double tx_lat, double tx_lon, double tx_antenna_a
     report.terrain.reserve(p2p._terrain.size());
     std::copy(p2p._terrain.begin(), p2p._terrain.end(), std::back_inserter(report.terrain));
 
+    report.tx_site_over_water = p2p._tx_site_over_water;
+
     return report;
 }
 
