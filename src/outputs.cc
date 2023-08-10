@@ -1351,6 +1351,7 @@ TerrainProfile::TerrainProfile(site const &src, site const &dst, Path const &pat
     const double total_great_circle_ft = FEET_PER_MILE * path.distance[path.ssize() - 1];
     const double src_radius_ft = src_elev_ft + src.alt + EARTHRADIUS_FT;
     const double wavelength_ft = 9.8425e8 / freq_hz;
+    _tx_site_over_water = false;
 
     double nb = 0.0;
     double nm = 0.0;
@@ -1363,6 +1364,9 @@ TerrainProfile::TerrainProfile(site const &src, site const &dst, Path const &pat
     for (int x = 0; x < path.ssize(); x++) {
         double terrain_ft = path.elevation[x];
         if (x == 0) {
+            if (terrain_ft == 0) {
+                _tx_site_over_water = true;
+            }
             /* RX antenna spike */
             terrain_ft += src.alt;
         }
