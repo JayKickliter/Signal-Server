@@ -2067,7 +2067,16 @@ int handle_args(int argc, char * argv[], output & out) {
         strncpy(out.tx_site[0].name, "Tx", 3);
         strncpy(out.tx_site[1].name, "Rx", 3);
         /* TODO:  refactor PathReport so overall loss can be calculated without all the IO noise. */
-        /* PathReport(path, out.tx_site[0], out.tx_site[1], NULL, 0, propmodel, pmenv, rxGain, &out, lr); */
+        PathReport(path,
+                   out.tx_site[0],
+                   out.tx_site[1],
+                   "/tmp/sigserve-path-report",
+                   0,
+                   propmodel,
+                   pmenv,
+                   rxGain,
+                   &out,
+                   lr);
         PlotPath(path, &out, out.tx_site[0], out.tx_site[1], 1, &lr);
         SeriesData(path, out.tx_site[0], out.tx_site[1], fresnel_plot, normalise, &out, lr);
     }
