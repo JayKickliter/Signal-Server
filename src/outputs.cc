@@ -826,7 +826,7 @@ void DoLOS(struct output * out, unsigned char kml, unsigned char ngs, struct sit
 void PathReport(Path const & path,
                 struct site source,
                 struct site destination,
-                char * name,
+                const char * name,
                 char /* graph_it */,
                 int propmodel,
                 int pmenv,
