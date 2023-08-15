@@ -20,24 +20,25 @@
 #define BZBUFFER 65536
 #define GZBUFFER 32768
 
-extern char *G_color_file;
+extern char * G_color_file;
 
-int loadClutter(char *filename, double radius, struct site tx)
-{
+int loadClutter(char * filename, double radius, struct site tx) {
     /* This function reads a MODIS 17-class clutter file in ASCII Grid format.
-       The nominal heights it applies to each value, eg. 5 (Mixed forest) = 15m are
-       taken from ITU-R P.452-11.
-       It doesn't have it's own matrix, instead it boosts the DEM matrix like point clutter
-       AddElevation(lat, lon, height);
-       If tiles are standard 2880 x 3840 then cellsize is constant at 0.004166
+       The nominal heights it applies to each value, eg. 5 (Mixed forest) = 15m
+       are taken from ITU-R P.452-11. It doesn't have it's own matrix, instead
+       it boosts the DEM matrix like point clutter AddElevation(lat, lon,
+       height); If tiles are standard 2880 x 3840 then cellsize is constant at
+       0.004166
      */
     int x, y, z, h = 0, w = 0;
     double clh, xll, yll, cellsize, cellsize2, xOffset, yOffset, lat, lon;
     char line[100000];
     char *s, *pch = NULL;
-    FILE *fd;
+    FILE * fd;
 
-    if ((fd = fopen(filename, "rb")) == NULL) return errno;
+    if ((fd = fopen(filename, "rb")) == NULL) {
+        return errno;
+    }
 
     if (fgets(line, 19, fd) != NULL) {
         pch = strtok(line, " ");
@@ -54,14 +55,17 @@ int loadClutter(char *filename, double radius, struct site tx)
     if (w == 2880 && h == 3840) {
         cellsize = 0.004167;
         cellsize2 = cellsize * 3;
-    }
-    else {
+    } else {
         if (G_debug) {
-            fprintf(stderr, "\nError Loading clutter file, unsupported resolution %d x %d.\n", w, h);
+            fprintf(stderr,
+                    "\nError Loading clutter file, unsupported resolution %d x "
+                    "%d.\n",
+                    w,
+                    h);
             fflush(stderr);
             fclose(fd);
         }
-        return 0;  // can't work with this yet
+        return 0; // can't work with this yet
     }
 
     if (G_debug) {
@@ -83,7 +87,7 @@ int loadClutter(char *filename, double radius, struct site tx)
         fflush(stderr);
     }
 
-    s = fgets(line, 25, fd);  // cellsize
+    s = fgets(line, 25, fd); // cellsize
 
     if (s) {
     }
@@ -96,36 +100,46 @@ int loadClutter(char *filename, double radius, struct site tx)
             while (pch != NULL && x < w) {
                 z = atoi(pch);
                 // Apply ITU-R P.452-11
-                // Treat classes 0, 9, 10, 11, 15, 16 as water, (Water, savanna, grassland, wetland, snow, barren)
+                // Treat classes 0, 9, 10, 11, 15, 16 as water, (Water, savanna,
+                // grassland, wetland, snow, barren)
                 clh = 0.0;
 
                 // evergreen, evergreen, urban
-                if (z == 1 || z == 2 || z == 13) clh = 20.0;
+                if (z == 1 || z == 2 || z == 13) {
+                    clh = 20.0;
+                }
                 // deciduous, deciduous, mixed
-                if (z == 3 || z == 4 || z == 5) clh = 15.0;
+                if (z == 3 || z == 4 || z == 5) {
+                    clh = 15.0;
+                }
                 // woody shrublands & savannas
-                if (z == 6 || z == 8) clh = 4.0;
+                if (z == 6 || z == 8) {
+                    clh = 4.0;
+                }
                 // shrublands, savannas, croplands...
-                if (z == 7 || z == 9 || z == 10 || z == 12 || z == 14) clh = 2.0;
+                if (z == 7 || z == 9 || z == 10 || z == 12 || z == 14) {
+                    clh = 2.0;
+                }
 
                 if (clh > 1) {
-                    xOffset = x * cellsize;  // 12 deg wide
-                    yOffset = y * cellsize;  // 16 deg high
+                    xOffset = x * cellsize; // 12 deg wide
+                    yOffset = y * cellsize; // 16 deg high
 
                     // make all longitudes positive
                     if (xll + xOffset > 0) {
                         lon = 360 - (xll + xOffset);
-                    }
-                    else {
+                    } else {
                         lon = (xll + xOffset) * -1;
                     }
                     lat = yll + yOffset;
 
                     // bounding box
-                    if (lat > tx.lat - radius && lat < tx.lat + radius && lon > tx.lon - radius && lon < tx.lon + radius) {
+                    if (lat > tx.lat - radius && lat < tx.lat + radius
+                        && lon > tx.lon - radius && lon < tx.lon + radius) {
                         // not in near field
-                        if ((lat > tx.lat + cellsize2 || lat < tx.lat - cellsize2) ||
-                            (lon > tx.lon + cellsize2 || lon < tx.lon - cellsize2)) {
+                        if ((lat > tx.lat + cellsize2 || lat < tx.lat - cellsize2)
+                            || (lon > tx.lon + cellsize2
+                                || lon < tx.lon - cellsize2)) {
                             AddElevation(lat, lon, clh, 2);
                         }
                     }
@@ -133,12 +147,11 @@ int loadClutter(char *filename, double radius, struct site tx)
 
                 x++;
                 pch = strtok(NULL, " ");
-            }  // while
-        }
-        else {
+            } // while
+        } else {
             fprintf(stderr, "Clutter error @ x %d y %d\n", x, y);
-        }  // if
-    }      // for
+        } // if
+    }     // for
 
     fclose(fd);
     return 0;
@@ -478,8 +491,7 @@ int loadLIDAR(char *filenames, int resample, struct output *out)
 }
 #endif
 
-int LoadSDF_BSDF(char *name, struct output *out)
-{
+int LoadSDF_BSDF(char * name, struct output * out) {
     /* This function reads uncompressed ss Data Files (.sdf)
        containing digital elevation model data into memory.
        Elevation data, maximum and minimum elevations, and
@@ -492,13 +504,17 @@ int LoadSDF_BSDF(char *name, struct output *out)
 
     int fd;
 
-    for (x = 0; name[x] != '.' && name[x] != 0 && x < 249; x++) sdf_file[x] = name[x];
+    for (x = 0; name[x] != '.' && name[x] != 0 && x < 249; x++) {
+        sdf_file[x] = name[x];
+    }
 
     sdf_file[x] = 0;
 
     /* Parse filename for minimum latitude and longitude values */
 
-    if (sscanf(sdf_file, "%d:%d:%d:%d", &minlat, &maxlat, &minlon, &maxlon) != 4) return -EINVAL;
+    if (sscanf(sdf_file, "%d:%d:%d:%d", &minlat, &maxlat, &minlon, &maxlon) != 4) {
+        return -EINVAL;
+    }
 
     sdf_file[x] = '.';
     sdf_file[x + 1] = 'b';
@@ -512,15 +528,18 @@ int LoadSDF_BSDF(char *name, struct output *out)
         /* Hold read lock on G_dem while iterating through the vec. */
         std::shared_lock r_lock(G_dem_mtx);
 
-        for (auto const &dem : G_dem) {
-            if (minlat == dem->min_north && minlon == dem->min_west && maxlat == dem->max_north && maxlon == dem->max_west) {
+        for (auto const & dem : G_dem) {
+            if (minlat == dem->min_north && minlon == dem->min_west
+                && maxlat == dem->max_north && maxlon == dem->max_west) {
                 found = 1;
 
                 if (out) {
                     // TODO copy-pasted from below, dedup
-                    if (dem->min_el < out->min_elevation) out->min_elevation = dem->min_el;
+                    if (dem->min_el < out->min_elevation)
+                        out->min_elevation = dem->min_el;
 
-                    if (dem->max_el > out->max_elevation) out->max_elevation = dem->max_el;
+                    if (dem->max_el > out->max_elevation)
+                        out->max_elevation = dem->max_el;
 
                     if (out->max_north == -90)
                         out->max_north = dem->max_north;
@@ -539,11 +558,13 @@ int LoadSDF_BSDF(char *name, struct output *out)
 
                     else {
                         if (abs(dem->max_west - out->max_west) < 180) {
-                            if (dem->max_west > out->max_west) out->max_west = dem->max_west;
+                            if (dem->max_west > out->max_west)
+                                out->max_west = dem->max_west;
                         }
 
                         else {
-                            if (dem->max_west < out->max_west) out->max_west = dem->max_west;
+                            if (dem->max_west < out->max_west)
+                                out->max_west = dem->max_west;
                         }
                     }
 
@@ -552,11 +573,13 @@ int LoadSDF_BSDF(char *name, struct output *out)
 
                     else {
                         if (fabs(dem->min_west - out->min_west) < 180.0) {
-                            if (dem->min_west < out->min_west) out->min_west = dem->min_west;
+                            if (dem->min_west < out->min_west)
+                                out->min_west = dem->min_west;
                         }
 
                         else {
-                            if (dem->min_west > out->min_west) out->min_west = dem->min_west;
+                            if (dem->min_west > out->min_west)
+                                out->min_west = dem->min_west;
                         }
                     }
                 }
@@ -626,8 +649,7 @@ int LoadSDF_BSDF(char *name, struct output *out)
              * @returns 0 on success
              * @returns a negative value on error
              */
-            int read(int fd)
-            {
+            int read(int fd) {
                 uint16_t version = UINT16_MAX;
                 if (lseek(fd, -2, SEEK_END) == -1) {
                     return -errno;
@@ -641,14 +663,17 @@ int LoadSDF_BSDF(char *name, struct output *out)
                 if (lseek(fd, -8, SEEK_END) == -1) {
                     return -errno;
                 }
-                if (::read(fd, &this->ippd, sizeof(this->ippd)) != sizeof(this->ippd)) {
+                if (::read(fd, &this->ippd, sizeof(this->ippd))
+                    != sizeof(this->ippd)) {
                     return -errno;
                 }
                 assert(this->ippd == 1200 || this->ippd == 3600);
-                if (::read(fd, &this->min_el, sizeof(this->min_el)) != sizeof(this->min_el)) {
+                if (::read(fd, &this->min_el, sizeof(this->min_el))
+                    != sizeof(this->min_el)) {
                     return -errno;
                 }
-                if (::read(fd, &this->max_el, sizeof(this->max_el)) != sizeof(this->max_el)) {
+                if (::read(fd, &this->max_el, sizeof(this->max_el))
+                    != sizeof(this->max_el)) {
                     return -errno;
                 }
                 return 0;
@@ -673,49 +698,68 @@ int LoadSDF_BSDF(char *name, struct output *out)
 
         /* TODO: need to seek before mapping? */
         lseek(fd, 0, SEEK_SET);
-        dem.data = (short *)mmap(NULL, sizeof(int16_t) * dem.ippd * dem.ippd, PROT_READ, MAP_PRIVATE, fd, 0);
+        dem.data = (short *)mmap(NULL,
+                                 sizeof(int16_t) * dem.ippd * dem.ippd,
+                                 PROT_READ,
+                                 MAP_PRIVATE,
+                                 fd,
+                                 0);
 
         close(fd);
         if (out) {
-            if (dem.min_el < out->min_elevation) out->min_elevation = dem.min_el;
+            if (dem.min_el < out->min_elevation) {
+                out->min_elevation = dem.min_el;
+            }
 
-            if (dem.max_el > out->max_elevation) out->max_elevation = dem.max_el;
+            if (dem.max_el > out->max_elevation) {
+                out->max_elevation = dem.max_el;
+            }
 
-            if (out->max_north == -90)
+            if (out->max_north == -90) {
                 out->max_north = dem.max_north;
 
-            else if (dem.max_north > out->max_north)
+            } else if (dem.max_north > out->max_north) {
                 out->max_north = dem.max_north;
+            }
 
-            if (out->min_north == 90)
+            if (out->min_north == 90) {
                 out->min_north = dem.min_north;
 
-            else if (dem.min_north < out->min_north)
+            } else if (dem.min_north < out->min_north) {
                 out->min_north = dem.min_north;
+            }
 
-            if (out->max_west == -1)
+            if (out->max_west == -1) {
                 out->max_west = dem.max_west;
 
-            else {
+            } else {
                 if (abs(dem.max_west - out->max_west) < 180) {
-                    if (dem.max_west > out->max_west) out->max_west = dem.max_west;
+                    if (dem.max_west > out->max_west) {
+                        out->max_west = dem.max_west;
+                    }
                 }
 
                 else {
-                    if (dem.max_west < out->max_west) out->max_west = dem.max_west;
+                    if (dem.max_west < out->max_west) {
+                        out->max_west = dem.max_west;
+                    }
                 }
             }
 
-            if (out->min_west == 360)
+            if (out->min_west == 360) {
                 out->min_west = dem.min_west;
 
-            else {
+            } else {
                 if (fabs(dem.min_west - out->min_west) < 180.0) {
-                    if (dem.min_west < out->min_west) out->min_west = dem.min_west;
+                    if (dem.min_west < out->min_west) {
+                        out->min_west = dem.min_west;
+                    }
                 }
 
                 else {
-                    if (dem.min_west > out->min_west) out->min_west = dem.min_west;
+                    if (dem.min_west > out->min_west) {
+                        out->min_west = dem.min_west;
+                    }
                 }
             }
         }
@@ -727,12 +771,12 @@ int LoadSDF_BSDF(char *name, struct output *out)
         return 1;
     }
 
-    else
+    else {
         return found;
+    }
 }
 
-int LoadSDF(char *name, struct output *out)
-{
+int LoadSDF(char * name, struct output * out) {
     /* This function loads the requested SDF file from the filesystem.
        It first tries to invoke the LoadSDF_SDF() function to load an
        uncompressed SDF file (since uncompressed files load slightly
@@ -773,9 +817,9 @@ int LoadSDF(char *name, struct output *out)
         {
             /* Hold an RAII read lock on G_dem while iterating through the vec. */
             std::shared_lock r_lock(G_dem_mtx);
-            for (auto const &dem : G_dem) {
-                if (minlat == dem->min_north && minlon == dem->min_west && maxlat == dem->max_north &&
-                    maxlon == dem->max_west) {
+            for (auto const & dem : G_dem) {
+                if (minlat == dem->min_north && minlon == dem->min_west
+                    && maxlat == dem->max_north && maxlon == dem->max_west) {
                     found = 1;
                     break;
                 }
@@ -799,47 +843,63 @@ int LoadSDF(char *name, struct output *out)
             dem.data = nullptr;
 
             if (out) {
-                if (dem.min_el > 0) dem.min_el = 0;
+                if (dem.min_el > 0) {
+                    dem.min_el = 0;
+                }
 
-                if (dem.min_el < out->min_elevation) out->min_elevation = dem.min_el;
+                if (dem.min_el < out->min_elevation) {
+                    out->min_elevation = dem.min_el;
+                }
 
-                if (dem.max_el > out->max_elevation) out->max_elevation = dem.max_el;
+                if (dem.max_el > out->max_elevation) {
+                    out->max_elevation = dem.max_el;
+                }
 
-                if (out->max_north == -90)
+                if (out->max_north == -90) {
                     out->max_north = dem.max_north;
 
-                else if (dem.max_north > out->max_north)
+                } else if (dem.max_north > out->max_north) {
                     out->max_north = dem.max_north;
+                }
 
-                if (out->min_north == 90)
+                if (out->min_north == 90) {
                     out->min_north = dem.min_north;
 
-                else if (dem.min_north < out->min_north)
+                } else if (dem.min_north < out->min_north) {
                     out->min_north = dem.min_north;
+                }
 
-                if (out->max_west == -1)
+                if (out->max_west == -1) {
                     out->max_west = dem.max_west;
 
-                else {
+                } else {
                     if (abs(dem.max_west - out->max_west) < 180) {
-                        if (dem.max_west > out->max_west) out->max_west = dem.max_west;
+                        if (dem.max_west > out->max_west) {
+                            out->max_west = dem.max_west;
+                        }
                     }
 
                     else {
-                        if (dem.max_west < out->max_west) out->max_west = dem.max_west;
+                        if (dem.max_west < out->max_west) {
+                            out->max_west = dem.max_west;
+                        }
                     }
                 }
 
-                if (out->min_west == 360)
+                if (out->min_west == 360) {
                     out->min_west = dem.min_west;
 
-                else {
+                } else {
                     if (abs(dem.min_west - out->min_west) < 180) {
-                        if (dem.min_west < out->min_west) out->min_west = dem.min_west;
+                        if (dem.min_west < out->min_west) {
+                            out->min_west = dem.min_west;
+                        }
                     }
 
                     else {
-                        if (dem.min_west > out->min_west) out->min_west = dem.min_west;
+                        if (dem.min_west > out->min_west) {
+                            out->min_west = dem.min_west;
+                        }
                     }
                 }
             }
@@ -855,17 +915,18 @@ int LoadSDF(char *name, struct output *out)
     return return_value;
 }
 
-int LoadPAT(char *az_filename, char *el_filename, struct LR &lr)
-{
+int LoadPAT(char * az_filename, char * el_filename, struct LR & lr) {
     /* This function reads and processes antenna pattern (.az
        and .el) files that may correspond in name to previously
        loaded ss .lrp files or may be user-supplied by cmdline.  */
 
     int a, b, w, x, y, z, last_index, next_index, span;
     char string[255], *pointer = NULL;
-    float az, xx, elevation, amplitude, rotation, valid1, valid2, delta, azimuth[361], azimuth_pattern[361], el_pattern[10001],
-        elevation_pattern[361][1001], slant_angle[361], tilt, mechanical_tilt = 0.0, tilt_azimuth, tilt_increment, sum;
-    FILE *fd = NULL;
+    float az, xx, elevation, amplitude, rotation, valid1, valid2, delta,
+        azimuth[361], azimuth_pattern[361], el_pattern[10001],
+        elevation_pattern[361][1001], slant_angle[361], tilt,
+        mechanical_tilt = 0.0, tilt_azimuth, tilt_increment, sum;
+    FILE * fd = NULL;
     unsigned char read_count[10001];
 
     rotation = 0.0;
@@ -875,9 +936,11 @@ int LoadPAT(char *az_filename, char *el_filename, struct LR &lr)
 
     /* Load .az antenna pattern file */
 
-    if (az_filename != NULL && (fd = fopen(az_filename, "r")) == NULL && errno != ENOENT)
+    if (az_filename != NULL && (fd = fopen(az_filename, "r")) == NULL
+        && errno != ENOENT) {
         /* Any error other than file not existing is an error */
         return errno;
+    }
 
     if (fd != NULL) {
         if (G_debug) {
@@ -901,12 +964,15 @@ int LoadPAT(char *az_filename, char *el_filename, struct LR &lr)
         }
         pointer = strchr(string, ';');
 
-        if (pointer != NULL) *pointer = 0;
+        if (pointer != NULL) {
+            *pointer = 0;
+        }
 
-        if (lr.antenna_rotation != -1)  // If cmdline override
+        if (lr.antenna_rotation != -1) { // If cmdline override
             rotation = (float)lr.antenna_rotation;
-        else
+        } else {
             sscanf(string, "%f", &rotation);
+        }
 
         if (G_debug) {
             fprintf(stderr, "Antenna Pattern Rotation = %f\n", rotation);
@@ -922,7 +988,9 @@ int LoadPAT(char *az_filename, char *el_filename, struct LR &lr)
         }
         pointer = strchr(string, ';');
 
-        if (pointer != NULL) *pointer = 0;
+        if (pointer != NULL) {
+            *pointer = 0;
+        }
 
         sscanf(string, "%f %f", &az, &amplitude);
 
@@ -940,7 +1008,9 @@ int LoadPAT(char *az_filename, char *el_filename, struct LR &lr)
             }
             pointer = strchr(string, ';');
 
-            if (pointer != NULL) *pointer = 0;
+            if (pointer != NULL) {
+                *pointer = 0;
+            }
 
             sscanf(string, "%f %f", &az, &amplitude);
 
@@ -965,7 +1035,9 @@ int LoadPAT(char *az_filename, char *el_filename, struct LR &lr)
            one was read for each degree of azimuth. */
 
         for (x = 0; x <= 360; x++) {
-            if (read_count[x] > 1) azimuth[x] /= (float)read_count[x];
+            if (read_count[x] > 1) {
+                azimuth[x] /= (float)read_count[x];
+            }
         }
 
         /* Interpolate missing azimuths
@@ -976,10 +1048,11 @@ int LoadPAT(char *az_filename, char *el_filename, struct LR &lr)
 
         for (x = 0; x <= 360; x++) {
             if (read_count[x] != 0) {
-                if (last_index == -1)
+                if (last_index == -1) {
                     last_index = x;
-                else
+                } else {
                     next_index = x;
+                }
             }
 
             if (last_index != -1 && next_index != -1) {
@@ -989,7 +1062,9 @@ int LoadPAT(char *az_filename, char *el_filename, struct LR &lr)
                 span = next_index - last_index;
                 delta = (valid2 - valid1) / (float)span;
 
-                for (y = last_index + 1; y < next_index; y++) azimuth[y] = azimuth[y - 1] + delta;
+                for (y = last_index + 1; y < next_index; y++) {
+                    azimuth[y] = azimuth[y - 1] + delta;
+                }
 
                 last_index = y;
                 next_index = -1;
@@ -1003,7 +1078,9 @@ int LoadPAT(char *az_filename, char *el_filename, struct LR &lr)
         for (x = 0; x < 360; x++) {
             y = x + (int)rintf(rotation);
 
-            if (y >= 360) y -= 360;
+            if (y >= 360) {
+                y -= 360;
+            }
 
             azimuth_pattern[y] = azimuth[x];
         }
@@ -1015,9 +1092,11 @@ int LoadPAT(char *az_filename, char *el_filename, struct LR &lr)
 
     /* Read and process .el file */
 
-    if (el_filename != NULL && (fd = fopen(el_filename, "r")) == NULL && errno != ENOENT)
+    if (el_filename != NULL && (fd = fopen(el_filename, "r")) == NULL
+        && errno != ENOENT) {
         /* Any error other than file not existing is an error */
         return errno;
+    }
 
     if (fd != NULL) {
         if (G_debug) {
@@ -1042,22 +1121,30 @@ int LoadPAT(char *az_filename, char *el_filename, struct LR &lr)
         }
         pointer = strchr(string, ';');
 
-        if (pointer != NULL) *pointer = 0;
+        if (pointer != NULL) {
+            *pointer = 0;
+        }
 
         sscanf(string, "%f %f", &mechanical_tilt, &tilt_azimuth);
 
-        if (lr.antenna_downtilt != 99.0) {      // If Cmdline override
-            if (lr.antenna_dt_direction == -1)  // dt_dir not specified
-                tilt_azimuth = rotation;        // use rotation value
+        if (lr.antenna_downtilt != 99.0) {       // If Cmdline override
+            if (lr.antenna_dt_direction == -1) { // dt_dir not specified
+                tilt_azimuth = rotation;         // use rotation value
+            }
             mechanical_tilt = (float)lr.antenna_downtilt;
         }
 
-        if (lr.antenna_dt_direction != -1)  // If Cmdline override
+        if (lr.antenna_dt_direction != -1) { // If Cmdline override
             tilt_azimuth = (float)lr.antenna_dt_direction;
+        }
 
         if (G_debug) {
-            fprintf(stderr, "Antenna Pattern Mechamical Downtilt = %f\n", mechanical_tilt);
-            fprintf(stderr, "Antenna Pattern Mechanical Downtilt Direction = %f\n\n", tilt_azimuth);
+            fprintf(stderr,
+                    "Antenna Pattern Mechamical Downtilt = %f\n",
+                    mechanical_tilt);
+            fprintf(stderr,
+                    "Antenna Pattern Mechanical Downtilt Direction = %f\n\n",
+                    tilt_azimuth);
             fflush(stderr);
         }
 
@@ -1071,7 +1158,9 @@ int LoadPAT(char *az_filename, char *el_filename, struct LR &lr)
         }
         pointer = strchr(string, ';');
 
-        if (pointer != NULL) *pointer = 0;
+        if (pointer != NULL) {
+            *pointer = 0;
+        }
 
         sscanf(string, "%f %f", &elevation, &amplitude);
 
@@ -1090,7 +1179,9 @@ int LoadPAT(char *az_filename, char *el_filename, struct LR &lr)
             if (fgets(string, 254, fd) != NULL) {
                 pointer = strchr(string, ';');
             }
-            if (pointer != NULL) *pointer = 0;
+            if (pointer != NULL) {
+                *pointer = 0;
+            }
 
             sscanf(string, "%f %f", &elevation, &amplitude);
         }
@@ -1101,7 +1192,9 @@ int LoadPAT(char *az_filename, char *el_filename, struct LR &lr)
            one was read for each 0.01 degrees of elevation. */
 
         for (x = 0; x <= 10000; x++) {
-            if (read_count[x] > 1) el_pattern[x] /= (float)read_count[x];
+            if (read_count[x] > 1) {
+                el_pattern[x] /= (float)read_count[x];
+            }
         }
 
         /* Interpolate between missing elevations (if
@@ -1114,10 +1207,11 @@ int LoadPAT(char *az_filename, char *el_filename, struct LR &lr)
 
         for (x = 0; x <= 10000; x++) {
             if (read_count[x] != 0) {
-                if (last_index == -1)
+                if (last_index == -1) {
                     last_index = x;
-                else
+                } else {
                     next_index = x;
+                }
             }
 
             if (last_index != -1 && next_index != -1) {
@@ -1127,7 +1221,9 @@ int LoadPAT(char *az_filename, char *el_filename, struct LR &lr)
                 span = next_index - last_index;
                 delta = (valid2 - valid1) / (float)span;
 
-                for (y = last_index + 1; y < next_index; y++) el_pattern[y] = el_pattern[y - 1] + delta;
+                for (y = last_index + 1; y < next_index; y++) {
+                    el_pattern[y] = el_pattern[y - 1] + delta;
+                }
 
                 last_index = y;
                 next_index = -1;
@@ -1139,7 +1235,9 @@ int LoadPAT(char *az_filename, char *el_filename, struct LR &lr)
            and tilt direction (azimuth). */
 
         if (mechanical_tilt == 0.0) {
-            for (x = 0; x <= 360; x++) slant_angle[x] = 0.0;
+            for (x = 0; x <= 360; x++) {
+                slant_angle[x] = 0.0;
+            }
         }
 
         else {
@@ -1149,13 +1247,21 @@ int LoadPAT(char *az_filename, char *el_filename, struct LR &lr)
                 xx = (float)x;
                 y = (int)rintf(tilt_azimuth + xx);
 
-                while (y >= 360) y -= 360;
+                while (y >= 360) {
+                    y -= 360;
+                }
 
-                while (y < 0) y += 360;
+                while (y < 0) {
+                    y += 360;
+                }
 
-                if (x <= 180) slant_angle[y] = -(tilt_increment * (90.0 - xx));
+                if (x <= 180) {
+                    slant_angle[y] = -(tilt_increment * (90.0 - xx));
+                }
 
-                if (x > 180) slant_angle[y] = -(tilt_increment * (xx - 270.0));
+                if (x > 180) {
+                    slant_angle[y] = -(tilt_increment * (xx - 270.0));
+                }
             }
         }
 
@@ -1178,9 +1284,15 @@ int LoadPAT(char *az_filename, char *el_filename, struct LR &lr)
                 for (sum = 0.0, a = 0; a < 10; a++) {
                     b = a + x;
 
-                    if (b >= 0 && b <= 10000) sum += el_pattern[b];
-                    if (b < 0) sum += el_pattern[0];
-                    if (b > 10000) sum += el_pattern[10000];
+                    if (b >= 0 && b <= 10000) {
+                        sum += el_pattern[b];
+                    }
+                    if (b < 0) {
+                        sum += el_pattern[0];
+                    }
+                    if (b > 10000) {
+                        sum += el_pattern[10000];
+                    }
                 }
 
                 elevation_pattern[w][z] = sum / 10.0;
@@ -1191,15 +1303,17 @@ int LoadPAT(char *az_filename, char *el_filename, struct LR &lr)
 
         for (x = 0; x <= 360; x++) {
             for (y = 0; y <= 1000; y++) {
-                if (G_got_elevation_pattern)
+                if (G_got_elevation_pattern) {
                     elevation = elevation_pattern[x][y];
-                else
+                } else {
                     elevation = 1.0;
+                }
 
-                if (G_got_azimuth_pattern)
+                if (G_got_azimuth_pattern) {
                     az = azimuth_pattern[x];
-                else
+                } else {
                     az = 1.0;
+                }
 
                 lr.ant_pat(x, y) = az * elevation;
             }
@@ -1208,16 +1322,21 @@ int LoadPAT(char *az_filename, char *el_filename, struct LR &lr)
     return 0;
 }
 
-int LoadSignalColors(struct site xmtr)
-{
+int LoadSignalColors(struct site xmtr) {
     int x, y, ok, val[4];
     char filename[255], string[80], *pointer = NULL, *s;
-    FILE *fd = NULL;
+    FILE * fd = NULL;
 
-    if (G_color_file != NULL && G_color_file[0] != 0)
-        for (x = 0; G_color_file[x] != '.' && G_color_file[x] != 0 && x < 250; x++) filename[x] = G_color_file[x];
-    else
-        for (x = 0; xmtr.filename[x] != '.' && xmtr.filename[x] != 0 && x < 250; x++) filename[x] = xmtr.filename[x];
+    if (G_color_file != NULL && G_color_file[0] != 0) {
+        for (x = 0; G_color_file[x] != '.' && G_color_file[x] != 0 && x < 250; x++) {
+            filename[x] = G_color_file[x];
+        }
+    } else {
+        for (x = 0; xmtr.filename[x] != '.' && xmtr.filename[x] != 0 && x < 250;
+             x++) {
+            filename[x] = xmtr.filename[x];
+        }
+    }
 
     filename[x] = '.';
     filename[x + 1] = 's';
@@ -1295,14 +1414,23 @@ int LoadSignalColors(struct site xmtr)
     G_region.levels = 13;
 
     /* Don't save if we don't have an output file */
-    if ((fd = fopen(filename, "r")) == NULL && xmtr.filename[0] == '\0') return 0;
+    if ((fd = fopen(filename, "r")) == NULL && xmtr.filename[0] == '\0') {
+        return 0;
+    }
 
     if (fd == NULL) {
-        if ((fd = fopen(filename, "w")) == NULL) return errno;
+        if ((fd = fopen(filename, "w")) == NULL) {
+            return errno;
+        }
 
-        for (x = 0; x < G_region.levels; x++)
-            fprintf(fd, "%3d: %3d, %3d, %3d\n", G_region.level[x], G_region.color[x][0], G_region.color[x][1],
+        for (x = 0; x < G_region.levels; x++) {
+            fprintf(fd,
+                    "%3d: %3d, %3d, %3d\n",
+                    G_region.level[x],
+                    G_region.color[x][0],
+                    G_region.color[x][1],
                     G_region.color[x][2]);
+        }
 
         fclose(fd);
     }
@@ -1317,20 +1445,31 @@ int LoadSignalColors(struct site xmtr)
         while (x < 128 && feof(fd) == 0) {
             pointer = strchr(string, ';');
 
-            if (pointer != NULL) *pointer = 0;
+            if (pointer != NULL) {
+                *pointer = 0;
+            }
 
             ok = sscanf(string, "%d: %d, %d, %d", &val[0], &val[1], &val[2], &val[3]);
 
             if (ok == 4) {
                 if (G_debug) {
-                    fprintf(stderr, "\nLoadSignalColors() %d: %d, %d, %d\n", val[0], val[1], val[2], val[3]);
+                    fprintf(stderr,
+                            "\nLoadSignalColors() %d: %d, %d, %d\n",
+                            val[0],
+                            val[1],
+                            val[2],
+                            val[3]);
                     fflush(stderr);
                 }
 
                 for (y = 0; y < 4; y++) {
-                    if (val[y] > 255) val[y] = 255;
+                    if (val[y] > 255) {
+                        val[y] = 255;
+                    }
 
-                    if (val[y] < 0) val[y] = 0;
+                    if (val[y] < 0) {
+                        val[y] = 0;
+                    }
                 }
 
                 G_region.level[x] = val[0];
@@ -1349,16 +1488,21 @@ int LoadSignalColors(struct site xmtr)
     return 0;
 }
 
-int LoadLossColors(struct site xmtr)
-{
+int LoadLossColors(struct site xmtr) {
     int x, y, ok, val[4];
     char filename[255], string[80], *pointer = NULL, *s;
-    FILE *fd = NULL;
+    FILE * fd = NULL;
 
-    if (G_color_file != NULL && G_color_file[0] != 0)
-        for (x = 0; G_color_file[x] != '.' && G_color_file[x] != 0 && x < 250; x++) filename[x] = G_color_file[x];
-    else
-        for (x = 0; xmtr.filename[x] != '.' && xmtr.filename[x] != 0 && x < 250; x++) filename[x] = xmtr.filename[x];
+    if (G_color_file != NULL && G_color_file[0] != 0) {
+        for (x = 0; G_color_file[x] != '.' && G_color_file[x] != 0 && x < 250; x++) {
+            filename[x] = G_color_file[x];
+        }
+    } else {
+        for (x = 0; xmtr.filename[x] != '.' && xmtr.filename[x] != 0 && x < 250;
+             x++) {
+            filename[x] = xmtr.filename[x];
+        }
+    }
 
     filename[x] = '.';
     filename[x + 1] = 'l';
@@ -1459,14 +1603,23 @@ int LoadLossColors(struct site xmtr)
             }
     */
     /* Don't save if we don't have an output file */
-    if ((fd = fopen(filename, "r")) == NULL && xmtr.filename[0] == '\0') return 0;
+    if ((fd = fopen(filename, "r")) == NULL && xmtr.filename[0] == '\0') {
+        return 0;
+    }
 
     if (fd == NULL) {
-        if ((fd = fopen(filename, "w")) == NULL) return errno;
+        if ((fd = fopen(filename, "w")) == NULL) {
+            return errno;
+        }
 
-        for (x = 0; x < G_region.levels; x++)
-            fprintf(fd, "%3d: %3d, %3d, %3d\n", G_region.level[x], G_region.color[x][0], G_region.color[x][1],
+        for (x = 0; x < G_region.levels; x++) {
+            fprintf(fd,
+                    "%3d: %3d, %3d, %3d\n",
+                    G_region.level[x],
+                    G_region.color[x][0],
+                    G_region.color[x][1],
                     G_region.color[x][2]);
+        }
 
         fclose(fd);
 
@@ -1486,20 +1639,31 @@ int LoadLossColors(struct site xmtr)
         while (x < 128 && feof(fd) == 0) {
             pointer = strchr(string, ';');
 
-            if (pointer != NULL) *pointer = 0;
+            if (pointer != NULL) {
+                *pointer = 0;
+            }
 
             ok = sscanf(string, "%d: %d, %d, %d", &val[0], &val[1], &val[2], &val[3]);
 
             if (ok == 4) {
                 if (G_debug) {
-                    fprintf(stderr, "\nLoadLossColors() %d: %d, %d, %d\n", val[0], val[1], val[2], val[3]);
+                    fprintf(stderr,
+                            "\nLoadLossColors() %d: %d, %d, %d\n",
+                            val[0],
+                            val[1],
+                            val[2],
+                            val[3]);
                     fflush(stderr);
                 }
 
                 for (y = 0; y < 4; y++) {
-                    if (val[y] > 255) val[y] = 255;
+                    if (val[y] > 255) {
+                        val[y] = 255;
+                    }
 
-                    if (val[y] < 0) val[y] = 0;
+                    if (val[y] < 0) {
+                        val[y] = 0;
+                    }
                 }
 
                 G_region.level[x] = val[0];
@@ -1518,16 +1682,20 @@ int LoadLossColors(struct site xmtr)
     return 0;
 }
 
-int LoadDBMColors(struct site xmtr)
-{
+int LoadDBMColors(struct site xmtr) {
     int x, y, ok, val[4];
     char filename[255], string[80], *pointer = NULL, *s;
-    FILE *fd = NULL;
+    FILE * fd = NULL;
 
-    if (G_color_file != NULL && G_color_file[0] != 0)
-        for (x = 0; G_color_file[x] != '.' && G_color_file[x] != 0 && x < 250; x++) filename[x] = G_color_file[x];
-    else {
-        for (x = 0; xmtr.filename[x] != '.' && xmtr.filename[x] != 0 && x < 250; x++) filename[x] = xmtr.filename[x];
+    if (G_color_file != NULL && G_color_file[0] != 0) {
+        for (x = 0; G_color_file[x] != '.' && G_color_file[x] != 0 && x < 250; x++) {
+            filename[x] = G_color_file[x];
+        }
+    } else {
+        for (x = 0; xmtr.filename[x] != '.' && xmtr.filename[x] != 0 && x < 250;
+             x++) {
+            filename[x] = xmtr.filename[x];
+        }
 
         filename[x] = '.';
         filename[x + 1] = 'd';
@@ -1621,14 +1789,23 @@ int LoadDBMColors(struct site xmtr)
     G_region.levels = 16;
 
     /* Don't save if we don't have an output file */
-    if ((fd = fopen(filename, "r")) == NULL && xmtr.filename[0] == '\0') return 0;
+    if ((fd = fopen(filename, "r")) == NULL && xmtr.filename[0] == '\0') {
+        return 0;
+    }
 
     if (fd == NULL) {
-        if ((fd = fopen(filename, "w")) == NULL) return errno;
+        if ((fd = fopen(filename, "w")) == NULL) {
+            return errno;
+        }
 
-        for (x = 0; x < G_region.levels; x++)
-            fprintf(fd, "%+4d: %3d, %3d, %3d\n", G_region.level[x], G_region.color[x][0], G_region.color[x][1],
+        for (x = 0; x < G_region.levels; x++) {
+            fprintf(fd,
+                    "%+4d: %3d, %3d, %3d\n",
+                    G_region.level[x],
+                    G_region.color[x][0],
+                    G_region.color[x][1],
                     G_region.color[x][2]);
+        }
 
         fclose(fd);
     }
@@ -1643,26 +1820,41 @@ int LoadDBMColors(struct site xmtr)
         while (x < 128 && feof(fd) == 0) {
             pointer = strchr(string, ';');
 
-            if (pointer != NULL) *pointer = 0;
+            if (pointer != NULL) {
+                *pointer = 0;
+            }
 
             ok = sscanf(string, "%d: %d, %d, %d", &val[0], &val[1], &val[2], &val[3]);
 
             if (ok == 4) {
                 if (G_debug) {
-                    fprintf(stderr, "\nLoadDBMColors() %d: %d, %d, %d\n", val[0], val[1], val[2], val[3]);
+                    fprintf(stderr,
+                            "\nLoadDBMColors() %d: %d, %d, %d\n",
+                            val[0],
+                            val[1],
+                            val[2],
+                            val[3]);
                     fflush(stderr);
                 }
 
-                if (val[0] < -200) val[0] = -200;
+                if (val[0] < -200) {
+                    val[0] = -200;
+                }
 
-                if (val[0] > +40) val[0] = +40;
+                if (val[0] > +40) {
+                    val[0] = +40;
+                }
 
                 G_region.level[x] = val[0];
 
                 for (y = 1; y < 4; y++) {
-                    if (val[y] > 255) val[y] = 255;
+                    if (val[y] > 255) {
+                        val[y] = 255;
+                    }
 
-                    if (val[y] < 0) val[y] = 0;
+                    if (val[y] < 0) {
+                        val[y] = 0;
+                    }
                 }
 
                 G_region.color[x][0] = val[1];
@@ -1680,8 +1872,11 @@ int LoadDBMColors(struct site xmtr)
     return 0;
 }
 
-int LoadTopoData(double max_lon, double min_lon, double max_lat, double min_lat, struct output *out)
-{
+int LoadTopoData(double max_lon,
+                 double min_lon,
+                 double max_lat,
+                 double min_lat,
+                 struct output * out) {
     /* This function loads the SDF files required
        to cover the limits of the region specified. */
 
@@ -1693,56 +1888,80 @@ int LoadTopoData(double max_lon, double min_lon, double max_lat, double min_lat,
     width = ReduceAngle(max_lon - min_lon);
 
     if ((max_lon - min_lon) <= 180.0) {
-        for (y = 0; y <= width; y++)
+        for (y = 0; y <= width; y++) {
             for (x = min_lat; x <= (int)max_lat; x++) {
                 ymin = (int)(min_lon + (double)y);
 
-                while (ymin < 0) ymin += 360;
+                while (ymin < 0) {
+                    ymin += 360;
+                }
 
-                while (ymin >= 360) ymin -= 360;
+                while (ymin >= 360) {
+                    ymin -= 360;
+                }
 
                 ymax = ymin + 1;
 
-                while (ymax < 0) ymax += 360;
+                while (ymax < 0) {
+                    ymax += 360;
+                }
 
-                while (ymax >= 360) ymax -= 360;
+                while (ymax >= 360) {
+                    ymax -= 360;
+                }
 
                 snprintf(basename, 255, "%d:%d:%d:%d", x, x + 1, ymin, ymax);
                 strcpy(string, basename);
 
-                if (G_ippd == 3600) strcat(string, "-hd");
+                if (G_ippd == 3600) {
+                    strcat(string, "-hd");
+                }
 
-                if ((success = LoadSDF(string, out)) < 0) return -success;
+                if ((success = LoadSDF(string, out)) < 0) {
+                    return -success;
+                }
             }
-    }
-    else {
-        for (y = 0; y <= width; y++)
+        }
+    } else {
+        for (y = 0; y <= width; y++) {
             for (x = (int)min_lat; x <= (int)max_lat; x++) {
                 ymin = (int)(max_lon + (double)y);
 
-                while (ymin < 0) ymin += 360;
+                while (ymin < 0) {
+                    ymin += 360;
+                }
 
-                while (ymin >= 360) ymin -= 360;
+                while (ymin >= 360) {
+                    ymin -= 360;
+                }
 
                 ymax = ymin + 1;
 
-                while (ymax < 0) ymax += 360;
+                while (ymax < 0) {
+                    ymax += 360;
+                }
 
-                while (ymax >= 360) ymax -= 360;
+                while (ymax >= 360) {
+                    ymax -= 360;
+                }
 
                 snprintf(string, 255, "%d:%d:%d:%d", x, x + 1, ymin, ymax);
                 strcpy(string, basename);
 
-                if (G_ippd == 3600) strcat(string, "-hd");
+                if (G_ippd == 3600) {
+                    strcat(string, "-hd");
+                }
 
-                if ((success = LoadSDF(string, out)) < 0) return -success;
+                if ((success = LoadSDF(string, out)) < 0) {
+                    return -success;
+                }
             }
+        }
     }
     return 0;
 }
 
-int LoadUDT(char *filename)
-{
+int LoadUDT(char * filename) {
     /* This function reads a file containing User-Defined Terrain
        features for their addition to the digital elevation model
        data used by SPLAT!.  Elevations in the UDT file are evaluated
@@ -1753,12 +1972,15 @@ int LoadUDT(char *filename)
 
     int i, x, y, z, ypix, xpix, tempxpix, tempypix, fd = 0, n = 0;
     char input[80], str[3][80], tempname[15], *pointer = NULL, *s = NULL;
-    double latitude, longitude, height, tempheight, old_longitude = 0.0, old_latitude = 0.0;
+    double latitude, longitude, height, tempheight, old_longitude = 0.0,
+                                                    old_latitude = 0.0;
     FILE *fd1 = NULL, *fd2 = NULL;
 
     strcpy(tempname, "/tmp/XXXXXX");
 
-    if ((fd1 = fopen(filename, "r")) == NULL) return errno;
+    if ((fd1 = fopen(filename, "r")) == NULL) {
+        return errno;
+    }
 
     if ((fd = mkstemp(tempname)) == -1) {
         fclose(fd1);
@@ -1778,7 +2000,9 @@ int LoadUDT(char *filename)
 
     pointer = strchr(input, ';');
 
-    if (pointer != NULL) *pointer = 0;
+    if (pointer != NULL) {
+        *pointer = 0;
+    }
 
     while (feof(fd1) == 0) {
         // Parse line for latitude, longitude, height
@@ -1799,13 +2023,14 @@ int LoadUDT(char *filename)
         old_latitude = latitude = ReadBearing(str[0]);
         old_longitude = longitude = ReadBearing(str[1]);
 
-        latitude = fabs(latitude);  // Clip if negative
+        latitude = fabs(latitude); // Clip if negative
         longitude = fabs(longitude);
 
         // Remove <CR> and/or <LF> from antenna height string
 
-        for (i = 0; str[2][i] != 13 && str[2][i] != 10 && str[2][i] != 0; i++)
+        for (i = 0; str[2][i] != 13 && str[2][i] != 10 && str[2][i] != 0; i++) {
             ;
+        }
 
         str[2][i] = 0;
 
@@ -1816,8 +2041,11 @@ int LoadUDT(char *filename)
            in meters.  Otherwise the height is interpreted
            as being expressed in feet.  */
 
-        for (i = 0; str[2][i] != 'M' && str[2][i] != 'm' && str[2][i] != 0 && i < 48; i++)
+        for (i = 0;
+             str[2][i] != 'M' && str[2][i] != 'm' && str[2][i] != 0 && i < 48;
+             i++) {
             ;
+        }
 
         if (str[2][i] == 'M' || str[2][i] == 'm') {
             str[2][i] = 0;
@@ -1829,19 +2057,29 @@ int LoadUDT(char *filename)
             height = rint(METERS_PER_FOOT * atof(str[2]));
         }
 
-        if (height > 0.0) fprintf(fd2, "%d, %d, %f\n", (int)rint(latitude / G_dpp), (int)rint(longitude / G_dpp), height);
+        if (height > 0.0) {
+            fprintf(fd2,
+                    "%d, %d, %f\n",
+                    (int)rint(latitude / G_dpp),
+                    (int)rint(longitude / G_dpp),
+                    height);
+        }
 
         s = fgets(input, 78, fd1);
 
         pointer = strchr(input, ';');
 
-        if (pointer != NULL) *pointer = 0;
+        if (pointer != NULL) {
+            *pointer = 0;
+        }
     }
 
     fclose(fd1);
     fclose(fd2);
 
-    if ((fd1 = fopen(tempname, "r")) == NULL) return errno;
+    if ((fd1 = fopen(tempname, "r")) == NULL) {
+        return errno;
+    }
 
     if ((fd2 = fopen(tempname, "r")) == NULL) {
         fclose(fd1);
@@ -1863,9 +2101,11 @@ int LoadUDT(char *filename)
 
         do {
             if (x > y && xpix == tempxpix && ypix == tempypix) {
-                z = 1;  // Dupe Found!
+                z = 1; // Dupe Found!
 
-                if (tempheight > height) height = tempheight;
+                if (tempheight > height) {
+                    height = tempheight;
+                }
             }
 
             else {
@@ -1878,7 +2118,11 @@ int LoadUDT(char *filename)
         if (z == 0) {
             // No duplicate found
             if (G_debug) {
-                fprintf(stderr, "Adding UDT Point: %lf, %lf, %lf\n", old_latitude, old_longitude, height);
+                fprintf(stderr,
+                        "Adding UDT Point: %lf, %lf, %lf\n",
+                        old_latitude,
+                        old_longitude,
+                        height);
                 fflush(stderr);
             }
             AddElevation((double)xpix * G_dpp, (double)ypix * G_dpp, height, 1);

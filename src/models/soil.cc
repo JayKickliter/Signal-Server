@@ -21,10 +21,11 @@
 
 // use call with log/ln as this may be faster
 // use constant of value 20.0/log(10.0)
-static __inline float _20log10f(float x) { return (8.685889f * logf(x)); }
+static __inline float _20log10f(float x) {
+    return (8.685889f * logf(x));
+}
 
-double SoilPathLoss(float f, float d, float terdic)
-{
+double SoilPathLoss(float f, float d, float terdic) {
     float soil = (120 / terdic);
     return (6.4 + _20log10f(d) + _20log10f(f) + (8.69 * soil));
 }

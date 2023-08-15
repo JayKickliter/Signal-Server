@@ -6,8 +6,8 @@
  * the ITM, based on an original, public domain version of this file obtained  *
  * from: ftp://flattop.its.bldrdoc.gov/itm/ITMDLL.cpp prior to May, 2007. C++  *
  * routines for this program are taken from a translation of the FORTRAN code  *
- * written by U.S. Department of Commerce NTIA/ITS Institute for		      *
- * Telecommunication Sciences Irregular Terrain Model (ITM) (Longley-Rice).    *
+ * written by U.S. Department of Commerce NTIA/ITS Institute for *
+ *Telecommunication Sciences Irregular Terrain Model (ITM) (Longley-Rice).    *
  * 2. The Linux version of this file incorporates improvements suggested by a  *
  * study of changes made to file itm.cpp by J. D. McDonald to remove Microsoft *
  * Windows dll-isms and to debug an ambguity in overloaded calls.	      *
@@ -115,62 +115,61 @@ struct propa_type {
     double tha;
 };
 
-int mymin(const int &i, const int &j)
-{
-    if (i < j)
+int mymin(const int & i, const int & j) {
+    if (i < j) {
         return i;
-    else
+    } else {
         return j;
+    }
 }
 
-int mymax(const int &i, const int &j)
-{
-    if (i > j)
+int mymax(const int & i, const int & j) {
+    if (i > j) {
         return i;
-    else
+    } else {
         return j;
+    }
 }
 
-double mymin(const double &a, const double &b)
-{
-    if (a < b)
+double mymin(const double & a, const double & b) {
+    if (a < b) {
         return a;
-    else
+    } else {
         return b;
+    }
 }
 
-double mymax(const double &a, const double &b)
-{
-    if (a > b)
+double mymax(const double & a, const double & b) {
+    if (a > b) {
         return a;
-    else
+    } else {
         return b;
+    }
 }
 
-double FORTRAN_DIM(const double &x, const double &y)
-{
+double FORTRAN_DIM(const double & x, const double & y) {
     /* This performs the FORTRAN DIM function.  Result is x-y
        if x is greater than y; otherwise result is 0.0 */
 
-    if (x > y)
+    if (x > y) {
         return x - y;
-    else
+    } else {
         return 0.0;
+    }
 }
 
-double aknfe(const double &v2)
-{
+double aknfe(const double & v2) {
     double a;
 
-    if (v2 < 5.76)
+    if (v2 < 5.76) {
         a = 6.02 + 9.11 * sqrt(v2) - 1.27 * v2;
-    else
+    } else {
         a = 12.953 + 10 * log10(v2);
+    }
     return a;
 }
 
-double fht(const double &x, const double &pk)
-{
+double fht(const double & x, const double & pk) {
     double w, fhtv;
 
     if (x < 200.0) {
@@ -179,10 +178,12 @@ double fht(const double &x, const double &pk)
         if (pk < 1.0e-5 || x * w * w * w > 5495.0) {
             fhtv = -117.0;
 
-            if (x > 1.0) fhtv = 40.0 * log10(x) + fhtv;
-        }
-        else
+            if (x > 1.0) {
+                fhtv = 40.0 * log10(x) + fhtv;
+            }
+        } else {
             fhtv = 2.5e-5 * x * x / pk - 8.686 * w - 15.0;
+        }
     }
 
     else {
@@ -196,8 +197,7 @@ double fht(const double &x, const double &pk)
     return fhtv;
 }
 
-double h0f(double r, double et)
-{
+double h0f(double r, double et) {
     double a[5] = {25.0, 80.0, 177.0, 395.0, 705.0};
     double b[5] = {24.0, 45.0, 68.0, 80.0, 105.0};
     double q, x;
@@ -216,8 +216,9 @@ double h0f(double r, double et)
         q = 0.0;
     }
 
-    else
+    else {
         q = et - it;
+    }
 
     /* x=pow(1.0/r,2.0); */
 
@@ -226,34 +227,37 @@ double h0f(double r, double et)
 
     h0fv = 4.343 * log((a[it - 1] * x + b[it - 1]) * x + 1.0);
 
-    if (q != 0.0) h0fv = (1.0 - q) * h0fv + q * 4.343 * log((a[it] * x + b[it]) * x + 1.0);
+    if (q != 0.0) {
+        h0fv = (1.0 - q) * h0fv + q * 4.343 * log((a[it] * x + b[it]) * x + 1.0);
+    }
 
     return h0fv;
 }
 
-double ahd(double td)
-{
+double ahd(double td) {
     int i;
     double a[3] = {133.4, 104.6, 71.8};
     double b[3] = {0.332e-3, 0.212e-3, 0.157e-3};
     double c[3] = {-4.343, -1.086, 2.171};
 
-    if (td <= 10e3)
+    if (td <= 10e3) {
         i = 0;
 
-    else if (td <= 70e3)
+    } else if (td <= 70e3) {
         i = 1;
 
-    else
+    } else {
         i = 2;
+    }
 
     return a[i] + b[i] * td + c[i] * log(td);
 }
 
-double abq_alos(complex<double> r) { return r.real() * r.real() + r.imag() * r.imag(); }
+double abq_alos(complex<double> r) {
+    return r.real() * r.real() + r.imag() * r.imag();
+}
 
-double saalos(double d, prop_type &prop)
-{
+double saalos(double d, prop_type & prop) {
     double ensa, encca, q, dp, dx, tde, hc, ucrpc, ctip, tip, tic, stic, ctic, sta;
     double ttc, cttc, crpc, ssnps, d1a, rsp, tsp, arte, zi, pd, pdk, hone, tvsr;
     double saalosv = 0.0;
@@ -265,11 +269,9 @@ double saalos(double d, prop_type &prop)
         rsp = 0.0;
         d1a = 50.0;
         saalosv = 0.0;
-    }
-    else if (prop.hg[1] > prop.cch) {
+    } else if (prop.hg[1] > prop.cch) {
         saalosv = 0.0;
-    }
-    else {
+    } else {
         pd = d;
         pdk = pd / 1000.0;
         tsp = 1.0;
@@ -288,7 +290,8 @@ double saalos(double d, prop_type &prop)
                 tde = dp / 6378137.0;
                 hc = (prop.cch + 6378137.0) * (1 - cos(tde));
                 dx = (prop.cch + 6378137.0) * sin(tde);
-                ucrpc = sqrt((hone - prop.cch + hc) * (hone - prop.cch + hc) + (dx * dx));
+                ucrpc = sqrt((hone - prop.cch + hc) * (hone - prop.cch + hc)
+                             + (dx * dx));
                 ctip = (hone - prop.cch + hc) / ucrpc;
                 tip = acos(ctip);
                 tic = tip + tde;
@@ -323,23 +326,25 @@ double saalos(double d, prop_type &prop)
                 hone = prop.cch + 1;
                 rsp = .997;
                 tsp = 1 - rsp;
-            }
-            else {
+            } else {
                 if (prop.ptx >= 1) { /* polarity ptx is vertical or circular */
-                    q = ((ensa * cttc - encca * ctic) / (ensa * cttc + encca * ctic));
+                    q = ((ensa * cttc - encca * ctic)
+                         / (ensa * cttc + encca * ctic));
                     rsp = q * q;
                     tsp = 1 - rsp;
 
                     if (prop.ptx == 2) { /* polarity is circular - new */
-                        q = ((ensa * ctic - encca * cttc) / (ensa * ctic + encca * cttc));
-                        rsp = ((ensa * cttc - encca * ctic) / (ensa * cttc + encca * ctic));
+                        q = ((ensa * ctic - encca * cttc)
+                             / (ensa * ctic + encca * cttc));
+                        rsp = ((ensa * cttc - encca * ctic)
+                               / (ensa * cttc + encca * ctic));
                         rsp = (q * q + rsp * rsp) / 2;
                         tsp = 1 - rsp;
                     }
-                }
-                else { /* ptx is 0, horizontal, or undefined */
+                } else { /* ptx is 0, horizontal, or undefined */
 
-                    q = ((ensa * ctic - encca * cttc) / (ensa * ctic + encca * cttc));
+                    q = ((ensa * ctic - encca * cttc)
+                         / (ensa * ctic + encca * cttc));
                     rsp = q * q;
                     tsp = 1 - rsp;
                 }
@@ -355,45 +360,51 @@ double saalos(double d, prop_type &prop)
                 if (d1a < 225.0) {
                     if (tvsr > 1000.0) {
                         q = d1a * (0.03 * exp(-0.14 * pdk));
-                    }
-                    else {
+                    } else {
                         q = d1a * (0.07 * exp(-0.17 * pdk));
                     }
 
-                    arte = q + (0.7 * pdk - mymax(0.01, log10(prop.wn * 47.7) - 2)) * (prop.hg[1] / hone);
+                    arte = q
+                           + (0.7 * pdk - mymax(0.01, log10(prop.wn * 47.7) - 2))
+                                 * (prop.hg[1] / hone);
                 }
 
                 else {
-                    q = 0.00055 * (pdk) + log10(pdk) * (0.041 - 0.0017 * sqrt(hone) + 0.019);
+                    q = 0.00055 * (pdk)
+                        + log10(pdk) * (0.041 - 0.0017 * sqrt(hone) + 0.019);
 
                     arte = d1a * q - (18 * log10(rsp)) / (exp(hone / 37.5));
 
                     zi = 1.5 * sqrt(hone - prop.cch);
 
                     if (pdk > zi) {
-                        q = (pdk - zi) * 10.2 * ((sqrt(mymax(0.01, log10(prop.wn * 47.7) - 2.0))) / (100 - zi));
-                    }
-                    else {
-                        q = ((zi - pdk) / zi) * (-20.0 * mymax(0.01, log10(prop.wn * 47.7) - 2.0)) / sqrt(hone);
+                        q = (pdk - zi) * 10.2
+                            * ((sqrt(mymax(0.01, log10(prop.wn * 47.7) - 2.0)))
+                               / (100 - zi));
+                    } else {
+                        q = ((zi - pdk) / zi)
+                            * (-20.0 * mymax(0.01, log10(prop.wn * 47.7) - 2.0))
+                            / sqrt(hone);
                     }
                     arte = arte + q;
                 }
             }
-        }
-        else { /* for TX at or below clutter height */
+        } else { /* for TX at or below clutter height */
 
-            q = (prop.cch - prop.tgh) * (2.06943 - 1.56184 * exp(1 / prop.cch - prop.tgh));
+            q = (prop.cch - prop.tgh)
+                * (2.06943 - 1.56184 * exp(1 / prop.cch - prop.tgh));
             q = q + (17.98 - 0.84224 * (prop.cch - prop.tgh)) * exp(-0.00000061 * pd);
             arte = q + 1.34795 * 20 * log10(pd + 1.0);
-            arte = arte - (mymax(0.01, log10(prop.wn * 47.7) - 2)) * (prop.hg[1] / prop.tgh);
+            arte = arte
+                   - (mymax(0.01, log10(prop.wn * 47.7) - 2))
+                         * (prop.hg[1] / prop.tgh);
         }
         saalosv = arte;
     }
     return saalosv;
 }
 
-double adiff(double d, prop_type &prop, propa_type &propa)
-{
+double adiff(double d, prop_type & prop, propa_type & propa) {
     complex<double> prop_zgnd(prop.zgndreal, prop.zgndimag);
     static __thread double wd1, xd1, afo, qk, aht, xht;
     double a, q, pk, ds, th, wa, ar, wd, adiffv;
@@ -402,13 +413,17 @@ double adiff(double d, prop_type &prop, propa_type &propa)
         q = prop.hg[0] * prop.hg[1];
         qk = prop.he[0] * prop.he[1] - q;
 
-        if (prop.mdp < 0.0) q += 10.0;
+        if (prop.mdp < 0.0) {
+            q += 10.0;
+        }
 
         wd1 = sqrt(1.0 + qk / q);
         xd1 = propa.dla + propa.tha / prop.gme;
         q = (1.0 - 0.8 * exp(-propa.dlsa / 50e3)) * prop.dh;
         q *= 0.78 * exp(-pow(q / 16.0, 0.25));
-        afo = mymin(15.0, 2.171 * log(1.0 + 4.77e-4 * prop.hg[0] * prop.hg[1] * prop.wn * q));
+        afo =
+            mymin(15.0,
+                  2.171 * log(1.0 + 4.77e-4 * prop.hg[0] * prop.hg[1] * prop.wn * q));
         qk = 1.0 / abs(prop_zgnd);
         aht = 20.0;
         xht = 0.0;
@@ -431,13 +446,15 @@ double adiff(double d, prop_type &prop, propa_type &propa)
         ds = d - propa.dla;
         /* q=0.0795775*prop.wn*ds*pow(th,2.0); */
         q = 0.0795775 * prop.wn * ds * th * th;
-        adiffv = aknfe(q * prop.dl[0] / (ds + prop.dl[0])) + aknfe(q * prop.dl[1] / (ds + prop.dl[1]));
+        adiffv = aknfe(q * prop.dl[0] / (ds + prop.dl[0]))
+                 + aknfe(q * prop.dl[1] / (ds + prop.dl[1]));
         a = ds / th;
         wa = pow(a * prop.wn, THIRD);
         pk = qk / wa;
         q = (1.607 - pk) * 151.0 * wa * th + xht;
         ar = 0.05751 * q - 4.343 * log(q) - aht;
-        q = (wd1 + xd1 / d) * mymin(((1.0 - 0.8 * exp(-d / 50e3)) * prop.dh * prop.wn), 6283.2);
+        q = (wd1 + xd1 / d)
+            * mymin(((1.0 - 0.8 * exp(-d / 50e3)) * prop.dh * prop.wn), 6283.2);
         wd = 25.1 / (25.1 + sqrt(q));
         adiffv = ar * wd + (1.0 - wd) * adiffv + afo;
     }
@@ -445,17 +462,18 @@ double adiff(double d, prop_type &prop, propa_type &propa)
     return adiffv;
 }
 
-double adiff2(double d, prop_type &prop, propa_type &propa)
-{
+double adiff2(double d, prop_type & prop, propa_type & propa) {
     complex<double> prop_zgnd(prop.zgndreal, prop.zgndimag);
-    static __thread double wd1, xd1, qk, aht, xht, toh, toho, roh, roho, dto, dto1, dtro, dro, dro2, drto, dtr, dhh1, dhh2,
+    static __thread double wd1, xd1, qk, aht, xht, toh, toho, roh, roho, dto,
+        dto1, dtro, dro, dro2, drto, dtr, dhh1, dhh2,
         /* dhec, */ dtof, /*dto1f,*/ drof;            //, dro2f;
     double a, q, pk, rd, ds, dsl, /* dfdh, */ th, wa, /* ar, wd, sf1, */
-        sf2, /* ec, */ vv, kedr = 0.0, arp = 0.0, sdr = 0.0, pd = 0.0, srp = 0.0, kem = 0.0, csd = 0.0, sdl = 0.0,
+        sf2, /* ec, */ vv, kedr = 0.0, arp = 0.0, sdr = 0.0, pd = 0.0,
+                           srp = 0.0, kem = 0.0, csd = 0.0, sdl = 0.0,
                            adiffv2 = 0.0, closs = 0.0;
 
     /* sf1=1.0; */ /* average empirical hilltop foliage scatter factor for 1 obstruction  */
-    sf2 = 1.0;     /* average empirical hilltop foliage scatter factor for 2 obstructions */
+    sf2 = 1.0; /* average empirical hilltop foliage scatter factor for 2 obstructions */
 
     /* dfdh=prop.dh; */
     /* ec=0.5*prop.gme; */
@@ -466,7 +484,9 @@ double adiff2(double d, prop_type &prop, propa_type &propa)
         qk = prop.he[0] * prop.he[1] - q;
         /* dhec=2.73; */
 
-        if (prop.mdp < 0.0) q += 10.0;
+        if (prop.mdp < 0.0) {
+            q += 10.0;
+        }
 
         /* coefficients for a standard four radii, rounded earth computation are prepared */
         wd1 = sqrt(1.0 + qk / q);
@@ -507,9 +527,17 @@ double adiff2(double d, prop_type &prop, propa_type &propa)
         a = ds / th;
         wa = pow(a * prop.wn, THIRD);
         pk = qk / wa;
-        toh = prop.hht - (prop.rch[0] - prop.dl[0] * ((prop.rch[1] - prop.rch[0]) / prop.dist));
-        roh = prop.hhr - (prop.rch[0] - (prop.dist - prop.dl[1]) * ((prop.rch[1] - prop.rch[0]) / prop.dist));
-        toho = prop.hht - (prop.rch[0] - (prop.dl[0] + dsl) * ((prop.hhr - prop.rch[0]) / (prop.dist - prop.dl[1])));
+        toh = prop.hht
+              - (prop.rch[0]
+                 - prop.dl[0] * ((prop.rch[1] - prop.rch[0]) / prop.dist));
+        roh = prop.hhr
+              - (prop.rch[0]
+                 - (prop.dist - prop.dl[1])
+                       * ((prop.rch[1] - prop.rch[0]) / prop.dist));
+        toho = prop.hht
+               - (prop.rch[0]
+                  - (prop.dl[0] + dsl)
+                        * ((prop.hhr - prop.rch[0]) / (prop.dist - prop.dl[1])));
         roho = prop.hhr - (prop.hht - dsl * ((prop.rch[1] - prop.hht) / dsl));
         dto = sqrt(prop.dl[0] * prop.dl[0] + toh * toh);
         dto += prop.gme * prop.dl[0];
@@ -523,22 +551,25 @@ double adiff2(double d, prop_type &prop, propa_type &propa)
         dro += prop.gme * (prop.dl[1]);
         dro2 = sqrt(prop.dl[1] * prop.dl[1] + roho * roho);
         dro2 += prop.gme * (prop.dl[1]);
-        dtr = sqrt(prop.dist * prop.dist + (prop.rch[0] - prop.rch[1]) * (prop.rch[0] - prop.rch[1]));
+        dtr = sqrt(prop.dist * prop.dist
+                   + (prop.rch[0] - prop.rch[1]) * (prop.rch[0] - prop.rch[1]));
         dtr += prop.gme * prop.dist;
-        dhh1 = sqrt((prop.dist - propa.dla) * (prop.dist - propa.dla) + toho * toho);
+        dhh1 =
+            sqrt((prop.dist - propa.dla) * (prop.dist - propa.dla) + toho * toho);
         dhh1 += prop.gme * (prop.dist - propa.dla);
-        dhh2 = sqrt((prop.dist - propa.dla) * (prop.dist - propa.dla) + roho * roho);
+        dhh2 =
+            sqrt((prop.dist - propa.dla) * (prop.dist - propa.dla) + roho * roho);
         dhh2 += prop.gme * (prop.dist - propa.dla);
 
         /* for 1 obst tree base path */
         dtof = sqrt(prop.dl[0] * prop.dl[0] + (toh - prop.cch) * (toh - prop.cch));
         dtof += prop.gme * prop.dl[0];
-        // dto1f = sqrt(prop.dl[0] * prop.dl[0] + (toho - prop.cch) * (toho - prop.cch));
-        // dto1f += prop.gme * prop.dl[0];
+        // dto1f = sqrt(prop.dl[0] * prop.dl[0] + (toho - prop.cch) * (toho -
+        // prop.cch)); dto1f += prop.gme * prop.dl[0];
         drof = sqrt(prop.dl[1] * prop.dl[1] + (roh - prop.cch) * (roh - prop.cch));
         drof += prop.gme * (prop.dl[1]);
-        // dro2f = sqrt(prop.dl[1] * prop.dl[1] + (roho - prop.cch) * (roho - prop.cch));
-        // dro2f += prop.gme * (prop.dl[1]);
+        // dro2f = sqrt(prop.dl[1] * prop.dl[1] + (roho - prop.cch) * (roho -
+        // prop.cch)); dro2f += prop.gme * (prop.dl[1]);
 
         /* saalos coefficients preset for post-obstacle receive path */
         prop.tgh = prop.cch + 1.0;
@@ -565,8 +596,7 @@ double adiff2(double d, prop_type &prop, propa_type &propa)
                     if (prop.hht < 3400) { /* if below tree line, foliage top loss */
                         vv = q * abs(dto1 + dhh1 - dtro);
                         adiffv2 = -18.0 + sf2 * aknfe(vv);
-                    }
-                    else {
+                    } else {
                         vv = q * abs(dto1 + dhh1 - dtro);
                         adiffv2 = aknfe(vv);
                     }
@@ -574,24 +604,21 @@ double adiff2(double d, prop_type &prop, propa_type &propa)
                     if (prop.hhr < 3400) {
                         vv = q * abs(dro2 + dhh2 - drto);
                         adiffv2 += (-18.0 + sf2 * aknfe(vv));
-                    }
-                    else {
+                    } else {
                         vv = q * abs(dro2 + dhh2 - drto);
                         adiffv2 += aknfe(vv);
                     }
                     /* finally, add clutter loss */
                     closs = saalos(rd, prop);
                     adiffv2 += mymin(22.0, closs);
-                }
-                else { /* rcvr site too close to 2nd obs */
+                } else { /* rcvr site too close to 2nd obs */
 
                     /* knife edge attenuation for 1st obs */
 
                     if (prop.hht < 3400) {
                         vv = q * abs(dto1 + dhh1 - dtro);
                         adiffv2 = -18.0 + sf2 * aknfe(vv);
-                    }
-                    else {
+                    } else {
                         vv = q * abs(dto1 + dhh1 - dtro);
                         adiffv2 = aknfe(vv);
                     }
@@ -605,32 +632,29 @@ double adiff2(double d, prop_type &prop, propa_type &propa)
 
                         if (prop.the[1] > 0.6) { /* through foliage downhill */
                             prop.tgh = prop.cch;
-                        }
-                        else { /* close to foliage, rcvr in foliage downslope */
+                        } else { /* close to foliage, rcvr in foliage downslope */
 
                             vv = 0.6365 * prop.wn * abs(dro2 + dhh2 - drto);
                         }
                         adiffv2 += aknfe(vv);
                         closs = saalos(rd, prop);
                         adiffv2 += mymin(closs, 22.0);
-                    }
-                    else { /* rcvr very close to bare cliff or skyscraper */
+                    } else { /* rcvr very close to bare cliff or skyscraper */
 
                         adiffv2 = 5.8 + 25.0;
                     }
                 }
-            }
-            else { /* receive site is atop a 2nd peak */
+            } else { /* receive site is atop a 2nd peak */
 
                 vv = 0.6365 * prop.wn * abs(dto + dro - dtr);
                 adiffv2 = 5.8 + aknfe(vv);
             }
-        }
-        else { /* for single obstacle */
+        } else { /* for single obstacle */
 
             if (int(prop.dl[1]) > 0.0) { /* receive site past 1st peak */
 
-                if (prop.the[1] < 0.2) { /* receive grazing angle less than .2 radians */
+                if (prop.the[1]
+                    < 0.2) { /* receive grazing angle less than .2 radians */
                     vv = 0.6365 * prop.wn * abs(dto + dro - dtr);
 
                     if (prop.hht < 3400) {
@@ -650,44 +674,42 @@ double adiff2(double d, prop_type &prop, propa_type &propa)
                            keep pd between 0 and pi radians and adjust for 3&4 quadrant */
                         if (pd >= 3.141592654) {
                             pd = 6.283185307 - pd;
-                            csd = abq_alos(complex<double>(sdl, 0) + complex<double>(kem * -cos(pd), kem * -sin(pd)));
-                        }
-                        else {
-                            csd = abq_alos(complex<double>(sdl, 0) + complex<double>(kem * cos(pd), kem * sin(pd)));
+                            csd = abq_alos(complex<double>(sdl, 0)
+                                           + complex<double>(kem * -cos(pd),
+                                                             kem * -sin(pd)));
+                        } else {
+                            csd = abq_alos(complex<double>(sdl, 0)
+                                           + complex<double>(kem * cos(pd),
+                                                             kem * sin(pd)));
                         }
                         /*csd=mymax(csd,0.0009); limits maximum loss value to 30.45 db */
                         adiffv2 = -3.71 - 10 * log10(csd);
-                    }
-                    else {
+                    } else {
                         adiffv2 = aknfe(vv);
                     }
                     /* finally, add clutter loss */
                     closs = saalos(rd, prop);
                     adiffv2 += mymin(closs, 22.0);
-                }
-                else { /* receive grazing angle too high */
+                } else { /* receive grazing angle too high */
 
                     if (prop.the[1] < 1.22) {
                         rd = prop.dl[1];
 
                         if (prop.the[1] > 0.6) { /* through foliage downhill */
                             prop.tgh = prop.cch;
-                        }
-                        else { /* downhill slope just above foliage  */
+                        } else { /* downhill slope just above foliage  */
 
                             vv = 0.6365 * prop.wn * abs(dto + dro - dtr);
                             adiffv2 = aknfe(vv);
                         }
                         closs = saalos(rd, prop);
                         adiffv2 += mymin(22.0, closs);
-                    }
-                    else { /* receiver very close to bare cliff or skyscraper */
+                    } else { /* receiver very close to bare cliff or skyscraper */
 
                         adiffv2 = 5.8 + 25.0;
                     }
                 }
-            }
-            else { /* if occurs, receive site atop first peak  */
+            } else { /* if occurs, receive site atop first peak  */
 
                 adiffv2 = 5.8;
             }
@@ -696,8 +718,7 @@ double adiff2(double d, prop_type &prop, propa_type &propa)
     return adiffv2;
 }
 
-double ascat(double d, prop_type &prop, propa_type &propa)
-{
+double ascat(double d, prop_type & prop, propa_type & propa) {
     static __thread double ad, rr, etq, h0s;
     double h0, r1, r2, z0, ss, et, ett, th, q;
     double ascatv, temp;
@@ -717,15 +738,17 @@ double ascat(double d, prop_type &prop, propa_type &propa)
     }
 
     else {
-        if (h0s > 15.0)
+        if (h0s > 15.0) {
             h0 = h0s;
-        else {
+        } else {
             th = prop.the[0] + prop.the[1] + d * prop.gme;
             r2 = 2.0 * prop.wn * th;
             r1 = r2 * prop.he[0];
             r2 *= prop.he[1];
 
-            if (r1 < 0.2 && r2 < 0.2) return 1001.0;  // <==== early return
+            if (r1 < 0.2 && r2 < 0.2) {
+                return 1001.0; // <==== early return
+            }
 
             ss = (d - ad) / (d + ad);
             q = rr / ss;
@@ -744,27 +767,31 @@ double ascat(double d, prop_type &prop, propa_type &propa)
             h0 = FORTRAN_DIM(h0, 0.0);
 
             if (et < 1.0) {
-                /* h0=et*h0+(1.0-et)*4.343*log(pow((1.0+1.4142/r1)*(1.0+1.4142/r2),2.0)*(r1+r2)/(r1+r2+2.8284)); */
+                /* h0=et*h0+(1.0-et)*4.343*log(pow((1.0+1.4142/r1)*(1.0+1.4142/r2),2.0)*(r1+r2)/(r1+r2+2.8284));
+                 */
 
                 temp = ((1.0 + 1.4142 / r1) * (1.0 + 1.4142 / r2));
-                h0 = et * h0 + (1.0 - et) * 4.343 * log((temp * temp) * (r1 + r2) / (r1 + r2 + 2.8284));
+                h0 = et * h0
+                     + (1.0 - et) * 4.343
+                           * log((temp * temp) * (r1 + r2) / (r1 + r2 + 2.8284));
             }
 
-            if (h0 > 15.0 && h0s >= 0.0) h0 = h0s;
+            if (h0 > 15.0 && h0s >= 0.0) {
+                h0 = h0s;
+            }
         }
 
         h0s = h0;
         th = propa.tha + d * prop.gme;
         /* ascatv=ahd(th*d)+4.343*log(47.7*prop.wn*pow(th,4.0))-0.1*(prop.ens-301.0)*exp(-th*d/40e3)+h0; */
-        ascatv = ahd(th * d) + 4.343 * log(47.7 * prop.wn * (th * th * th * th)) -
-                 0.1 * (prop.ens - 301.0) * exp(-th * d / 40e3) + h0;
+        ascatv = ahd(th * d) + 4.343 * log(47.7 * prop.wn * (th * th * th * th))
+                 - 0.1 * (prop.ens - 301.0) * exp(-th * d / 40e3) + h0;
     }
 
     return ascatv;
 }
 
-double qerfi(double q)
-{
+double qerfi(double q) {
     double x, t, v;
     double c0 = 2.515516698;
     double c1 = 0.802853;
@@ -778,33 +805,42 @@ double qerfi(double q)
     t = sqrt(-2.0 * log(t));
     v = t - ((c2 * t + c1) * t + c0) / (((d3 * t + d2) * t + d1) * t + 1.0);
 
-    if (x < 0.0) v = -v;
+    if (x < 0.0) {
+        v = -v;
+    }
 
     return v;
 }
 
-void qlrps(double fmhz, double zsys, double en0, int ipol, double eps, double sgm, prop_type &prop)
-{
+void qlrps(double fmhz,
+           double zsys,
+           double en0,
+           int ipol,
+           double eps,
+           double sgm,
+           prop_type & prop) {
     double gma = 157e-9;
 
     prop.wn = fmhz / 47.7;
     prop.ens = en0;
 
-    if (zsys != 0.0) prop.ens *= exp(-zsys / 9460.0);
+    if (zsys != 0.0) {
+        prop.ens *= exp(-zsys / 9460.0);
+    }
 
     prop.gme = gma * (1.0 - 0.04665 * exp(prop.ens / 179.3));
     complex<double> zq, prop_zgnd(prop.zgndreal, prop.zgndimag);
     zq = complex<double>(eps, 376.62 * sgm / prop.wn);
     prop_zgnd = sqrt(zq - 1.0);
 
-    if (ipol != 0.0) prop_zgnd = prop_zgnd / zq;
+    if (ipol != 0.0)
+        prop_zgnd = prop_zgnd / zq;
 
     prop.zgndreal = prop_zgnd.real();
     prop.zgndimag = prop_zgnd.imag();
 }
 
-double alos(double d, prop_type &prop, propa_type &propa)
-{
+double alos(double d, prop_type & prop, propa_type & propa) {
     complex<double> prop_zgnd(prop.zgndreal, prop.zgndimag);
     static __thread double wls;
     complex<double> r;
@@ -821,23 +857,29 @@ double alos(double d, prop_type &prop, propa_type &propa)
         s = 0.78 * q * exp(-pow(q / 16.0, 0.25));
         q = prop.he[0] + prop.he[1];
         sps = q / sqrt(d * d + q * q);
-        r = (sps - prop_zgnd) / (sps + prop_zgnd) * exp(-mymin(10.0, prop.wn * s * sps));
+        r = (sps - prop_zgnd) / (sps + prop_zgnd)
+            * exp(-mymin(10.0, prop.wn * s * sps));
         q = abq_alos(r);
 
-        if (q < 0.25 || q < sps) r = r * sqrt(sps / q);
+        if (q < 0.25 || q < sps)
+            r = r * sqrt(sps / q);
 
         alosv = propa.emd * d + propa.aed;
         q = prop.wn * prop.he[0] * prop.he[1] * 2.0 / d;
 
-        if (q > 1.57) q = 3.14 - 2.4649 / q;
+        if (q > 1.57) {
+            q = 3.14 - 2.4649 / q;
+        }
 
-        alosv = (-4.343 * log(abq_alos(complex<double>(cos(q), -sin(q)) + r)) - alosv) * wls + alosv;
+        alosv =
+            (-4.343 * log(abq_alos(complex<double>(cos(q), -sin(q)) + r)) - alosv)
+                * wls
+            + alosv;
     }
     return alosv;
 }
 
-double alos2(double d, prop_type &prop)
-{
+double alos2(double d, prop_type & prop) {
     complex<double> prop_zgnd(prop.zgndreal, prop.zgndimag);
     complex<double> r;
     double cd, cr, dr, hr, hrg, ht, htg, hrp, re, s, sps, q, pd, drh;
@@ -867,17 +909,20 @@ double alos2(double d, prop_type &prop)
             dr = pd / (1 + hrg / htg);
 
             if (dr < (0.5 * pd)) {
-                drh = 6378137.0 - sqrt(-(0.5 * pd) * (0.5 * pd) + 6378137.0 * 6378137.0 + (0.5 * pd - dr) * (0.5 * pd - dr));
-            }
-            else {
-                drh = 6378137.0 - sqrt(-(0.5 * pd) * (0.5 * pd) + 6378137.0 * 6378137.0 + (dr - 0.5 * pd) * (dr - 0.5 * pd));
+                drh = 6378137.0
+                      - sqrt(-(0.5 * pd) * (0.5 * pd) + 6378137.0 * 6378137.0
+                             + (0.5 * pd - dr) * (0.5 * pd - dr));
+            } else {
+                drh = 6378137.0
+                      - sqrt(-(0.5 * pd) * (0.5 * pd) + 6378137.0 * 6378137.0
+                             + (dr - 0.5 * pd) * (dr - 0.5 * pd));
             }
 
-            if ((sps < 0.05) && (prop.cch > hrg) &&
-                (prop.dist < prop.dl[0])) { /* if far from transmitter and receiver below canopy */
+            if ((sps < 0.05) && (prop.cch > hrg) && (prop.dist < prop.dl[0])) { /* if far from transmitter and receiver below canopy */
                 cd = mymax(0.01, pd * (prop.cch - hrg) / (htg - hrg));
                 cr = mymax(0.01, pd - dr + dr * (prop.cch - drh) / htg);
-                q = ((1.0 - 0.8 * exp(-pd / 50e3)) * prop.dh * (mymin(-20 * log10(cd / cr), 1.0)));
+                q = ((1.0 - 0.8 * exp(-pd / 50e3)) * prop.dh
+                     * (mymin(-20 * log10(cd / cr), 1.0)));
             }
         }
 
@@ -908,14 +953,14 @@ double alos2(double d, prop_type &prop)
            by removing minus sign from in front of sin function */
         re = abq_alos(complex<double>(cos(q), sin(q)) + r);
         alosv = -10 * log10(re);
-        prop.tgh = prop.hg[0];                /*tx above gnd hgt set to antenna height AGL */
+        prop.tgh = prop.hg[0]; /*tx above gnd hgt set to antenna height AGL */
         prop.tsgh = prop.rch[0] - prop.hg[0]; /* tsgh set to tx site gl AMSL */
 
-        if ((prop.hg[1] < prop.cch) && (prop.thera < 0.785) && (prop.thenr < 0.785)) {
+        if ((prop.hg[1] < prop.cch) && (prop.thera < 0.785)
+            && (prop.thenr < 0.785)) {
             if (sps < 0.05) {
                 alosv = alosv + saalos(pd, prop);
-            }
-            else {
+            } else {
                 alosv = saalos(pd, prop);
             }
         }
@@ -924,26 +969,33 @@ double alos2(double d, prop_type &prop)
     return alosv;
 }
 
-void qlra(int kst[], int klimx, int mdvarx, prop_type &prop, propv_type &propv)
-{
+void qlra(int kst[], int klimx, int mdvarx, prop_type & prop, propv_type & propv) {
     double q;
 
     for (int j = 0; j < 2; ++j) {
-        if (kst[j] <= 0)
+        if (kst[j] <= 0) {
             prop.he[j] = prop.hg[j];
-        else {
+        } else {
             q = 4.0;
 
-            if (kst[j] != 1) q = 9.0;
+            if (kst[j] != 1) {
+                q = 9.0;
+            }
 
-            if (prop.hg[j] < 5.0) q *= sin(0.3141593 * prop.hg[j]);
+            if (prop.hg[j] < 5.0) {
+                q *= sin(0.3141593 * prop.hg[j]);
+            }
 
-            prop.he[j] = prop.hg[j] + (1.0 + q) * exp(-mymin(20.0, 2.0 * prop.hg[j] / mymax(1e-3, prop.dh)));
+            prop.he[j] =
+                prop.hg[j]
+                + (1.0 + q)
+                      * exp(-mymin(20.0, 2.0 * prop.hg[j] / mymax(1e-3, prop.dh)));
         }
 
         q = sqrt(2.0 * prop.he[j] / prop.gme);
         prop.dl[j] = q * exp(-0.07 * sqrt(prop.dh / mymax(prop.he[j], 5.0)));
-        prop.the[j] = (0.65 * prop.dh * (q / prop.dl[j] - 1.0) - 2.0 * prop.he[j]) / q;
+        prop.the[j] =
+            (0.65 * prop.dh * (q / prop.dl[j] - 1.0) - 2.0 * prop.he[j]) / q;
     }
 
     prop.mdp = 1;
@@ -960,8 +1012,7 @@ void qlra(int kst[], int klimx, int mdvarx, prop_type &prop, propv_type &propv)
     }
 }
 
-void lrprop(double d, prop_type &prop, propa_type &propa)
-{
+void lrprop(double d, prop_type & prop, propa_type & propa) {
     /* PaulM_lrprop used for ITM */
     static __thread bool wlos, wscat;
     static __thread double dmin, xae;
@@ -973,7 +1024,9 @@ void lrprop(double d, prop_type &prop, propa_type &propa)
     int j;
 
     if (prop.mdp != 0) {
-        for (j = 0; j < 2; j++) propa.dls[j] = sqrt(2.0 * prop.he[j] / prop.gme);
+        for (j = 0; j < 2; j++) {
+            propa.dls[j] = sqrt(2.0 * prop.he[j] / prop.gme);
+        }
 
         propa.dlsa = propa.dls[0] + propa.dls[1];
         propa.dla = prop.dl[0] + prop.dl[1];
@@ -981,21 +1034,33 @@ void lrprop(double d, prop_type &prop, propa_type &propa)
         wlos = false;
         wscat = false;
 
-        if (prop.wn < 0.838 || prop.wn > 210.0) prop.kwx = mymax(prop.kwx, 1);
+        if (prop.wn < 0.838 || prop.wn > 210.0) {
+            prop.kwx = mymax(prop.kwx, 1);
+        }
 
-        for (j = 0; j < 2; j++)
-            if (prop.hg[j] < 1.0 || prop.hg[j] > 1000.0) prop.kwx = mymax(prop.kwx, 1);
+        for (j = 0; j < 2; j++) {
+            if (prop.hg[j] < 1.0 || prop.hg[j] > 1000.0) {
+                prop.kwx = mymax(prop.kwx, 1);
+            }
+        }
 
-        for (j = 0; j < 2; j++)
-            if (abs(prop.the[j]) > 200e-3 || prop.dl[j] < 0.1 * propa.dls[j] || prop.dl[j] > 3.0 * propa.dls[j])
+        for (j = 0; j < 2; j++) {
+            if (abs(prop.the[j]) > 200e-3 || prop.dl[j] < 0.1 * propa.dls[j]
+                || prop.dl[j] > 3.0 * propa.dls[j]) {
                 prop.kwx = mymax(prop.kwx, 3);
+            }
+        }
 
-        if (prop.ens < 250.0 || prop.ens > 400.0 || prop.gme < 75e-9 || prop.gme > 250e-9 ||
-            prop_zgnd.real() <= abs(prop_zgnd.imag()) || prop.wn < 0.419 || prop.wn > 420.0)
+        if (prop.ens < 250.0 || prop.ens > 400.0 || prop.gme < 75e-9
+            || prop.gme > 250e-9 || prop_zgnd.real() <= abs(prop_zgnd.imag())
+            || prop.wn < 0.419 || prop.wn > 420.0)
             prop.kwx = 4;
 
-        for (j = 0; j < 2; j++)
-            if (prop.hg[j] < 0.5 || prop.hg[j] > 3000.0) prop.kwx = 4;
+        for (j = 0; j < 2; j++) {
+            if (prop.hg[j] < 0.5 || prop.hg[j] > 3000.0) {
+                prop.kwx = 4;
+            }
+        }
 
         dmin = abs(prop.he[0] - prop.he[1]) / 200e-3;
         q = adiff(0.0, prop, propa);
@@ -1015,11 +1080,17 @@ void lrprop(double d, prop_type &prop, propa_type &propa)
     }
 
     if (prop.dist > 0.0) {
-        if (prop.dist > 1000e3) prop.kwx = mymax(prop.kwx, 1);
+        if (prop.dist > 1000e3) {
+            prop.kwx = mymax(prop.kwx, 1);
+        }
 
-        if (prop.dist < dmin) prop.kwx = mymax(prop.kwx, 3);
+        if (prop.dist < dmin) {
+            prop.kwx = mymax(prop.kwx, 3);
+        }
 
-        if (prop.dist < 1e3 || prop.dist > 2000e3) prop.kwx = 4;
+        if (prop.dist < 1e3 || prop.dist > 2000e3) {
+            prop.kwx = 4;
+        }
     }
 
     if (prop.dist < propa.dlsa) {
@@ -1034,8 +1105,9 @@ void lrprop(double d, prop_type &prop, propa_type &propa)
                 d1 = d0 + 0.25 * (propa.dla - d0);
             }
 
-            else
+            else {
                 d1 = mymax(-propa.aed / propa.emd, 0.25 * propa.dla);
+            }
 
             a1 = alos(d1, prop, propa);
             wq = false;
@@ -1044,7 +1116,9 @@ void lrprop(double d, prop_type &prop, propa_type &propa)
                 a0 = alos(d0, prop, propa);
                 q = log(d2 / d0);
                 propa.ak2 =
-                    mymax(0.0, ((d2 - d0) * (a1 - a0) - (d1 - d0) * (a2 - a0)) / ((d2 - d0) * log(d1 / d0) - (d1 - d0) * q));
+                    mymax(0.0,
+                          ((d2 - d0) * (a1 - a0) - (d1 - d0) * (a2 - a0))
+                              / ((d2 - d0) * log(d1 / d0) - (d1 - d0) * q));
                 wq = propa.aed >= 0.0 || propa.ak2 > 0.0;
 
                 if (wq) {
@@ -1054,7 +1128,9 @@ void lrprop(double d, prop_type &prop, propa_type &propa)
                         propa.ak1 = 0.0;
                         propa.ak2 = FORTRAN_DIM(a2, a0) / q;
 
-                        if (propa.ak2 == 0.0) propa.ak1 = propa.emd;
+                        if (propa.ak2 == 0.0) {
+                            propa.ak1 = propa.emd;
+                        }
                     }
                 }
 
@@ -1062,7 +1138,9 @@ void lrprop(double d, prop_type &prop, propa_type &propa)
                     propa.ak2 = 0.0;
                     propa.ak1 = (a2 - a1) / (d2 - d1);
 
-                    if (propa.ak1 <= 0.0) propa.ak1 = propa.emd;
+                    if (propa.ak1 <= 0.0) {
+                        propa.ak1 = propa.emd;
+                    }
                 }
             }
 
@@ -1070,14 +1148,19 @@ void lrprop(double d, prop_type &prop, propa_type &propa)
                 propa.ak1 = (a2 - a1) / (d2 - d1);
                 propa.ak2 = 0.0;
 
-                if (propa.ak1 <= 0.0) propa.ak1 = propa.emd;
+                if (propa.ak1 <= 0.0) {
+                    propa.ak1 = propa.emd;
+                }
             }
 
             propa.ael = a2 - propa.ak1 * d2 - propa.ak2 * log(d2);
             wlos = true;
         }
 
-        if (prop.dist > 0.0) prop.aref = propa.ael + propa.ak1 * prop.dist + propa.ak2 * log(prop.dist);
+        if (prop.dist > 0.0) {
+            prop.aref =
+                propa.ael + propa.ak1 * prop.dist + propa.ak2 * log(prop.dist);
+        }
     }
 
     if (prop.dist <= 0.0 || prop.dist >= propa.dlsa) {
@@ -1090,8 +1173,10 @@ void lrprop(double d, prop_type &prop, propa_type &propa)
 
             if (a5 < 1000.0) {
                 propa.ems = (a6 - a5) / 200e3;
-                propa.dx = mymax(propa.dlsa, mymax(propa.dla + 0.3 * xae * log(47.7 * prop.wn),
-                                                   (a5 - propa.aed - propa.ems * d5) / (propa.emd - propa.ems)));
+                propa.dx = mymax(propa.dlsa,
+                                 mymax(propa.dla + 0.3 * xae * log(47.7 * prop.wn),
+                                       (a5 - propa.aed - propa.ems * d5)
+                                           / (propa.emd - propa.ems)));
                 propa.aes = (propa.emd - propa.ems) * propa.dx + propa.aed;
             }
 
@@ -1104,17 +1189,17 @@ void lrprop(double d, prop_type &prop, propa_type &propa)
             wscat = true;
         }
 
-        if (prop.dist > propa.dx)
+        if (prop.dist > propa.dx) {
             prop.aref = propa.aes + propa.ems * prop.dist;
-        else
+        } else {
             prop.aref = propa.aed + propa.emd * prop.dist;
+        }
     }
 
     prop.aref = mymax(prop.aref, 0.0);
 }
 
-void lrprop2(double d, prop_type &prop, propa_type &propa)
-{
+void lrprop2(double d, prop_type & prop, propa_type & propa) {
     /* ITWOM_lrprop2 */
     static __thread bool wlos, wscat;
     static __thread double dmin, xae;
@@ -1131,7 +1216,9 @@ void lrprop2(double d, prop_type &prop, propa_type &propa)
     propa.dx = 2000000.0;
 
     if (prop.mdp != 0) { /* if oper. mode is not 0, i.e. not area mode ongoing */
-        for (j = 0; j < 2; j++) propa.dls[j] = sqrt(2.0 * prop.he[j] / prop.gme);
+        for (j = 0; j < 2; j++) {
+            propa.dls[j] = sqrt(2.0 * prop.he[j] / prop.gme);
+        }
 
         propa.dlsa = propa.dls[0] + propa.dls[1];
         propa.dlsa = mymin(propa.dlsa, 1000000.0);
@@ -1142,26 +1229,38 @@ void lrprop2(double d, prop_type &prop, propa_type &propa)
 
         /*checking for parameters-in-range, error codes set if not */
 
-        if (prop.wn < 0.838 || prop.wn > 210.0) prop.kwx = mymax(prop.kwx, 1);
+        if (prop.wn < 0.838 || prop.wn > 210.0) {
+            prop.kwx = mymax(prop.kwx, 1);
+        }
 
-        for (j = 0; j < 2; j++)
-            if (prop.hg[j] < 1.0 || prop.hg[j] > 1000.0) prop.kwx = mymax(prop.kwx, 1);
+        for (j = 0; j < 2; j++) {
+            if (prop.hg[j] < 1.0 || prop.hg[j] > 1000.0) {
+                prop.kwx = mymax(prop.kwx, 1);
+            }
+        }
 
-        if (abs(prop.the[0]) > 200e-3) prop.kwx = mymax(prop.kwx, 3);
+        if (abs(prop.the[0]) > 200e-3) {
+            prop.kwx = mymax(prop.kwx, 3);
+        }
 
-        if (abs(prop.the[1]) > 1.220) prop.kwx = mymax(prop.kwx, 3);
+        if (abs(prop.the[1]) > 1.220) {
+            prop.kwx = mymax(prop.kwx, 3);
+        }
 
         /*for (j=0; j<2; j++)
            if (prop.dl[j]<0.1*propa.dls[j] || prop.dl[j]>3.0*propa.dls[j])
            prop.kwx=mymax(prop.kwx,3);  */
 
-        if (prop.ens < 250.0 || prop.ens > 400.0 || prop.gme < 75e-9 || prop.gme > 250e-9 ||
-            prop_zgnd.real() <= abs(prop_zgnd.imag()) || prop.wn < 0.419 || prop.wn > 420.0)
+        if (prop.ens < 250.0 || prop.ens > 400.0 || prop.gme < 75e-9
+            || prop.gme > 250e-9 || prop_zgnd.real() <= abs(prop_zgnd.imag())
+            || prop.wn < 0.419 || prop.wn > 420.0)
             prop.kwx = 4;
 
-        for (j = 0; j < 2; j++)
-
-            if (prop.hg[j] < 0.5 || prop.hg[j] > 3000.0) prop.kwx = 4;
+        for (j = 0; j < 2; j++) {
+            if (prop.hg[j] < 0.5 || prop.hg[j] > 3000.0) {
+                prop.kwx = 4;
+            }
+        }
 
         dmin = abs(prop.he[0] - prop.he[1]) / 200e-3;
         q = adiff2(0.0, prop, propa);
@@ -1180,12 +1279,18 @@ void lrprop2(double d, prop_type &prop, propa_type &propa)
     }
 
     if (prop.dist > 0.0) {
-        if (prop.dist > 1000e3) /* prop.dist being in meters, if greater than 1000 km, kwx=1 */
+        if (prop.dist
+            > 1000e3) { /* prop.dist being in meters, if greater than 1000 km, kwx=1 */
             prop.kwx = mymax(prop.kwx, 1);
+        }
 
-        if (prop.dist < dmin) prop.kwx = mymax(prop.kwx, 3);
+        if (prop.dist < dmin) {
+            prop.kwx = mymax(prop.kwx, 3);
+        }
 
-        if (prop.dist < 1e3 || prop.dist > 2000e3) prop.kwx = 4;
+        if (prop.dist < 1e3 || prop.dist > 2000e3) {
+            prop.kwx = 4;
+        }
     }
 
     if (prop.dist < propa.dlsa) {
@@ -1199,13 +1304,11 @@ void lrprop2(double d, prop_type &prop, propa_type &propa)
 
                 if (propa.aed > 0.0) {
                     prop.aref = propa.aed + propa.emd * prop.dist;
-                }
-                else {
+                } else {
                     if (propa.aed == 0.0) {
                         d0 = mymin(d0, 0.5 * propa.dla);
                         d1 = d0 + 0.25 * (propa.dla - d0);
-                    }
-                    else { /* aed less than zero */
+                    } else { /* aed less than zero */
 
                         d1 = mymax(-propa.aed / propa.emd, 0.25 * propa.dla);
                     }
@@ -1216,8 +1319,10 @@ void lrprop2(double d, prop_type &prop, propa_type &propa)
                         a0 = alos2(d0, prop);
                         a2 = mymin(a2, alos2(d2, prop));
                         q = log(d2 / d0);
-                        propa.ak2 = mymax(
-                            0.0, ((d2 - d0) * (a1 - a0) - (d1 - d0) * (a2 - a0)) / ((d2 - d0) * log(d1 / d0) - (d1 - d0) * q));
+                        propa.ak2 =
+                            mymax(0.0,
+                                  ((d2 - d0) * (a1 - a0) - (d1 - d0) * (a2 - a0))
+                                      / ((d2 - d0) * log(d1 / d0) - (d1 - d0) * q));
                         wq = propa.aed >= 0.0 || propa.ak2 > 0.0;
 
                         if (wq) {
@@ -1227,7 +1332,9 @@ void lrprop2(double d, prop_type &prop, propa_type &propa)
                                 propa.ak1 = 0.0;
                                 propa.ak2 = FORTRAN_DIM(a2, a0) / q;
 
-                                if (propa.ak2 == 0.0) propa.ak1 = propa.emd;
+                                if (propa.ak2 == 0.0) {
+                                    propa.ak1 = propa.emd;
+                                }
                             }
                         }
                     }
@@ -1236,14 +1343,15 @@ void lrprop2(double d, prop_type &prop, propa_type &propa)
                         propa.ak1 = FORTRAN_DIM(a2, a1) / (d2 - d1);
                         propa.ak2 = 0.0;
 
-                        if (propa.ak1 == 0.0) propa.ak1 = propa.emd;
+                        if (propa.ak1 == 0.0) {
+                            propa.ak1 = propa.emd;
+                        }
                     }
                     propa.ael = a2 - propa.ak1 * d2 - propa.ak2 * log(d2);
                     wlos = true;
                 }
             }
-        }
-        else { /* for ITWOM point-to-point mode */
+        } else { /* for ITWOM point-to-point mode */
 
             if (!wlos) {
                 q = alos2(0.0, prop); /* coefficient setup */
@@ -1252,16 +1360,14 @@ void lrprop2(double d, prop_type &prop, propa_type &propa)
 
             if (prop.los == 1) { /* if line of sight */
                 prop.aref = alos2(pd1, prop);
-            }
-            else {
+            } else {
                 if (int(prop.dist - prop.dl[0]) == 0) { /* if at 1st horiz */
                     prop.aref = 5.8 + alos2(pd1, prop);
-                }
-                else if (int(prop.dist - prop.dl[0]) > 0.0) { /* if past 1st horiz */
+                } else if (int(prop.dist - prop.dl[0])
+                           > 0.0) { /* if past 1st horiz */
                     q = adiff2(0.0, prop, propa);
                     prop.aref = adiff2(pd1, prop, propa);
-                }
-                else {
+                } else {
                     prop.aref = 1.0;
                 }
             }
@@ -1280,8 +1386,11 @@ void lrprop2(double d, prop_type &prop, propa_type &propa)
 
                 if (a5 < 1000.0) {
                     propa.ems = (a6 - a5) / 200e3;
-                    propa.dx = mymax(propa.dlsa, mymax(propa.dla + 0.3 * xae * log(47.7 * prop.wn),
-                                                       (a5 - propa.aed - propa.ems * d5) / (propa.emd - propa.ems)));
+                    propa.dx =
+                        mymax(propa.dlsa,
+                              mymax(propa.dla + 0.3 * xae * log(47.7 * prop.wn),
+                                    (a5 - propa.aed - propa.ems * d5)
+                                        / (propa.emd - propa.ems)));
 
                     propa.aes = (propa.emd - propa.ems) * propa.dx + propa.aed;
                 }
@@ -1296,12 +1405,10 @@ void lrprop2(double d, prop_type &prop, propa_type &propa)
 
             if (prop.dist > propa.dx) {
                 prop.aref = propa.aes + propa.ems * prop.dist;
-            }
-            else {
+            } else {
                 prop.aref = propa.aed + propa.emd * prop.dist;
             }
-        }
-        else { /* ITWOM mode  q used to preset coefficients with zero input */
+        } else { /* ITWOM mode  q used to preset coefficients with zero input */
 
             if (!wscat) {
                 d5 = 0.0;
@@ -1314,8 +1421,7 @@ void lrprop2(double d, prop_type &prop, propa_type &propa)
                 if (a5 <= a6) {
                     propa.dx = 10000000;
                     prop.aref = a5;
-                }
-                else {
+                } else {
                     propa.dx = propa.dlsa;
                     prop.aref = a6;
                 }
@@ -1326,8 +1432,12 @@ void lrprop2(double d, prop_type &prop, propa_type &propa)
     prop.aref = mymax(prop.aref, 0.0);
 }
 
-double curve(double const &c1, double const &c2, double const &x1, double const &x2, double const &x3, double const &de)
-{
+double curve(double const & c1,
+             double const & c2,
+             double const & x1,
+             double const & x2,
+             double const & x3,
+             double const & de) {
     /* return (c1+c2/(1.0+pow((de-x2)/x3,2.0)))*pow(de/x1,2.0)/(1.0+pow(de/x1,2.0)); */
     double temp1, temp2;
 
@@ -1340,11 +1450,11 @@ double curve(double const &c1, double const &c2, double const &x1, double const 
     return (c1 + c2 / (1.0 + temp1)) * temp2 / (1.0 + temp2);
 }
 
-double avar(double zzt, double zzl, double zzc, prop_type &prop, propv_type &propv)
-{
+double avar(double zzt, double zzl, double zzc, prop_type & prop, propv_type & propv) {
     static __thread int kdv;
-    static __thread double dexa, de, vmd, vs0, sgl, sgtm, sgtp, sgtd, tgtd, gm, gp, cv1, cv2, yv1, yv2, yv3, csm1, csm2, ysm1,
-        ysm2, ysm3, csp1, csp2, ysp1, ysp2, ysp3, csd1, zd, cfm1, cfm2, cfm3, cfp1, cfp2, cfp3;
+    static __thread double dexa, de, vmd, vs0, sgl, sgtm, sgtp, sgtd, tgtd, gm,
+        gp, cv1, cv2, yv1, yv2, yv3, csm1, csm2, ysm1, ysm2, ysm3, csp1, csp2,
+        ysp1, ysp2, ysp3, csd1, zd, cfm1, cfm2, cfm3, cfp1, cfp2, cfp3;
 
     double bv1[7] = {-9.67, -0.62, 1.26, -9.21, -0.62, -0.39, 3.15};
     double bv2[7] = {12.7, 9.19, 15.5, 9.05, 9.19, 2.86, 857.9};
@@ -1376,77 +1486,83 @@ double avar(double zzt, double zzl, double zzc, prop_type &prop, propv_type &pro
 
     if (propv.lvar > 0) {
         switch (propv.lvar) {
-            default:
-                if (propv.klim <= 0 || propv.klim > 7) {
-                    propv.klim = 5;
-                    temp_klim = 4;
-                    prop.kwx = mymax(prop.kwx, 2);
-                }
+        default:
+            if (propv.klim <= 0 || propv.klim > 7) {
+                propv.klim = 5;
+                temp_klim = 4;
+                prop.kwx = mymax(prop.kwx, 2);
+            }
 
-                cv1 = bv1[temp_klim];
-                cv2 = bv2[temp_klim];
-                yv1 = xv1[temp_klim];
-                yv2 = xv2[temp_klim];
-                yv3 = xv3[temp_klim];
-                csm1 = bsm1[temp_klim];
-                csm2 = bsm2[temp_klim];
-                ysm1 = xsm1[temp_klim];
-                ysm2 = xsm2[temp_klim];
-                ysm3 = xsm3[temp_klim];
-                csp1 = bsp1[temp_klim];
-                csp2 = bsp2[temp_klim];
-                ysp1 = xsp1[temp_klim];
-                ysp2 = xsp2[temp_klim];
-                ysp3 = xsp3[temp_klim];
-                csd1 = bsd1[temp_klim];
-                zd = bzd1[temp_klim];
-                cfm1 = bfm1[temp_klim];
-                cfm2 = bfm2[temp_klim];
-                cfm3 = bfm3[temp_klim];
-                cfp1 = bfp1[temp_klim];
-                cfp2 = bfp2[temp_klim];
-                cfp3 = bfp3[temp_klim];
-                /* NOTE: we are not sure if this code is supposed to fall through. */
-                [[fallthrough]];
+            cv1 = bv1[temp_klim];
+            cv2 = bv2[temp_klim];
+            yv1 = xv1[temp_klim];
+            yv2 = xv2[temp_klim];
+            yv3 = xv3[temp_klim];
+            csm1 = bsm1[temp_klim];
+            csm2 = bsm2[temp_klim];
+            ysm1 = xsm1[temp_klim];
+            ysm2 = xsm2[temp_klim];
+            ysm3 = xsm3[temp_klim];
+            csp1 = bsp1[temp_klim];
+            csp2 = bsp2[temp_klim];
+            ysp1 = xsp1[temp_klim];
+            ysp2 = xsp2[temp_klim];
+            ysp3 = xsp3[temp_klim];
+            csd1 = bsd1[temp_klim];
+            zd = bzd1[temp_klim];
+            cfm1 = bfm1[temp_klim];
+            cfm2 = bfm2[temp_klim];
+            cfm3 = bfm3[temp_klim];
+            cfp1 = bfp1[temp_klim];
+            cfp2 = bfp2[temp_klim];
+            cfp3 = bfp3[temp_klim];
+            /* NOTE: we are not sure if this code is supposed to fall through. */
+            [[fallthrough]];
 
-            case 4:
-                kdv = propv.mdvar;
-                ws = kdv >= 20;
+        case 4:
+            kdv = propv.mdvar;
+            ws = kdv >= 20;
 
-                if (ws) kdv -= 20;
+            if (ws) {
+                kdv -= 20;
+            }
 
-                w1 = kdv >= 10;
+            w1 = kdv >= 10;
 
-                if (w1) kdv -= 10;
+            if (w1) {
+                kdv -= 10;
+            }
 
-                if (kdv < 0 || kdv > 3) {
-                    kdv = 0;
-                    prop.kwx = mymax(prop.kwx, 2);
-                }
+            if (kdv < 0 || kdv > 3) {
+                kdv = 0;
+                prop.kwx = mymax(prop.kwx, 2);
+            }
 
-                /* NOTE: we are not sure if this code is supposed to fall through. */
-                [[fallthrough]];
-            case 3:
-                q = log(0.133 * prop.wn);
+            /* NOTE: we are not sure if this code is supposed to fall through. */
+            [[fallthrough]];
+        case 3:
+            q = log(0.133 * prop.wn);
 
-                /* gm=cfm1+cfm2/(pow(cfm3*q,2.0)+1.0); */
-                /* gp=cfp1+cfp2/(pow(cfp3*q,2.0)+1.0); */
+            /* gm=cfm1+cfm2/(pow(cfm3*q,2.0)+1.0); */
+            /* gp=cfp1+cfp2/(pow(cfp3*q,2.0)+1.0); */
 
-                gm = cfm1 + cfm2 / ((cfm3 * q * cfm3 * q) + 1.0);
-                gp = cfp1 + cfp2 / ((cfp3 * q * cfp3 * q) + 1.0);
-                /* NOTE: we are not sure if this code is supposed to fall through. */
-                [[fallthrough]];
+            gm = cfm1 + cfm2 / ((cfm3 * q * cfm3 * q) + 1.0);
+            gp = cfp1 + cfp2 / ((cfp3 * q * cfp3 * q) + 1.0);
+            /* NOTE: we are not sure if this code is supposed to fall through. */
+            [[fallthrough]];
 
-            case 2:
-                dexa = sqrt(18e6 * prop.he[0]) + sqrt(18e6 * prop.he[1]) + pow((575.7e12 / prop.wn), THIRD);
-                /* NOTE: we are not sure if this code is supposed to fall through. */
-                [[fallthrough]];
+        case 2:
+            dexa = sqrt(18e6 * prop.he[0]) + sqrt(18e6 * prop.he[1])
+                   + pow((575.7e12 / prop.wn), THIRD);
+            /* NOTE: we are not sure if this code is supposed to fall through. */
+            [[fallthrough]];
 
-            case 1:
-                if (prop.dist < dexa)
-                    de = 130e3 * prop.dist / dexa;
-                else
-                    de = 130e3 + prop.dist - dexa;
+        case 1:
+            if (prop.dist < dexa) {
+                de = 130e3 * prop.dist / dexa;
+            } else {
+                de = 130e3 + prop.dist - dexa;
+            }
         }
 
         vmd = curve(cv1, cv2, yv1, yv2, yv3, de);
@@ -1455,16 +1571,16 @@ double avar(double zzt, double zzl, double zzc, prop_type &prop, propv_type &pro
         sgtd = sgtp * csd1;
         tgtd = (sgtp - sgtd) * zd;
 
-        if (w1)
+        if (w1) {
             sgl = 0.0;
-        else {
+        } else {
             q = (1.0 - 0.8 * exp(-prop.dist / 50e3)) * prop.dh * prop.wn;
             sgl = 10.0 * q / (q + 13.0);
         }
 
-        if (ws)
+        if (ws) {
             vs0 = 0.0;
-        else {
+        } else {
             /* vs0=pow(5.0+3.0*exp(-de/100e3),2.0); */
             temp1 = (5.0 + 3.0 * exp(-de / 100e3));
             vs0 = temp1 * temp1;
@@ -1478,29 +1594,32 @@ double avar(double zzt, double zzl, double zzc, prop_type &prop, propv_type &pro
     zc = zzc;
 
     switch (kdv) {
-        case 0:
-            zt = zc;
-            zl = zc;
-            break;
+    case 0:
+        zt = zc;
+        zl = zc;
+        break;
 
-        case 1:
-            zl = zc;
-            break;
+    case 1:
+        zl = zc;
+        break;
 
-        case 2:
-            zl = zt;
+    case 2:
+        zl = zt;
     }
 
-    if (fabs(zt) > 3.1 || fabs(zl) > 3.1 || fabs(zc) > 3.1) prop.kwx = mymax(prop.kwx, 1);
+    if (fabs(zt) > 3.1 || fabs(zl) > 3.1 || fabs(zc) > 3.1) {
+        prop.kwx = mymax(prop.kwx, 1);
+    }
 
-    if (zt < 0.0)
+    if (zt < 0.0) {
         sgt = sgtm;
 
-    else if (zt <= zd)
+    } else if (zt <= zd) {
         sgt = sgtp;
 
-    else
+    } else {
         sgt = sgtd + tgtd / zt;
+    }
 
     /* vs=vs0+pow(sgt*zt,2.0)/(rt+zc*zc)+pow(sgl*zl,2.0)/(rl+zc*zc); */
 
@@ -1531,13 +1650,14 @@ double avar(double zzt, double zzl, double zzc, prop_type &prop, propv_type &pro
 
     avarv = prop.aref - vmd - yr - propv.sgc * zc;
 
-    if (avarv < 0.0) avarv = avarv * (29.0 - avarv) / (29.0 - 10.0 * avarv);
+    if (avarv < 0.0) {
+        avarv = avarv * (29.0 - avarv) / (29.0 - 10.0 * avarv);
+    }
 
     return avarv;
 }
 
-void hzns(double pfl[], prop_type &prop)
-{
+void hzns(double pfl[], prop_type & prop) {
     /* Used only with ITM 1.2.2 */
     bool wq;
     int np;
@@ -1583,8 +1703,7 @@ void hzns(double pfl[], prop_type &prop)
     }
 }
 
-void hzns2(double pfl[], prop_type &prop)
-{
+void hzns2(double pfl[], prop_type & prop) {
     bool wq;
     int np, rp, i, j;
     double xi, za, zb, qc, q, sb, sa, dr, dshh;
@@ -1629,7 +1748,9 @@ void hzns2(double pfl[], prop_type &prop)
         if (!wq) {
             for (i = 1; i < np; i++) {
                 sb -= xi;
-                q = pfl[np + 2 - i] - (qc * (prop.dist - sb) + prop.the[1]) * (prop.dist - sb) - zb;
+                q = pfl[np + 2 - i]
+                    - (qc * (prop.dist - sb) + prop.the[1]) * (prop.dist - sb)
+                    - zb;
                 if (q > 0.0) {
                     prop.the[1] += q / (prop.dist - sb);
                     prop.the[1] = mymin(prop.the[1], 1.57);
@@ -1638,8 +1759,10 @@ void hzns2(double pfl[], prop_type &prop)
                     prop.dl[1] = mymax(0.0, prop.dist - sb);
                 }
             }
-            prop.the[0] = atan((prop.hht - za) / prop.dl[0]) - 0.5 * prop.gme * prop.dl[0];
-            prop.the[1] = atan((prop.hhr - zb) / prop.dl[1]) - 0.5 * prop.gme * prop.dl[1];
+            prop.the[0] =
+                atan((prop.hht - za) / prop.dl[0]) - 0.5 * prop.gme * prop.dl[0];
+            prop.the[1] =
+                atan((prop.hhr - zb) / prop.dl[1]) - 0.5 * prop.gme * prop.dl[1];
         }
     }
 
@@ -1648,13 +1771,11 @@ void hzns2(double pfl[], prop_type &prop)
 
         if (int(dshh) == 0) { /* one obstacle */
             dr = prop.dl[1] / (1 + zb / prop.hht);
-        }
-        else { /* two obstacles */
+        } else { /* two obstacles */
 
             dr = prop.dl[1] / (1 + zb / prop.hhr);
         }
-    }
-    else { /* line of sight  */
+    } else { /* line of sight  */
 
         dr = (prop.dist) / (1 + zb / za);
     }
@@ -1663,8 +1784,7 @@ void hzns2(double pfl[], prop_type &prop)
     prop.rph = pfl[rp];
 }
 
-void z1sq1(double z[], const double &x1, const double &x2, double &z0, double &zn)
-{
+void z1sq1(double z[], const double & x1, const double & x2, double & z0, double & zn) {
     /* Used only with ITM 1.2.2 */
     double xn, xa, xb, x, a, b;
     int n, ja, jb;
@@ -1701,8 +1821,7 @@ void z1sq1(double z[], const double &x1, const double &x2, double &z0, double &z
     zn = a + b * (xn - xb);
 }
 
-void z1sq2(double z[], const double &x1, const double &x2, double &z0, double &zn)
-{
+void z1sq2(double z[], const double & x1, const double & x2, double & z0, double & zn) {
     /* corrected for use with ITWOM */
     double xn, xa, xb, x, a, b, bn;
     int n, ja, jb;
@@ -1741,8 +1860,7 @@ void z1sq2(double z[], const double &x1, const double &x2, double &z0, double &z
     zn = a + (b * (xn - xb));
 }
 
-double qtile(const int &nn, double a[], const int &ir)
-{
+double qtile(const int & nn, double a[], const int & ir) {
     double q = 0.0, r;                 /* q initialization -- KD2BD */
     int m, n, i, j, j1 = 0, i0 = 0, k; /* more initializations -- KD2BD */
     bool done = false;
@@ -1761,15 +1879,23 @@ double qtile(const int &nn, double a[], const int &ir)
 
         i = i0;
 
-        while (i <= n && a[i] >= q) i++;
+        while (i <= n && a[i] >= q) {
+            i++;
+        }
 
-        if (i > n) i = n;
+        if (i > n) {
+            i = n;
+        }
 
         j = j1;
 
-        while (j >= m && a[j] <= q) j--;
+        while (j >= m && a[j] <= q) {
+            j--;
+        }
 
-        if (j < m) j = m;
+        if (j < m) {
+            j = m;
+        }
 
         if (i < j) {
             r = a[i];
@@ -1794,15 +1920,15 @@ double qtile(const int &nn, double a[], const int &ir)
             goto10 = true;
         }
 
-        else
+        else {
             done = true;
+        }
     }
 
     return q;
 }
 
-double qerf(const double &z)
-{
+double qerf(const double & z) {
     double b1 = 0.319381530, b2 = -0.356563782, b3 = 1.781477937;
     double b4 = -1.821255987, b5 = 1.330274429;
     double rp = 4.317008, rrt2pi = 0.398942280;
@@ -1811,31 +1937,34 @@ double qerf(const double &z)
     x = z;
     t = fabs(x);
 
-    if (t >= 10.0)
+    if (t >= 10.0) {
         qerfv = 0.0;
-    else {
+    } else {
         t = rp / (t + rp);
-        qerfv = exp(-0.5 * x * x) * rrt2pi * ((((b5 * t + b4) * t + b3) * t + b2) * t + b1) * t;
+        qerfv = exp(-0.5 * x * x) * rrt2pi
+                * ((((b5 * t + b4) * t + b3) * t + b2) * t + b1) * t;
     }
 
-    if (x < 0.0) qerfv = 1.0 - qerfv;
+    if (x < 0.0) {
+        qerfv = 1.0 - qerfv;
+    }
 
     return qerfv;
 }
 
-double d1thx(double pfl[], const double &x1, const double &x2)
-{
+double d1thx(double pfl[], const double & x1, const double & x2) {
     int np, ka, kb, n, k, j;
     double d1thxv, sn, xa, xb;
-    double *s;
+    double * s;
 
     np = (int)pfl[0];
     xa = x1 / pfl[1];
     xb = x2 / pfl[1];
     d1thxv = 0.0;
 
-    if (xb - xa < 2.0)  // exit out
+    if (xb - xa < 2.0) { // exit out
         return d1thxv;
+    }
 
     ka = (int)(0.1 * (xb - xa + 8.0));
     ka = mymin(mymax(4, ka), 25);
@@ -1874,8 +2003,7 @@ double d1thx(double pfl[], const double &x1, const double &x2)
     return d1thxv;
 }
 
-double d1thx2(double pfl[], const double &x1, const double &x2)
-{
+double d1thx2(double pfl[], const double & x1, const double & x2) {
     int np, ka, kb, n, k, kmx, j;
     double d1thx2v, sn, xa, xb, xc;
 
@@ -1884,8 +2012,9 @@ double d1thx2(double pfl[], const double &x1, const double &x2)
     xb = x2 / pfl[1];
     d1thx2v = 0.0;
 
-    if (xb - xa < 2.0)  // exit out
+    if (xb - xa < 2.0) { // exit out
         return d1thx2v;
+    }
 
     ka = (int)(0.1 * (xb - xa + 8.0));
     kmx = mymax(25, (int)(83350 / (pfl[1])));
@@ -1918,13 +2047,18 @@ double d1thx2(double pfl[], const double &x1, const double &x2)
         xa = xa + xb;
     }
 
-    d1thx2v = qtile(n - 1, s.data() + 2, ka - 1) - qtile(n - 1, s.data() + 2, kb - 1);
+    d1thx2v =
+        qtile(n - 1, s.data() + 2, ka - 1) - qtile(n - 1, s.data() + 2, kb - 1);
     d1thx2v /= 1.0 - 0.8 * exp(-(x2 - x1) / 50.0e3);
     return d1thx2v;
 }
 
-void qlrpfl(double pfl[], int klimx, int mdvarx, prop_type &prop, propa_type &propa, propv_type &propv)
-{
+void qlrpfl(double pfl[],
+            int klimx,
+            int mdvarx,
+            prop_type & prop,
+            propa_type & propa,
+            propv_type & propv) {
     int np, j;
     double xl[2], q, za, zb, temp;
 
@@ -1932,7 +2066,9 @@ void qlrpfl(double pfl[], int klimx, int mdvarx, prop_type &prop, propa_type &pr
     np = (int)pfl[0];
     hzns(pfl, prop);
 
-    for (j = 0; j < 2; j++) xl[j] = mymin(15.0 * prop.hg[j], 0.1 * prop.dl[j]);
+    for (j = 0; j < 2; j++) {
+        xl[j] = mymin(15.0 * prop.hg[j], 0.1 * prop.dl[j]);
+    }
 
     xl[1] = prop.dist - xl[1];
     prop.dh = d1thx(pfl, xl[0], xl[1]);
@@ -1942,8 +2078,10 @@ void qlrpfl(double pfl[], int klimx, int mdvarx, prop_type &prop, propa_type &pr
         prop.he[0] = prop.hg[0] + FORTRAN_DIM(pfl[2], za);
         prop.he[1] = prop.hg[1] + FORTRAN_DIM(pfl[np + 2], zb);
 
-        for (j = 0; j < 2; j++)
-            prop.dl[j] = sqrt(2.0 * prop.he[j] / prop.gme) * exp(-0.07 * sqrt(prop.dh / mymax(prop.he[j], 5.0)));
+        for (j = 0; j < 2; j++) {
+            prop.dl[j] = sqrt(2.0 * prop.he[j] / prop.gme)
+                         * exp(-0.07 * sqrt(prop.dh / mymax(prop.he[j], 5.0)));
+        }
 
         q = prop.dl[0] + prop.dl[1];
 
@@ -1953,14 +2091,18 @@ void qlrpfl(double pfl[], int klimx, int mdvarx, prop_type &prop, propa_type &pr
             q = temp * temp;
 
             for (j = 0; j < 2; j++) {
-                prop.he[j] *= q; /* tx effective height set to be path dist/distance between obstacles */
-                prop.dl[j] = sqrt(2.0 * prop.he[j] / prop.gme) * exp(-0.07 * sqrt(prop.dh / mymax(prop.he[j], 5.0)));
+                prop.he[j] *= q; /* tx effective height set to be path
+                                    dist/distance between obstacles */
+                prop.dl[j] = sqrt(2.0 * prop.he[j] / prop.gme)
+                             * exp(-0.07 * sqrt(prop.dh / mymax(prop.he[j], 5.0)));
             }
         }
 
-        for (j = 0; j < 2; j++) { /* original empirical adjustment?  uses delta-h to adjust grazing angles */
+        for (j = 0; j < 2; j++) { /* original empirical adjustment?  uses
+                                     delta-h to adjust grazing angles */
             q = sqrt(2.0 * prop.he[j] / prop.gme);
-            prop.the[j] = (0.65 * prop.dh * (q / prop.dl[j] - 1.0) - 2.0 * prop.he[j]) / q;
+            prop.the[j] =
+                (0.65 * prop.dh * (q / prop.dl[j] - 1.0) - 2.0 * prop.he[j]) / q;
         }
     }
 
@@ -1987,8 +2129,12 @@ void qlrpfl(double pfl[], int klimx, int mdvarx, prop_type &prop, propa_type &pr
     lrprop(0.0, prop, propa);
 }
 
-void qlrpfl2(double pfl[], int klimx, int mdvarx, prop_type &prop, propa_type &propa, propv_type &propv)
-{
+void qlrpfl2(double pfl[],
+             int klimx,
+             int mdvarx,
+             prop_type & prop,
+             propa_type & propa,
+             propv_type & propv) {
     int np, j;
     double xl[2], dlb, q, za, zb, temp, rad, rae1, rae2;
 
@@ -1999,7 +2145,9 @@ void qlrpfl2(double pfl[], int klimx, int mdvarx, prop_type &prop, propa_type &p
     prop.rch[0] = prop.hg[0] + pfl[2];
     prop.rch[1] = prop.hg[1] + pfl[np + 2];
 
-    for (j = 0; j < 2; j++) xl[j] = mymin(15.0 * prop.hg[j], 0.1 * prop.dl[j]);
+    for (j = 0; j < 2; j++) {
+        xl[j] = mymin(15.0 * prop.hg[j], 0.1 * prop.dl[j]);
+    }
 
     xl[1] = prop.dist - xl[1];
     prop.dh = d1thx2(pfl, xl[0], xl[1]);
@@ -2019,8 +2167,10 @@ void qlrpfl2(double pfl[], int klimx, int mdvarx, prop_type &prop, propa_type &p
             prop.he[0] = prop.hg[0] + FORTRAN_DIM(pfl[2], za);
             prop.he[1] = prop.hg[1] + FORTRAN_DIM(pfl[np + 2], zb);
 
-            for (j = 0; j < 2; j++)
-                prop.dl[j] = sqrt(2.0 * prop.he[j] / prop.gme) * exp(-0.07 * sqrt(prop.dh / mymax(prop.he[j], 5.0)));
+            for (j = 0; j < 2; j++) {
+                prop.dl[j] = sqrt(2.0 * prop.he[j] / prop.gme)
+                             * exp(-0.07 * sqrt(prop.dh / mymax(prop.he[j], 5.0)));
+            }
 
             /* for one or more obstructions only NOTE buried as in ITM FORTRAN and DLL, not functional  */
             if ((prop.dl[0] + prop.dl[1]) <= prop.dist) {
@@ -2031,13 +2181,16 @@ void qlrpfl2(double pfl[], int klimx, int mdvarx, prop_type &prop, propa_type &p
 
             for (j = 0; j < 2; j++) {
                 prop.he[j] *= q;
-                prop.dl[j] = sqrt(2.0 * prop.he[j] / prop.gme) * exp(-0.07 * sqrt(prop.dh / mymax(prop.he[j], 5.0)));
+                prop.dl[j] = sqrt(2.0 * prop.he[j] / prop.gme)
+                             * exp(-0.07 * sqrt(prop.dh / mymax(prop.he[j], 5.0)));
             }
 
             /* this sets (or resets) prop.the, and is not in The Guide FORTRAN QLRPFL */
             for (j = 0; j < 2; j++) {
                 q = sqrt(2.0 * prop.he[j] / prop.gme);
-                prop.the[j] = (0.65 * prop.dh * (q / prop.dl[j] - 1.0) - 2.0 * prop.he[j]) / q;
+                prop.the[j] =
+                    (0.65 * prop.dh * (q / prop.dl[j] - 1.0) - 2.0 * prop.he[j])
+                    / q;
             }
         }
     }
@@ -2051,8 +2204,7 @@ void qlrpfl2(double pfl[], int klimx, int mdvarx, prop_type &prop, propa_type &p
 
         if (prop.dist > 550.0) {
             z1sq2(pfl, rad, prop.dist, rae1, rae2);
-        }
-        else {
+        } else {
             rae1 = 0.0;
             rae2 = 0.0;
         }
@@ -2082,15 +2234,28 @@ void qlrpfl2(double pfl[], int klimx, int mdvarx, prop_type &prop, propa_type &p
     lrprop2(0.0, prop, propa);
 }
 
-double deg2rad(double d) { return d * 3.1415926535897 / 180.0; }
+double deg2rad(double d) {
+    return d * 3.1415926535897 / 180.0;
+}
 
 //***************************************************************************************
 //* Point-To-Point Mode Calculations
 //***************************************************************************************
 
-void point_to_point_ITM(double tht_m, double rht_m, double eps_dielect, double sgm_conductivity, double eno_ns_surfref,
-                        double frq_mhz, int radio_climate, int pol, double conf, double rel, double &dbloss, char *strmode,
-                        double *elev, int &errnum)
+void point_to_point_ITM(double tht_m,
+                        double rht_m,
+                        double eps_dielect,
+                        double sgm_conductivity,
+                        double eno_ns_surfref,
+                        double frq_mhz,
+                        int radio_climate,
+                        int pol,
+                        double conf,
+                        double rel,
+                        double & dbloss,
+                        char * strmode,
+                        double * elev,
+                        int & errnum)
 
 /******************************************************************************
 
@@ -2151,7 +2316,9 @@ Note that point_to_point has become point_to_point_ITM for use as the old ITM
         ja = (long)(3.0 + 0.1 * elev[0]); /* added (long) to correct */
         jb = np - ja + 6;
 
-        for (i = ja - 1; i < jb; ++i) zsys += elev[i];
+        for (i = ja - 1; i < jb; ++i) {
+            zsys += elev[i];
+        }
 
         zsys /= (jb - ja + 1);
         q = eno;
@@ -2163,29 +2330,42 @@ Note that point_to_point has become point_to_point_ITM for use as the old ITM
     fs = 32.45 + 20.0 * log10(frq_mhz) + 20.0 * log10(prop.dist / 1000.0);
     q = prop.dist - propa.dla;
 
-    if (int(q) < 0.0)
+    if (int(q) < 0.0) {
         strcpy(strmode, "Line-Of-Sight Mode");
-    else {
-        if (int(q) == 0.0)
+    } else {
+        if (int(q) == 0.0) {
             strcpy(strmode, "Single Horizon");
 
-        else if (int(q) > 0.0)
+        } else if (int(q) > 0.0) {
             strcpy(strmode, "Double Horizon");
+        }
 
-        if (prop.dist <= propa.dlsa || prop.dist <= propa.dx)
+        if (prop.dist <= propa.dlsa || prop.dist <= propa.dx) {
             strcat(strmode, ", Diffraction Dominant");
 
-        else if (prop.dist > propa.dx)
+        } else if (prop.dist > propa.dx) {
             strcat(strmode, ", Troposcatter Dominant");
+        }
     }
 
     dbloss = avar(zr, 0.0, zc, prop, propv) + fs;
     errnum = prop.kwx;
 }
 
-void point_to_point(double tht_m, double rht_m, double eps_dielect, double sgm_conductivity, double eno_ns_surfref,
-                    double frq_mhz, int radio_climate, int pol, double conf, double rel, double &dbloss, char *strmode,
-                    double *elev, int &errnum)
+void point_to_point(double tht_m,
+                    double rht_m,
+                    double eps_dielect,
+                    double sgm_conductivity,
+                    double eno_ns_surfref,
+                    double frq_mhz,
+                    int radio_climate,
+                    int pol,
+                    double conf,
+                    double rel,
+                    double & dbloss,
+                    char * strmode,
+                    double * elev,
+                    int & errnum)
 
 /******************************************************************************
 
@@ -2284,7 +2464,9 @@ void point_to_point(double tht_m, double rht_m, double eps_dielect, double sgm_c
         ja = (long)(3.0 + 0.1 * elev[0]);
         jb = np - ja + 6;
 
-        for (i = ja - 1; i < jb; ++i) zsys += elev[i];
+        for (i = ja - 1; i < jb; ++i) {
+            zsys += elev[i];
+        }
 
         zsys /= (jb - ja + 1);
         q = eno;
@@ -2293,62 +2475,73 @@ void point_to_point(double tht_m, double rht_m, double eps_dielect, double sgm_c
     propv.mdvar = mode_var;
     qlrps(frq_mhz, zsys, q, pol, eps_dielect, sgm_conductivity, prop);
     qlrpfl2(elev, propv.klim, propv.mdvar, prop, propa, propv);
-    tpd = sqrt((prop.he[0] - prop.he[1]) * (prop.he[0] - prop.he[1]) + (prop.dist) * (prop.dist));
+    tpd = sqrt((prop.he[0] - prop.he[1]) * (prop.he[0] - prop.he[1])
+               + (prop.dist) * (prop.dist));
     fs = 32.45 + 20.0 * log10(frq_mhz) + 20.0 * log10(tpd / 1000.0);
     q = prop.dist - propa.dla;
 
-    if (int(q) < 0.0)
+    if (int(q) < 0.0) {
         strcpy(strmode, "L-o-S");
-    else {
-        if (int(q) == 0.0)
+    } else {
+        if (int(q) == 0.0) {
             strcpy(strmode, "1_Hrzn");
 
-        else if (int(q) > 0.0)
+        } else if (int(q) > 0.0) {
             strcpy(strmode, "2_Hrzn");
+        }
 
-        if (prop.dist <= propa.dlsa || prop.dist <= propa.dx)
-
-            if (int(prop.dl[1]) == 0.0)
+        if (prop.dist <= propa.dlsa || prop.dist <= propa.dx) {
+            if (int(prop.dl[1]) == 0.0) {
                 strcat(strmode, "_Peak");
 
-            else
+            } else {
                 strcat(strmode, "_Diff");
+            }
 
-        else if (prop.dist > propa.dx)
+        } else if (prop.dist > propa.dx) {
             strcat(strmode, "_Tropo");
+        }
     }
 
     dbloss = avar(zr, 0.0, zc, prop, propv) + fs;
     errnum = prop.kwx;
 }
 
-void point_to_pointMDH_two(double tht_m, double rht_m, double eps_dielect, double sgm_conductivity, double eno_ns_surfref,
-                           double enc_ncc_clcref, double clutter_height, double clutter_density, double delta_h_diff,
-                           double frq_mhz, int radio_climate, int pol, int /* mode_var */, double timepct, double locpct,
-                           double confpct, double &dbloss, int &propmode, double &deltaH, double *elev, int &errnum)
+void point_to_pointMDH_two(double tht_m,
+                           double rht_m,
+                           double eps_dielect,
+                           double sgm_conductivity,
+                           double eno_ns_surfref,
+                           double enc_ncc_clcref,
+                           double clutter_height,
+                           double clutter_density,
+                           double delta_h_diff,
+                           double frq_mhz,
+                           int radio_climate,
+                           int pol,
+                           int /* mode_var */,
+                           double timepct,
+                           double locpct,
+                           double confpct,
+                           double & dbloss,
+                           int & propmode,
+                           double & deltaH,
+                           double * elev,
+                           int & errnum)
 
 /*************************************************************************************************
          pol: 0-Horizontal, 1-Vertical
-         radio_climate: 1-Equatorial, 2-Continental Subtropical, 3-Maritime Tropical,
-                        4-Desert, 5-Continental Temperate, 6-Maritime Temperate, Over Land,
-                        7-Maritime Temperate, Over Sea
-         timepct, locpct, confpct: .01 to .99
-         elev[]: [num points - 1], [delta dist(meters)], [height(meters) point 1], ..., [height(meters) point n]
-         propmode:  Value   Mode
-                     -1     mode is undefined
-                      0     Line of Sight
-                      5     Single Horizon, Diffraction
-                      6     Single Horizon, Troposcatter
-                      9     Double Horizon, Diffraction
-                     10     Double Horizon, Troposcatter
-         errnum: 0- No Error.
-                 1- Warning: Some parameters are nearly out of range.
-                             Results should be used with caution.
-                 2- Note: Default parameters have been substituted for impossible ones.
-                 3- Warning: A combination of parameters is out of range.
-                             Results are probably invalid.
-                 Other-  Warning: Some parameters are out of range.
-                                  Results are probably invalid.
+         radio_climate: 1-Equatorial, 2-Continental Subtropical, 3-Maritime
+Tropical, 4-Desert, 5-Continental Temperate, 6-Maritime Temperate, Over Land, 7-Maritime
+Temperate, Over Sea timepct, locpct, confpct: .01 to .99 elev[]: [num points -
+1], [delta dist(meters)], [height(meters) point 1], ..., [height(meters) point
+n] propmode:  Value   Mode -1     mode is undefined 0     Line of Sight 5 Single
+Horizon, Diffraction 6     Single Horizon, Troposcatter 9     Double Horizon,
+Diffraction 10     Double Horizon, Troposcatter errnum: 0- No Error. 1- Warning:
+Some parameters are nearly out of range. Results should be used with caution. 2-
+Note: Default parameters have been substituted for impossible ones. 3- Warning:
+A combination of parameters is out of range. Results are probably invalid. Other-
+Warning: Some parameters are out of range. Results are probably invalid.
 *************************************************************************************************/
 {
     prop_type prop;
@@ -2361,7 +2554,7 @@ void point_to_pointMDH_two(double tht_m, double rht_m, double eps_dielect, doubl
     /* double dkm, xkm; */
     double fs;
 
-    propmode = -1;  // mode is undefined
+    propmode = -1; // mode is undefined
     prop.hg[0] = tht_m;
     prop.hg[1] = rht_m;
     propv.klim = radio_climate;
@@ -2395,7 +2588,9 @@ void point_to_pointMDH_two(double tht_m, double rht_m, double eps_dielect, doubl
     if (q <= 0.0) {
         ja = (long)(3.0 + 0.1 * elev[0]); /* to match addition of (long) */
         jb = np - ja + 6;
-        for (i = ja - 1; i < jb; ++i) zsys += elev[i];
+        for (i = ja - 1; i < jb; ++i) {
+            zsys += elev[i];
+        }
         zsys /= (jb - ja + 1);
         q = eno;
     }
@@ -2406,41 +2601,54 @@ void point_to_pointMDH_two(double tht_m, double rht_m, double eps_dielect, doubl
 
     deltaH = prop.dh;
     q = prop.dist - propa.dla;
-    if (int(q) < 0.0)
-        propmode = 0;  // L-of-S
-    else {
-        if (int(q) == 0.0)
-            propmode = 4;  // 1-Hrzn
-        else if (int(q) > 0.0)
-            propmode = 8;  // 2-Hrzn
-        if (prop.dist <= propa.dlsa || prop.dist <= propa.dx)
-            propmode += 1;  // Diff
-        else if (prop.dist > propa.dx)
-            propmode += 2;  // Tropo
+    if (int(q) < 0.0) {
+        propmode = 0; // L-of-S
+    } else {
+        if (int(q) == 0.0) {
+            propmode = 4; // 1-Hrzn
+        } else if (int(q) > 0.0) {
+            propmode = 8; // 2-Hrzn
+        }
+        if (prop.dist <= propa.dlsa || prop.dist <= propa.dx) {
+            propmode += 1; // Diff
+        } else if (prop.dist > propa.dx) {
+            propmode += 2; // Tropo
+        }
     }
-    dbloss = avar(ztime, zloc, zconf, prop, propv) + fs;  // avar(time,location,confidence)
+    dbloss = avar(ztime, zloc, zconf, prop, propv)
+             + fs; // avar(time,location,confidence)
     errnum = prop.kwx;
 }
 
-void point_to_pointDH(double tht_m, double rht_m, double eps_dielect, double sgm_conductivity, double eno_ns_surfref,
-                      double enc_ncc_clcref, double clutter_height, double clutter_density, double delta_h_diff, double frq_mhz,
-                      int radio_climate, int pol, double conf, double rel, double &dbloss, double &deltaH, double *elev,
-                      int &errnum)
+void point_to_pointDH(double tht_m,
+                      double rht_m,
+                      double eps_dielect,
+                      double sgm_conductivity,
+                      double eno_ns_surfref,
+                      double enc_ncc_clcref,
+                      double clutter_height,
+                      double clutter_density,
+                      double delta_h_diff,
+                      double frq_mhz,
+                      int radio_climate,
+                      int pol,
+                      double conf,
+                      double rel,
+                      double & dbloss,
+                      double & deltaH,
+                      double * elev,
+                      int & errnum)
 /*************************************************************************************************
          pol: 0-Horizontal, 1-Vertical
-         radio_climate: 1-Equatorial, 2-Continental Subtropical, 3-Maritime Tropical,
-                        4-Desert, 5-Continental Temperate, 6-Maritime Temperate, Over Land,
-                        7-Maritime Temperate, Over Sea
-         conf, rel: .01 to .99
-         elev[]: [num points - 1], [delta dist(meters)], [height(meters) point 1], ..., [height(meters) point n]
-         errnum: 0- No Error.
-                 1- Warning: Some parameters are nearly out of range.
-                             Results should be used with caution.
-                 2- Note: Default parameters have been substituted for impossible ones.
-                 3- Warning: A combination of parameters is out of range.
-                             Results are probably invalid.
-                 Other-  Warning: Some parameters are out of range.
-                                  Results are probably invalid.
+         radio_climate: 1-Equatorial, 2-Continental Subtropical, 3-Maritime
+Tropical, 4-Desert, 5-Continental Temperate, 6-Maritime Temperate, Over Land,
+7-Maritime Temperate, Over Sea conf, rel: .01 to .99 elev[]: [num points - 1],
+[delta dist(meters)], [height(meters) point 1], ..., [height(meters) point n]
+errnum: 0- No Error. 1- Warning: Some parameters are nearly out of range.
+Results should be used with caution. 2- Note: Default parameters have been
+substituted for impossible ones. 3- Warning: A combination of parameters is out
+of range. Results are probably invalid. Other-  Warning: Some parameters are out
+of range. Results are probably invalid.
 *************************************************************************************************/
 {
     char strmode[100];
@@ -2483,9 +2691,11 @@ void point_to_pointDH(double tht_m, double rht_m, double eps_dielect, double sgm
     prop.cd = 1.00;      /* double clutter_density */
 
     if (q <= 0.0) {
-        ja = (long)(3.0 + 0.1 * elev[0]); /* to match KD2BD addition of (long)  */
+        ja = (long)(3.0 + 0.1 * elev[0]); /* to match KD2BD addition of (long) */
         jb = np - ja + 6;
-        for (i = ja - 1; i < jb; ++i) zsys += elev[i];
+        for (i = ja - 1; i < jb; ++i) {
+            zsys += elev[i];
+        }
         zsys /= (jb - ja + 1);
         q = eno;
     }
@@ -2495,19 +2705,21 @@ void point_to_pointDH(double tht_m, double rht_m, double eps_dielect, double sgm
     fs = 32.45 + 20.0 * log10(frq_mhz) + 20.0 * log10(prop.dist / 1000.0);
     deltaH = prop.dh;
     q = prop.dist - propa.dla;
-    if (int(q) < 0.0)
+    if (int(q) < 0.0) {
         strcpy(strmode, "Line-Of-Sight Mode");
-    else {
-        if (int(q) == 0.0)
+    } else {
+        if (int(q) == 0.0) {
             strcpy(strmode, "Single Horizon");
-        else if (int(q) > 0.0)
+        } else if (int(q) > 0.0) {
             strcpy(strmode, "Double Horizon");
-        if (prop.dist <= propa.dlsa || prop.dist <= propa.dx)
+        }
+        if (prop.dist <= propa.dlsa || prop.dist <= propa.dx) {
             strcat(strmode, ", Diffraction Dominant");
-        else if (prop.dist > propa.dx)
+        } else if (prop.dist > propa.dx) {
             strcat(strmode, ", Troposcatter Dominant");
+        }
     }
-    dbloss = avar(zr, 0.0, zc, prop, propv) + fs;  // avar(time,location,confidence)
+    dbloss = avar(zr, 0.0, zc, prop, propv) + fs; // avar(time,location,confidence)
     errnum = prop.kwx;
 }
 
@@ -2515,28 +2727,49 @@ void point_to_pointDH(double tht_m, double rht_m, double eps_dielect, double sgm
 //* Area Mode Calculations                               *
 //********************************************************
 
-void area(long ModVar, double deltaH, double tht_m, double rht_m, double dist_km, int TSiteCriteria, int RSiteCriteria,
-          double eps_dielect, double sgm_conductivity, double eno_ns_surfref, double enc_ncc_clcref, double clutter_height,
-          double clutter_density, double delta_h_diff, double frq_mhz, int radio_climate, int pol, double pctTime,
-          double pctLoc, double pctConf, double &dbloss, int &errnum)
-{
+void area(long ModVar,
+          double deltaH,
+          double tht_m,
+          double rht_m,
+          double dist_km,
+          int TSiteCriteria,
+          int RSiteCriteria,
+          double eps_dielect,
+          double sgm_conductivity,
+          double eno_ns_surfref,
+          double enc_ncc_clcref,
+          double clutter_height,
+          double clutter_density,
+          double delta_h_diff,
+          double frq_mhz,
+          int radio_climate,
+          int pol,
+          double pctTime,
+          double pctLoc,
+          double pctConf,
+          double & dbloss,
+          int & errnum) {
     // pol: 0-Horizontal, 1-Vertical
     // TSiteCriteria, RSiteCriteria:
     //                 0 - random, 1 - careful, 2 - very careful
 
-    // radio_climate: 1-Equatorial, 2-Continental Subtropical, 3-Maritime Tropical,
-    //                4-Desert, 5-Continental Temperate, 6-Maritime Temperate, Over Land,
-    //                7-Maritime Temperate, Over Sea
-    // ModVar: 0 - Single: pctConf is "Time/Situation/Location", pctTime, pctLoc not used
-    //         1 - Individual: pctTime is "Situation/Location", pctConf is "Confidence", pctLoc not used
-    //         2 - Mobile: pctTime is "Time/Locations (Reliability)", pctConf is "Confidence", pctLoc not used
-    //         3 - Broadcast: pctTime is "Time", pctLoc is "Location", pctConf is "Confidence"
+    // radio_climate: 1-Equatorial, 2-Continental Subtropical, 3-Maritime
+    // Tropical,
+    //                4-Desert, 5-Continental Temperate, 6-Maritime Temperate,
+    //                Over Land, 7-Maritime Temperate, Over Sea
+    // ModVar: 0 - Single: pctConf is "Time/Situation/Location", pctTime, pctLoc
+    // not used
+    //         1 - Individual: pctTime is "Situation/Location", pctConf is
+    //         "Confidence", pctLoc not used 2 - Mobile: pctTime is
+    //         "Time/Locations (Reliability)", pctConf is "Confidence", pctLoc
+    //         not used 3 - Broadcast: pctTime is "Time", pctLoc is "Location",
+    //         pctConf is "Confidence"
     // pctTime, pctLoc, pctConf: .01 to .99
     // errnum: 0- No Error.
     //         1- Warning: Some parameters are nearly out of range.
     //                     Results should be used with caution.
-    //         2- Note: Default parameters have been substituted for impossible ones.
-    //         3- Warning: A combination of parameters is out of range.
+    //         2- Note: Default parameters have been substituted for impossible
+    //         ones. 3- Warning: A combination of parameters is out of range.
     //                     Results are probably invalid.
     //         Other-  Warning: Some parameters are out of range.
     //                          Results are probably invalid.
@@ -2575,29 +2808,68 @@ void area(long ModVar, double deltaH, double tht_m, double rht_m, double dist_km
     qlrps(frq_mhz, 0.0, eno, ipol, eps, sgm, prop);
     qlra(kst, propv.klim, ivar, prop, propv);
 
-    if (propv.lvar < 1) propv.lvar = 1;
+    if (propv.lvar < 1) {
+        propv.lvar = 1;
+    }
 
     lrprop2(dist_km * 1000.0, prop, propa);
     fs = 32.45 + 20.0 * log10(frq_mhz) + 20.0 * log10(prop.dist / 1000.0);
     xlb = fs + avar(zt, zl, zc, prop, propv);
     dbloss = xlb;
-    if (prop.kwx == 0)
+    if (prop.kwx == 0) {
         errnum = 0;
-    else
+    } else {
         errnum = prop.kwx;
+    }
 }
 
-double ITMAreadBLoss(long ModVar, double deltaH, double tht_m, double rht_m, double dist_km, int TSiteCriteria,
-                     int RSiteCriteria, double eps_dielect, double sgm_conductivity, double eno_ns_surfref,
-                     double enc_ncc_clcref, double clutter_height, double clutter_density, double delta_h_diff, double frq_mhz,
-                     int radio_climate, int pol, double pctTime, double pctLoc, double pctConf)
-{
+double ITMAreadBLoss(long ModVar,
+                     double deltaH,
+                     double tht_m,
+                     double rht_m,
+                     double dist_km,
+                     int TSiteCriteria,
+                     int RSiteCriteria,
+                     double eps_dielect,
+                     double sgm_conductivity,
+                     double eno_ns_surfref,
+                     double enc_ncc_clcref,
+                     double clutter_height,
+                     double clutter_density,
+                     double delta_h_diff,
+                     double frq_mhz,
+                     int radio_climate,
+                     int pol,
+                     double pctTime,
+                     double pctLoc,
+                     double pctConf) {
     int errnum;
     double dbloss;
-    area(ModVar, deltaH, tht_m, rht_m, dist_km, TSiteCriteria, RSiteCriteria, eps_dielect, sgm_conductivity, eno_ns_surfref,
-         enc_ncc_clcref, clutter_height, clutter_density, delta_h_diff, frq_mhz, radio_climate, pol, pctTime, pctLoc, pctConf,
-         dbloss, errnum);
+    area(ModVar,
+         deltaH,
+         tht_m,
+         rht_m,
+         dist_km,
+         TSiteCriteria,
+         RSiteCriteria,
+         eps_dielect,
+         sgm_conductivity,
+         eno_ns_surfref,
+         enc_ncc_clcref,
+         clutter_height,
+         clutter_density,
+         delta_h_diff,
+         frq_mhz,
+         radio_climate,
+         pol,
+         pctTime,
+         pctLoc,
+         pctConf,
+         dbloss,
+         errnum);
     return dbloss;
 }
 
-double ITWOMVersion() { return 3.0; }
+double ITWOMVersion() {
+    return 3.0;
+}

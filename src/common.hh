@@ -43,7 +43,7 @@ struct dem {
     float max_west;
     short max_el;
     short min_el;
-    short *data;
+    short * data;
 };
 
 struct dem_output {
@@ -74,7 +74,7 @@ struct Path {
     ssize_t ssize() const;
     size_t size() const;
     Path() = default;
-    Path(site const &src, site const &dst);
+    Path(site const & src, site const & dst);
 };
 
 struct TerrainProfile {
@@ -85,16 +85,26 @@ struct TerrainProfile {
     std::vector<double> _los;
     std::vector<double> _terrain;
     bool _tx_site_over_water;
-    TerrainProfile(site const &src, site const &dst, Path const &path, double freq_hz, bool normalised, bool metric) noexcept;
+    TerrainProfile(site const & src,
+                   site const & dst,
+                   Path const & path,
+                   double freq_hz,
+                   bool normalised,
+                   bool metric) noexcept;
 };
 
 class antenna_pattern {
     std::vector<float> elems;
 
-   public:
-    antenna_pattern() : elems(361 * 1001, 0.0) {}
-    float const &operator()(int azimuth, int elevation) const { return elems[(azimuth * 1001) + elevation]; }
-    float &operator()(int azimuth, int elevation) { return elems[(azimuth * 1001) + elevation]; }
+  public:
+    antenna_pattern()
+        : elems(361 * 1001, 0.0) {}
+    float const & operator()(int azimuth, int elevation) const {
+        return elems[(azimuth * 1001) + elevation];
+    }
+    float & operator()(int azimuth, int elevation) {
+        return elems[(azimuth * 1001) + elevation];
+    }
 };
 
 // TODO what does LR mean

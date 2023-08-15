@@ -59,5 +59,8 @@ jobs:
           -R 20                    \
           -pm 4
 
-      - name: Hygeine | Formatting
-        run: make -C ${{github.workspace}}/build check-format
+      - name: Hygiene | Formatting
+        uses: jidicula/clang-format-action@v4.11.0
+        with:
+          clang-format-version: '13'
+          check-path: 'src'

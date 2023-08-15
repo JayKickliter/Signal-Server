@@ -10,9 +10,8 @@
 
 /* Return the offset of the first newline in text or the length of
    text if there's no newline */
-static int newline_offset(const char *text)
-{
-    const char *newline = strchr(text, '\n');
+static int newline_offset(const char * text) {
+    const char * newline = strchr(text, '\n');
     if (!newline)
         return strlen(text);
     else
@@ -20,13 +19,12 @@ static int newline_offset(const char *text)
 }
 
 struct write_result {
-    char *data;
+    char * data;
     int pos;
 };
 
-static size_t write_response(void *ptr, size_t size, size_t nmemb, void *stream)
-{
-    struct write_result *result = (struct write_result *)stream;
+static size_t write_response(void * ptr, size_t size, size_t nmemb, void * stream) {
+    struct write_result * result = (struct write_result *)stream;
 
     if (result->pos + size * nmemb >= BUFFER_SIZE - 1) {
         fprintf(stderr, "error: too small buffer\n");
@@ -39,16 +37,16 @@ static size_t write_response(void *ptr, size_t size, size_t nmemb, void *stream)
     return size * nmemb;
 }
 
-static char *request(const char *url)
-{
-    CURL *curl;
+static char * request(const char * url) {
+    CURL * curl;
     CURLcode status;
-    char *data;
+    char * data;
     long code;
 
     curl = curl_easy_init();
     data = (char *)malloc(BUFFER_SIZE);
-    if (!curl || !data) return NULL;
+    if (!curl || !data)
+        return NULL;
 
     struct write_result write_result = {.data = data, .pos = 0};
 
@@ -78,15 +76,14 @@ static char *request(const char *url)
     return data;
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char * argv[]) {
     size_t i;
-    char *text;
+    char * text;
     char url[URL_SIZE];
 
-    json_t *root;
+    json_t * root;
     json_error_t error;
-    json_t *commits;
+    json_t * commits;
 
     if (argc != 3) {
         fprintf(stderr, "usage: %s USER REPOSITORY\n\n", argv[0]);
@@ -97,7 +94,8 @@ int main(int argc, char *argv[])
     snprintf(url, URL_SIZE, URL_FORMAT, argv[1], argv[2]);
 
     text = request(URL_FORMAT);
-    if (!text) return 1;
+    if (!text)
+        return 1;
 
     root = json_loads(text, 0, &error);
     free(text);
@@ -115,7 +113,7 @@ int main(int argc, char *argv[])
 
     for (i = 0; i < json_array_size(commits); i++) {
         json_t *commit, *id, *message;
-        const char *message_text;
+        const char * message_text;
 
         commit = json_array_get(commits, i);
         if (!json_is_object(commit)) {
@@ -136,7 +134,10 @@ int main(int argc, char *argv[])
         }
 
         message_text = json_string_value(message);
-        printf("%.8s %.*s\n", json_string_value(id), newline_offset(message_text), message_text);
+        printf("%.8s %.*s\n",
+               json_string_value(id),
+               newline_offset(message_text),
+               message_text);
     }
 
     json_decref(root);
