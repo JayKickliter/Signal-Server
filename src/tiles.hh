@@ -2,7 +2,7 @@
 #define _TILES_HH_
 
 typedef struct _tile_t {
-    char *filename;
+    char * filename;
     union {
         int cols;
         int width;
@@ -32,7 +32,7 @@ typedef struct _tile_t {
     short nodata;
     short max_el;
     short min_el;
-    short *data;
+    short * data;
     float precise_resolution;
     float resolution;
     double width_deg;
@@ -41,7 +41,7 @@ typedef struct _tile_t {
     int ppdy;
 } tile_t, *ptile_t;
 
-int tile_load_lidar(tile_t *, char *, struct output *out);
+int tile_load_lidar(tile_t *, char *, struct output * out);
 int tile_rescale(tile_t *, float);
 void tile_destroy(tile_t *);
 

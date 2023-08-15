@@ -38,8 +38,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-char *d2e(char *string)
-{
+char * d2e(char * string) {
     /* This function is used to replace 'D's with 'E's for proper
        exponential notation of numeric strings read from delimited
        USGS data files.  It returns a pointer to a string. */
@@ -47,19 +46,19 @@ char *d2e(char *string)
     unsigned char x;
 
     for (x = 0; string[x] != 0; x++)
-        if (string[x] == 'D') string[x] = 'E';
+        if (string[x] == 'D')
+            string[x] = 'E';
     return (string);
 }
 
-int main(int argc, char *argv[])
-{
-    unsigned char minimum[30], maximum[30], swlong[30], swlat[30], nwlong[30], nwlat[30], nelong[30], nelat[30], selong[30],
-        selat[30];
+int main(int argc, char * argv[]) {
+    unsigned char minimum[30], maximum[30], swlong[30], swlat[30], nwlong[30],
+        nwlat[30], nelong[30], nelat[30], selong[30], selat[30];
     char string[40];
     double max_el, min_el, max_west, min_west, max_north, min_north;
     int x, y, z, c, array[1202][1202];
     char splatfile[25];
-    FILE *fd;
+    FILE * fd;
 
     if (argc != 2) {
         fprintf(stderr, "Usage: usgs2sdf uncompressed_delimited_usgs_datafile (ie: wilmington-e)\n");
@@ -74,94 +73,114 @@ int main(int argc, char *argv[])
 
         /* Skip first 548 bytes */
 
-        for (x = 0; x < 548; x++) getc(fd);
+        for (x = 0; x < 548; x++)
+            getc(fd);
 
         /* Read quadrangle corners */
 
         /* Read southwest longitude */
 
-        for (x = 0; x < 22; x++) swlong[x] = getc(fd);
+        for (x = 0; x < 22; x++)
+            swlong[x] = getc(fd);
         swlong[x] = 0;
 
         /* Skip 2 bytes */
 
-        for (x = 0; x < 2; x++) getc(fd);
+        for (x = 0; x < 2; x++)
+            getc(fd);
 
         /* Read southwest latitude */
 
-        for (x = 0; x < 22; x++) swlat[x] = getc(fd);
+        for (x = 0; x < 22; x++)
+            swlat[x] = getc(fd);
         swlat[x] = 0;
 
         /* Skip 2 bytes */
 
-        for (x = 0; x < 2; x++) getc(fd);
+        for (x = 0; x < 2; x++)
+            getc(fd);
 
         /* Read northwest longitude */
 
-        for (x = 0; x < 22; x++) nwlong[x] = getc(fd);
+        for (x = 0; x < 22; x++)
+            nwlong[x] = getc(fd);
         nwlong[x] = 0;
 
         /* Skip 2 bytes */
 
-        for (x = 0; x < 2; x++) getc(fd);
+        for (x = 0; x < 2; x++)
+            getc(fd);
 
         /* Read northwest latitude */
 
-        for (x = 0; x < 22; x++) nwlat[x] = getc(fd);
+        for (x = 0; x < 22; x++)
+            nwlat[x] = getc(fd);
         nwlat[x] = 0;
 
         /* Skip 2 bytes */
 
-        for (x = 0; x < 2; x++) getc(fd);
+        for (x = 0; x < 2; x++)
+            getc(fd);
 
         /* Read northeast longitude */
 
-        for (x = 0; x < 22; x++) nelong[x] = getc(fd);
+        for (x = 0; x < 22; x++)
+            nelong[x] = getc(fd);
         nelong[x] = 0;
 
         /* Skip 2 bytes */
 
-        for (x = 0; x < 2; x++) getc(fd);
+        for (x = 0; x < 2; x++)
+            getc(fd);
 
         /* Read northeast latitude */
 
-        for (x = 0; x < 22; x++) nelat[x] = getc(fd);
+        for (x = 0; x < 22; x++)
+            nelat[x] = getc(fd);
         nelat[x] = 0;
 
         /* Skip 2 bytes */
 
-        for (x = 0; x < 2; x++) getc(fd);
+        for (x = 0; x < 2; x++)
+            getc(fd);
 
         /* Read southeast longitude */
 
-        for (x = 0; x < 22; x++) selong[x] = getc(fd);
+        for (x = 0; x < 22; x++)
+            selong[x] = getc(fd);
         selong[x] = 0;
 
         /* Skip 2 bytes */
 
-        for (x = 0; x < 2; x++) getc(fd);
+        for (x = 0; x < 2; x++)
+            getc(fd);
 
         /* Read southeast latitude */
 
-        for (x = 0; x < 22; x++) selat[x] = getc(fd);
+        for (x = 0; x < 22; x++)
+            selat[x] = getc(fd);
         selat[x] = 0;
 
         /* Skip 2 bytes */
 
-        for (x = 0; x < 2; x++) getc(fd);
+        for (x = 0; x < 2; x++)
+            getc(fd);
 
         /* Read minimum elevation */
 
-        for (x = 0; x < 22; x++) minimum[x] = getc(fd);
+        for (x = 0; x < 22; x++)
+            minimum[x] = getc(fd);
         minimum[x] = 0;
 
         /* Skip 2 bytes */
 
-        for (x = 0; x < 2; x++) getc(fd);
+        for (x = 0; x < 2; x++)
+            getc(fd);
 
         /* Read maximum elevation */
 
-        for (x = 0; x < 22; x++) maximum[x] = getc(fd);
+        for (x = 0; x < 22; x++)
+            maximum[x] = getc(fd);
 
         maximum[x] = 0;
 
@@ -181,7 +200,8 @@ int main(int argc, char *argv[])
 
         /* Skip 84 Bytes */
 
-        for (x = 0; x < 84; x++) getc(fd);
+        for (x = 0; x < 84; x++)
+            getc(fd);
 
         /* Read elevation data... */
 
@@ -243,7 +263,12 @@ int main(int argc, char *argv[])
 
         /* Write splat data file to disk */
 
-        sprintf(splatfile, "%.0f:%.0f:%.0f:%.0f.sdf", min_north, max_north, min_west, max_west);
+        sprintf(splatfile,
+                "%.0f:%.0f:%.0f:%.0f.sdf",
+                min_north,
+                max_north,
+                min_west,
+                max_west);
 
         fprintf(stdout, " Done!\nWriting \"%s\"... ", splatfile);
         fflush(stdout);
@@ -253,7 +278,8 @@ int main(int argc, char *argv[])
         fprintf(fd, "%.0f\n%.0f\n%.0f\n%.0f\n", max_west, min_north, min_west, max_north);
 
         for (x = 0; x < 1200; x++)
-            for (y = 0; y < 1200; y++) fprintf(fd, "%d\n", array[x][y]);
+            for (y = 0; y < 1200; y++)
+                fprintf(fd, "%d\n", array[x][y]);
 
         fclose(fd);
         fprintf(stdout, "Done!\n");
@@ -263,7 +289,6 @@ int main(int argc, char *argv[])
     if (fd == NULL) {
         fprintf(stderr, "*** %c%s%c: File Not Found!\n", 34, argv[1], 34);
         exit(-1);
-    }
-    else
+    } else
         exit(0);
 }

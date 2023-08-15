@@ -5,13 +5,14 @@
 
 #include "image.hh"
 
-int ppm_init(image_ctx_t *ctx)
-{
+int ppm_init(image_ctx_t * ctx) {
     size_t buf_size;
 
     /* Perform simple sanity checking */
-    if (ctx->canvas != NULL) return EINVAL;
-    ctx->model = IMAGE_RGB;  // Override this as we only support RGB
+    if (ctx->canvas != NULL) {
+        return EINVAL;
+    }
+    ctx->model = IMAGE_RGB; // Override this as we only support RGB
     ctx->format = IMAGE_PPM;
     ctx->extension = (char *)".ppm";
 
@@ -20,14 +21,19 @@ int ppm_init(image_ctx_t *ctx)
     /* Allocate the canvas buffer */
     ctx->canvas = (uint8_t *)calloc(buf_size, sizeof(uint8_t));
     ctx->next_pixel = ctx->canvas;
-    if (ctx->canvas == NULL) return ENOMEM;
+    if (ctx->canvas == NULL) {
+        return ENOMEM;
+    }
 
     return 0;
 }
 
-int ppm_add_pixel(image_ctx_t *ctx, const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t)
-{
-    uint8_t *next;
+int ppm_add_pixel(image_ctx_t * ctx,
+                  const uint8_t r,
+                  const uint8_t g,
+                  const uint8_t b,
+                  const uint8_t) {
+    uint8_t * next;
 
     next = ctx->next_pixel;
 
@@ -40,8 +46,7 @@ int ppm_add_pixel(image_ctx_t *ctx, const uint8_t r, const uint8_t g, const uint
     return 0;
 }
 
-int ppm_write(image_ctx_t *ctx, std::vector<char> *out)
-{
+int ppm_write(image_ctx_t * ctx, std::vector<char> * out) {
     size_t count;
 
     count = ctx->width * ctx->height * RGB_SIZE;

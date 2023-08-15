@@ -15,18 +15,18 @@
 
 #define BZBUFFER 65536
 
-char sdf_filename[30], sdf_path[255], replacement_flag, opened = 0, hgt = 0, bil = 0;
+char sdf_filename[30], sdf_path[255], replacement_flag, opened = 0, hgt = 0,
+                                                        bil = 0;
 
-int srtm[3601][3601], usgs[1201][1201], max_north, max_west, n, min_north, min_west, merge = 0, min_elevation, bzerror, ippd,
-                                                                                     mpi;
+int srtm[3601][3601], usgs[1201][1201], max_north, max_west, n, min_north,
+    min_west, merge = 0, min_elevation, bzerror, ippd, mpi;
 
-int ReadSRTM(char *filename)
-{
+int ReadSRTM(char * filename) {
     int x, y, infile, byte = 0, bytes_read;
     unsigned char error, buffer[2];
     char north[3], west[4], *base = NULL, blw_filename[255];
     double cell_size, deg_north, deg_west;
-    FILE *fd = NULL;
+    FILE * fd = NULL;
 
     if (strstr(filename, ".zip") != NULL) {
         fprintf(stderr, "*** Error: \"%s\" must be uncompressed\n", filename);
@@ -39,13 +39,18 @@ int ReadSRTM(char *filename)
     }
 
     if ((strstr(filename, ".hgt") == NULL) && (strstr(filename, ".bil") == NULL)) {
-        fprintf(stderr, "*** Error: \"%s\" does not have the correct extension (.hgt or .bil)\n", filename);
+        fprintf(stderr,
+                "*** Error: \"%s\" does not have the correct extension (.hgt "
+                "or .bil)\n",
+                filename);
         return -1;
     }
 
-    if (strstr(filename, ".hgt") != NULL) hgt = 1;
+    if (strstr(filename, ".hgt") != NULL)
+        hgt = 1;
 
-    if (strstr(filename, ".bil") != NULL) bil = 1;
+    if (strstr(filename, ".bil") != NULL)
+        bil = 1;
 
     base = strrchr(filename, '/');
 
@@ -66,18 +71,21 @@ int ReadSRTM(char *filename)
         west[2] = base[6];
         west[3] = 0;
 
-        if ((base[0] != 'N' && base[0] != 'S') || (base[3] != 'W' && base[3] != 'E')) {
+        if ((base[0] != 'N' && base[0] != 'S')
+            || (base[3] != 'W' && base[3] != 'E')) {
             fprintf(stderr, "*** Error: \"%s\" doesn't look like a valid .hgt SRTM filename.\n", filename);
             return -1;
         }
 
         max_west = atoi(west);
 
-        if (base[3] == 'E') max_west = 360 - max_west;
+        if (base[3] == 'E')
+            max_west = 360 - max_west;
 
         min_west = max_west - 1;
 
-        if (max_west == 360) max_west = 0;
+        if (max_west == 360)
+            max_west = 0;
 
         if (base[0] == 'N')
             min_north = atoi(north);
@@ -105,7 +113,8 @@ int ReadSRTM(char *filename)
                 n = fscanf(fd, "%lf", &cell_size);
 
                 if ((cell_size < 0.0008) || (cell_size > 0.0009)) {
-                    printf("\n*** .BIL file's cell size is incompatible with SPLAT!!\n");
+                    printf("\n*** .BIL file's cell size is incompatible with "
+                           "SPLAT!!\n");
                     exit(1);
                 }
 
@@ -130,7 +139,8 @@ int ReadSRTM(char *filename)
 
             min_west = (int)(deg_west);
 
-            if (min_west == 360) min_west = 0;
+            if (min_west == 360)
+                min_west = 0;
 
             max_west = min_west + 1;
         }
@@ -146,7 +156,9 @@ int ReadSRTM(char *filename)
     n = read(infile, &buffer, 2);
 
     if ((buffer[0] == 'P') && (buffer[1] == 'K')) {
-        fprintf(stderr, "*** Error: \"%s\" still appears to be compressed!\n", filename);
+        fprintf(stderr,
+                "*** Error: \"%s\" still appears to be compressed!\n",
+                filename);
         close(infile);
         return -1;
     }
@@ -174,7 +186,8 @@ int ReadSRTM(char *filename)
 
                     byte = buffer[0] + (buffer[1] << 8);
 
-                    if (buffer[1] & 128) byte -= 0x10000;
+                    if (buffer[1] & 128)
+                        byte -= 0x10000;
                 }
 
                 if (hgt) {
@@ -182,16 +195,20 @@ int ReadSRTM(char *filename)
 
                     byte = buffer[1] + (buffer[0] << 8);
 
-                    if (buffer[0] & 128) byte -= 0x10000;
+                    if (buffer[0] & 128)
+                        byte -= 0x10000;
                 }
 
                 /* Flag problem elevations here */
 
-                if (byte < -32768) byte = -32768;
+                if (byte < -32768)
+                    byte = -32768;
 
-                if (byte > 32767) byte = 32767;
+                if (byte > 32767)
+                    byte = 32767;
 
-                if (byte <= min_elevation) replacement_flag = 1;
+                if (byte <= min_elevation)
+                    replacement_flag = 1;
 
                 srtm[x][y] = byte;
             }
@@ -201,7 +218,10 @@ int ReadSRTM(char *filename)
         }
 
     if (error) {
-        fprintf(stderr, "\n*** Error: Premature EOF detected while reading \"%s\"!  :-(\n", filename);
+        fprintf(
+            stderr,
+            "\n*** Error: Premature EOF detected while reading \"%s\"!  :-(\n",
+            filename);
     }
 
     close(infile);
@@ -209,16 +229,16 @@ int ReadSRTM(char *filename)
     return 0;
 }
 
-int LoadSDF_SDF(char *name)
-{
+int LoadSDF_SDF(char * name) {
     /* This function reads uncompressed
        SPLAT Data Files (.sdf) into memory. */
 
     int x, y, dummy;
     char sdf_file[255], path_plus_name[512];
-    FILE *infile;
+    FILE * infile;
 
-    for (x = 0; name[x] != '.' && name[x] != 0 && x < 250; x++) sdf_file[x] = name[x];
+    for (x = 0; name[x] != '.' && name[x] != 0 && x < 250; x++)
+        sdf_file[x] = name[x];
 
     sdf_file[x] = '.';
     sdf_file[x + 1] = 's';
@@ -231,7 +251,8 @@ int LoadSDF_SDF(char *name)
 
     infile = fopen(path_plus_name, "rb");
 
-    if (infile == NULL) return 0;
+    if (infile == NULL)
+        return 0;
 
     n = fscanf(infile, "%d", &dummy);
     n = fscanf(infile, "%d", &dummy);
@@ -242,15 +263,15 @@ int LoadSDF_SDF(char *name)
     fflush(stdout);
 
     for (x = 0; x < 1200; x++)
-        for (y = 0; y < 1200; y++) n = fscanf(infile, "%d", &usgs[x][y]);
+        for (y = 0; y < 1200; y++)
+            n = fscanf(infile, "%d", &usgs[x][y]);
 
     fclose(infile);
 
     return 1;
 }
 
-char *BZfgets(BZFILE *bzfd, unsigned length)
-{
+char * BZfgets(BZFILE * bzfd, unsigned length) {
     /* This function returns at most one less than 'length' number
        of characters from a bz2 compressed file whose file descriptor
        is pointed to by *bzfd.  In operation, a buffer is filled with
@@ -298,22 +319,23 @@ char *BZfgets(BZFILE *bzfd, unsigned length)
 
     } while (done == 0);
 
-    if (output[0] == 0) opened = 0;
+    if (output[0] == 0)
+        opened = 0;
 
     return (output);
 }
 
-int LoadSDF_BZ(char *name)
-{
+int LoadSDF_BZ(char * name) {
     /* This function reads .bz2 compressed
        SPLAT Data Files into memory. */
 
     int x, y, dummy;
     char sdf_file[255], path_plus_name[255];
-    FILE *fd;
-    BZFILE *bzfd;
+    FILE * fd;
+    BZFILE * bzfd;
 
-    for (x = 0; name[x] != '.' && name[x] != 0 && x < 247; x++) sdf_file[x] = name[x];
+    for (x = 0; name[x] != '.' && name[x] != 0 && x < 247; x++)
+        sdf_file[x] = name[x];
 
     sdf_file[x] = '.';
     sdf_file[x + 1] = 's';
@@ -341,7 +363,8 @@ int LoadSDF_BZ(char *name)
         sscanf(BZfgets(bzfd, 255), "%d", &dummy);
 
         for (x = 0; x < 1200; x++)
-            for (y = 0; y < 1200; y++) sscanf(BZfgets(bzfd, 20), "%d", &usgs[x][y]);
+            for (y = 0; y < 1200; y++)
+                sscanf(BZfgets(bzfd, 20), "%d", &usgs[x][y]);
 
         fclose(fd);
 
@@ -354,8 +377,7 @@ int LoadSDF_BZ(char *name)
         return 0;
 }
 
-char LoadSDF(char *name)
-{
+char LoadSDF(char * name) {
     /* This function loads the requested SDF file from the filesystem.
        First, it tries to invoke the LoadSDF_SDF() function to load an
        uncompressed SDF file (since uncompressed files load slightly
@@ -370,13 +392,13 @@ char LoadSDF(char *name)
 
     /* If that fails, try loading a compressed SDF. */
 
-    if (return_value == 0 || return_value == -1) return_value = LoadSDF_BZ(name);
+    if (return_value == 0 || return_value == -1)
+        return_value = LoadSDF_BZ(name);
 
     return return_value;
 }
 
-int ReadUSGS()
-{
+int ReadUSGS() {
     char usgs_filename[15];
 
     /* usgs_filename is a minimal filename ("40:41:74:75").
@@ -388,8 +410,7 @@ int ReadUSGS()
     return (LoadSDF(usgs_filename));
 }
 
-void average_terrain(int y, int x, int z)
-{
+void average_terrain(int y, int x, int z) {
     long accum;
     int temp = 0, count, bad_value;
     double average;
@@ -482,8 +503,7 @@ void average_terrain(int y, int x, int z)
         srtm[y][x] = min_elevation;
 }
 
-void WriteSDF(char *filename)
-{
+void WriteSDF(char * filename) {
     /* Like the HGT files, the extreme southwest corner
      * provides the point of reference for the SDF file.
      * The SDF file extends from min_north degrees to
@@ -496,7 +516,7 @@ void WriteSDF(char *filename)
      */
 
     int x, y, byte, last_good_byte = 0;
-    FILE *outfile;
+    FILE * outfile;
 
     printf("\nWriting %s... ", filename);
     fflush(stdout);
@@ -510,12 +530,15 @@ void WriteSDF(char *filename)
         {
             byte = srtm[y][x];
 
-            if (byte > min_elevation) last_good_byte = byte;
+            if (byte > min_elevation)
+                last_good_byte = byte;
 
             if (byte < min_elevation) {
                 if (merge) {
                     if (ippd == 3600)
-                        fprintf(outfile, "%d\n", usgs[1200 - (y / 3)][1199 - (x / 3)]);
+                        fprintf(outfile,
+                                "%d\n",
+                                usgs[1200 - (y / 3)][1199 - (x / 3)]);
                     else
                         fprintf(outfile, "%d\n", usgs[1200 - y][1199 - x]);
                 }
@@ -524,8 +547,7 @@ void WriteSDF(char *filename)
                     average_terrain(y, x, last_good_byte);
                     fprintf(outfile, "%d\n", srtm[y][x]);
                 }
-            }
-            else
+            } else
                 fprintf(outfile, "%d\n", byte);
         }
 
@@ -534,11 +556,10 @@ void WriteSDF(char *filename)
     fclose(outfile);
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char * argv[]) {
     int x, y, z = 0;
     char *env = NULL, string[255];
-    FILE *fd;
+    FILE * fd;
 
     if (strstr(argv[0], "srtm2sdf-hd") != NULL) {
         ippd = 3600; /* High Definition (1 arc-sec) Mode */
@@ -555,18 +576,25 @@ int main(int argc, char *argv[])
     if (argc == 1 || (argc == 2 && strncmp(argv[1], "-h", 2) == 0)) {
         if (ippd == 1200)
             fprintf(stderr,
-                    "\nsrtm2sdf: Generates SPLAT! elevation data files from unzipped\nSRTM-3 elevation data files, and "
-                    "replaces SRTM data voids with\nelevation data from older usgs2sdf derived SDF files.\n\n");
+                    "\nsrtm2sdf: Generates SPLAT! elevation data files from "
+                    "unzipped\nSRTM-3 elevation data files, and "
+                    "replaces SRTM data voids with\nelevation data from older "
+                    "usgs2sdf derived SDF files.\n\n");
 
         if (ippd == 3600)
             fprintf(stderr,
-                    "\nsrtm2sdf-hd: Generates SPLAT! elevation data files from unzipped\nSRTM-1 elevation data files, and "
-                    "replaces SRTM data voids with\naverages, or elevation data from older usgs2sdf derived SDF files.\n\n");
+                    "\nsrtm2sdf-hd: Generates SPLAT! elevation data files from "
+                    "unzipped\nSRTM-1 elevation data files, and "
+                    "replaces SRTM data voids with\naverages, or elevation "
+                    "data from older usgs2sdf derived SDF files.\n\n");
 
         fprintf(stderr, "\tAvailable Options...\n\n");
-        fprintf(stderr, "\t-d directory path of usgs2sdf derived SDF files\n\t    (overrides path in ~/.splat_path file)\n\n");
         fprintf(stderr,
-                "\t-n elevation limit (in meters) below which SRTM data is\n\t    replaced by USGS-derived .sdf data (default "
+                "\t-d directory path of usgs2sdf derived SDF files\n\t    "
+                "(overrides path in ~/.splat_path file)\n\n");
+        fprintf(stderr,
+                "\t-n elevation limit (in meters) below which SRTM data is\n\t "
+                "   replaced by USGS-derived .sdf data (default "
                 "= 0 meters)\n\n");
         fprintf(stderr, "Examples: %s N40W074.hgt\n", string);
         fprintf(stderr, "          %s -d /cdrom/sdf N40W074.hgt\n", string);
@@ -584,7 +612,8 @@ int main(int argc, char *argv[])
         if (strcmp(argv[x], "-d") == 0) {
             z = x + 1;
 
-            if (z <= y && argv[z][0] && argv[z][0] != '-') strncpy(sdf_path, argv[z], 253);
+            if (z <= y && argv[z][0] && argv[z][0] != '-')
+                strncpy(sdf_path, argv[z], 253);
         }
 
         if (strcmp(argv[x], "-n") == 0) {
@@ -593,7 +622,8 @@ int main(int argc, char *argv[])
             if (z <= y && argv[z][0]) {
                 sscanf(argv[z], "%d", &min_elevation);
 
-                if (min_elevation < -32767) min_elevation = 0;
+                if (min_elevation < -32767)
+                    min_elevation = 0;
             }
         }
     }
@@ -615,7 +645,9 @@ int main(int argc, char *argv[])
 
             /* Remove <CR> and/or <LF> from string */
 
-            for (x = 0; string[x] != 13 && string[x] != 10 && string[x] != 0 && x < 253; x++)
+            for (x = 0;
+                 string[x] != 13 && string[x] != 10 && string[x] != 0 && x < 253;
+                 x++)
                 ;
             string[x] = 0;
 
@@ -637,7 +669,8 @@ int main(int argc, char *argv[])
     }
 
     if (ReadSRTM(argv[z + 1]) == 0) {
-        if (replacement_flag && sdf_path[0]) merge = ReadUSGS();
+        if (replacement_flag && sdf_path[0])
+            merge = ReadUSGS();
 
         WriteSDF(sdf_filename);
     }

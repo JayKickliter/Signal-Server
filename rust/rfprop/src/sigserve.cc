@@ -6,17 +6,22 @@
 #include "../../../src/common.hh"
 #include "rfprop/src/sigserve.rs.h"
 
-extern int init(const char *sdf_path, bool debug);
-extern int handle_args(int argc, char *argv[], output &ret_out);
-extern int LoadTopoData(double max_lon, double min_lon, double max_lat, double min_lat, struct output *out);
+extern int init(const char * sdf_path, bool debug);
+extern int handle_args(int argc, char * argv[], output & ret_out);
+extern int LoadTopoData(double max_lon,
+                        double min_lon,
+                        double max_lat,
+                        double min_lat,
+                        struct output * out);
 extern double LonDiff(double lon1, double lon2);
 
 namespace sigserve_wrapper {
 
-int init(const char *sdf_path, bool debug) { return ::init(sdf_path, debug); };
+int init(const char * sdf_path, bool debug) {
+    return ::init(sdf_path, debug);
+};
 
-Report handle_args(int argc, char *argv[])
-{
+Report handle_args(int argc, char * argv[]) {
     Report report;
     output out;
 
@@ -30,35 +35,57 @@ Report handle_args(int argc, char *argv[])
     report.field_strength = out.field_strength;
 
     report.cluttervec.reserve(out.cluttervec.size());
-    std::copy(out.cluttervec.begin(), out.cluttervec.end(), std::back_inserter(report.cluttervec));
+    std::copy(out.cluttervec.begin(),
+              out.cluttervec.end(),
+              std::back_inserter(report.cluttervec));
 
     report.line_of_sight.reserve(out.line_of_sight.size());
-    std::copy(out.line_of_sight.begin(), out.line_of_sight.end(), std::back_inserter(report.line_of_sight));
+    std::copy(out.line_of_sight.begin(),
+              out.line_of_sight.end(),
+              std::back_inserter(report.line_of_sight));
 
     report.fresnelvec.reserve(out.fresnelvec.size());
-    std::copy(out.fresnelvec.begin(), out.fresnelvec.end(), std::back_inserter(report.fresnelvec));
+    std::copy(out.fresnelvec.begin(),
+              out.fresnelvec.end(),
+              std::back_inserter(report.fresnelvec));
 
     report.fresnel60vec.reserve(out.fresnel60vec.size());
-    std::copy(out.fresnel60vec.begin(), out.fresnel60vec.end(), std::back_inserter(report.fresnel60vec));
+    std::copy(out.fresnel60vec.begin(),
+              out.fresnel60vec.end(),
+              std::back_inserter(report.fresnel60vec));
 
     report.curvaturevec.reserve(out.curvaturevec.size());
-    std::copy(out.curvaturevec.begin(), out.curvaturevec.end(), std::back_inserter(report.curvaturevec));
+    std::copy(out.curvaturevec.begin(),
+              out.curvaturevec.end(),
+              std::back_inserter(report.curvaturevec));
 
     report.profilevec.reserve(out.profilevec.size());
-    std::copy(out.profilevec.begin(), out.profilevec.end(), std::back_inserter(report.profilevec));
+    std::copy(out.profilevec.begin(),
+              out.profilevec.end(),
+              std::back_inserter(report.profilevec));
 
     report.distancevec.reserve(out.distancevec.size());
-    std::copy(out.distancevec.begin(), out.distancevec.end(), std::back_inserter(report.distancevec));
+    std::copy(out.distancevec.begin(),
+              out.distancevec.end(),
+              std::back_inserter(report.distancevec));
 
     report.image_data.reserve(out.imagedata.size());
-    std::copy(out.imagedata.begin(), out.imagedata.end(), std::back_inserter(report.image_data));
+    std::copy(out.imagedata.begin(),
+              out.imagedata.end(),
+              std::back_inserter(report.image_data));
 
     return report;
 }
 
-TerrainProfile terrain_profile(double tx_lat, double tx_lon, double tx_antenna_alt, double rx_lat, double rx_lon,
-                               double rx_antenna_alt, double freq_hz, bool normalize, bool metric)
-{
+TerrainProfile terrain_profile(double tx_lat,
+                               double tx_lon,
+                               double tx_antenna_alt,
+                               double rx_lat,
+                               double rx_lon,
+                               double rx_antenna_alt,
+                               double freq_hz,
+                               bool normalize,
+                               bool metric) {
     // The following conversions are confusing, and I'm still not
     // entirely sure why negating longitudes works.
     //
@@ -120,26 +147,36 @@ TerrainProfile terrain_profile(double tx_lat, double tx_lon, double tx_antenna_a
     TerrainProfile report;
 
     report.distance.reserve(p2p._distance.size());
-    std::copy(p2p._distance.begin(), p2p._distance.end(), std::back_inserter(report.distance));
+    std::copy(p2p._distance.begin(),
+              p2p._distance.end(),
+              std::back_inserter(report.distance));
 
     report.los.reserve(p2p._los.size());
     std::copy(p2p._los.begin(), p2p._los.end(), std::back_inserter(report.los));
 
     report.fresnel.reserve(p2p._fresnel.size());
-    std::copy(p2p._fresnel.begin(), p2p._fresnel.end(), std::back_inserter(report.fresnel));
+    std::copy(p2p._fresnel.begin(),
+              p2p._fresnel.end(),
+              std::back_inserter(report.fresnel));
 
     report.fresnel60.reserve(p2p._fresnel60.size());
-    std::copy(p2p._fresnel60.begin(), p2p._fresnel60.end(), std::back_inserter(report.fresnel60));
+    std::copy(p2p._fresnel60.begin(),
+              p2p._fresnel60.end(),
+              std::back_inserter(report.fresnel60));
 
     report.curvature.reserve(p2p._curvature.size());
-    std::copy(p2p._curvature.begin(), p2p._curvature.end(), std::back_inserter(report.curvature));
+    std::copy(p2p._curvature.begin(),
+              p2p._curvature.end(),
+              std::back_inserter(report.curvature));
 
     report.terrain.reserve(p2p._terrain.size());
-    std::copy(p2p._terrain.begin(), p2p._terrain.end(), std::back_inserter(report.terrain));
+    std::copy(p2p._terrain.begin(),
+              p2p._terrain.end(),
+              std::back_inserter(report.terrain));
 
     report.tx_site_over_water = p2p._tx_site_over_water;
 
     return report;
 }
 
-}  // namespace sigserve_wrapper
+} // namespace sigserve_wrapper
