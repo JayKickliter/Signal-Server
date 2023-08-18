@@ -53,6 +53,7 @@ fn main() {
         bridge.flag("-fno-omit-frame-pointer");
         bridge.flag("-ggdb");
         bridge.flag("-fsanitize=address");
+        bridge.compiler("clang");
     }
     bridge.compile("sigserve_wrapper");
     println!("cargo:rustc-link-lib=png");
