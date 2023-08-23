@@ -657,10 +657,6 @@ Path::Path(site const & src, site const & dst) {
         tempsite.lon = lon2;
         tempsite.alt = std::numeric_limits<float>::min();
         elevation.push_back(GetElevation(tempsite));
-        // fix for tile gaps in multi-tile LIDAR plots
-        if (elevation[c] == 0 && elevation[c - 1] > 10) {
-            elevation[c] = elevation[c - 1];
-        }
         distance.push_back(distance_);
     }
 
