@@ -12,6 +12,9 @@ thiserror = "1"
 [dev-dependencies]
 criterion = { version = "0.4", features = ["html_reports"] }
 
+[target.'cfg(not(target_env = "msvc"))'.dev-dependencies]
+tikv-jemallocator = "0.5"
+
 [build-dependencies]
 cmake = "0.1"
 cxx-build = "1.0"
@@ -19,9 +22,6 @@ cxx-build = "1.0"
 [features]
 default = []
 address_sanitizer = []
-
-[profile.bench]
-debug = true
 
 [[bench]]
 name = "rfprop_benches"
