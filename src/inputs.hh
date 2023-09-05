@@ -18,14 +18,14 @@ int LoadPAT(char * az_filename, char * el_filename, struct LR & lr);
 int LoadSignalColors(struct site xmtr);
 int LoadLossColors(struct site xmtr);
 int LoadDBMColors(struct site xmtr);
-int LoadTopoData(double max_lon,
-                 double min_lon,
-                 double max_lat,
-                 double min_lat,
+int LoadTopoData(float max_lon,
+                 float min_lon,
+                 float max_lat,
+                 float min_lat,
                  struct output * out);
 int LoadUDT(char * filename);
 int loadLIDAR(char * filename, int resample, struct output * out);
-int loadClutter(char * filename, double radius, struct site tx);
+int loadClutter(char * filename, float radius, struct site tx);
 int averageHeight(int h, int w, int x, int y);
 static const char AZ_FILE_SUFFIX[] = ".az";
 static const char EL_FILE_SUFFIX[] = ".el";

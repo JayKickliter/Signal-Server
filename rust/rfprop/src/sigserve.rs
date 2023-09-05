@@ -50,13 +50,13 @@ pub fn call_sigserve(args: &str) -> Result<ffi::Report, Error> {
 
 #[allow(clippy::too_many_arguments)]
 pub fn terrain_profile(
-    tx_lat: f64,
-    tx_lon: f64,
-    tx_antenna_alt_m: f64,
-    rx_lat: f64,
-    rx_lon: f64,
-    rx_antenna_alt_m: f64,
-    freq_hz: f64,
+    tx_lat: f32,
+    tx_lon: f32,
+    tx_antenna_alt_m: f32,
+    rx_lat: f32,
+    rx_lon: f32,
+    rx_antenna_alt_m: f32,
+    freq_hz: f32,
     normalize: bool,
 ) -> ffi::TerrainProfile {
     assert!(
@@ -91,16 +91,16 @@ pub(crate) mod ffi {
         // common return code
         retcode: i32,
         // begin point-to-point fields.
-        dbm: f64,
-        loss: f64,
-        field_strength: f64,
-        distancevec: Vec<f64>,
-        cluttervec: Vec<f64>,
-        line_of_sight: Vec<f64>,
-        fresnelvec: Vec<f64>,
-        fresnel60vec: Vec<f64>,
-        curvaturevec: Vec<f64>,
-        profilevec: Vec<f64>,
+        dbm: f32,
+        loss: f32,
+        field_strength: f32,
+        distancevec: Vec<f32>,
+        cluttervec: Vec<f32>,
+        line_of_sight: Vec<f32>,
+        fresnelvec: Vec<f32>,
+        fresnel60vec: Vec<f32>,
+        curvaturevec: Vec<f32>,
+        profilevec: Vec<f32>,
         // end point-to-point fields.
 
         // begin image-mode fields.
@@ -110,12 +110,12 @@ pub(crate) mod ffi {
 
     #[derive(Default, Debug)]
     pub struct TerrainProfile {
-        distance: Vec<f64>,
-        los: Vec<f64>,
-        fresnel: Vec<f64>,
-        fresnel60: Vec<f64>,
-        curvature: Vec<f64>,
-        terrain: Vec<f64>,
+        distance: Vec<f32>,
+        los: Vec<f32>,
+        fresnel: Vec<f32>,
+        fresnel60: Vec<f32>,
+        curvature: Vec<f32>,
+        terrain: Vec<f32>,
         tx_site_over_water: bool,
     }
 
@@ -128,13 +128,13 @@ pub(crate) mod ffi {
 
         #[allow(clippy::too_many_arguments)]
         unsafe fn terrain_profile(
-            tx_lat: f64,
-            tx_lon: f64,
-            tx_antenna_alt: f64,
-            rx_lat: f64,
-            rx_lon: f64,
-            rx_antenna_alt: f64,
-            freq_hz: f64,
+            tx_lat: f32,
+            tx_lon: f32,
+            tx_antenna_alt: f32,
+            rx_lat: f32,
+            rx_lon: f32,
+            rx_antenna_alt: f32,
+            freq_hz: f32,
             normalize: bool,
             metric: bool,
         ) -> TerrainProfile;

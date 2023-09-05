@@ -12,22 +12,22 @@ typedef struct _tile_t {
         int height;
     };
     union {
-        double xll;
-        double max_west;
+        float xll;
+        float max_west;
     };
     union {
-        double yll;
-        double min_north;
+        float yll;
+        float min_north;
     };
     union {
-        double xur;
-        double min_west;
+        float xur;
+        float min_west;
     };
     union {
-        double yur;
-        double max_north;
+        float yur;
+        float max_north;
     };
-    double cellsize;
+    float cellsize;
     long long datastart;
     short nodata;
     short max_el;
@@ -35,8 +35,8 @@ typedef struct _tile_t {
     short * data;
     float precise_resolution;
     float resolution;
-    double width_deg;
-    double height_deg;
+    float width_deg;
+    float height_deg;
     int ppdx;
     int ppdy;
 } tile_t, *ptile_t;

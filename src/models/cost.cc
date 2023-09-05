@@ -15,7 +15,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-double COST231pathLoss(float f, float TxH, float RxH, float d, int mode) {
+float COST231pathLoss(float f, float TxH, float RxH, float d, int mode) {
     /*
     COST231 extension to HATA model
     Frequency 1500 to 2000MHz
@@ -50,7 +50,7 @@ double COST231pathLoss(float f, float TxH, float RxH, float d, int mode) {
         C_H = (1.1 * log10(f) - 0.7) * RxH - (1.56 * log10(f)) + 0.8;
     }
     float logf = log10(f);
-    double dbloss = c0 + (cf * logf) - (13.82 * log10(TxH)) - C_H
+    float dbloss = c0 + (cf * logf) - (13.82 * log10(TxH)) - C_H
                     + (44.9 - 6.55 * log10(TxH)) * log10(d) + C;
     return dbloss;
 }

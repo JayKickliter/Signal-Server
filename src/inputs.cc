@@ -22,7 +22,7 @@
 
 extern char * G_color_file;
 
-int loadClutter(char * filename, double radius, struct site tx) {
+int loadClutter(char * filename, float radius, struct site tx) {
     /* This function reads a MODIS 17-class clutter file in ASCII Grid format.
        The nominal heights it applies to each value, eg. 5 (Mixed forest) = 15m
        are taken from ITU-R P.452-11. It doesn't have it's own matrix, instead
@@ -31,7 +31,7 @@ int loadClutter(char * filename, double radius, struct site tx) {
        0.004166
      */
     int x, y, z, h = 0, w = 0;
-    double clh, xll, yll, cellsize, cellsize2, xOffset, yOffset, lat, lon;
+    float clh, xll, yll, cellsize, cellsize2, xOffset, yOffset, lat, lon;
     char line[100000];
     char *s, *pch = NULL;
     FILE * fd;
@@ -74,12 +74,12 @@ int loadClutter(char * filename, double radius, struct site tx) {
     }
 
     if (fgets(line, 25, fd) != NULL) {
-        sscanf(pch, "%lf", &xll);
+        sscanf(pch, "%f", &xll);
     }
 
     s = fgets(line, 25, fd);
     if (fgets(line, 25, fd) != NULL) {
-        sscanf(pch, "%lf", &yll);
+        sscanf(pch, "%f", &yll);
     }
 
     if (G_debug) {
@@ -190,7 +190,7 @@ int loadLIDAR(char *filenames, int resample, struct output *out)
     char *filename;
     char *files[900];  // 20x20=400, 16x16=256 tiles
     int indx = 0, fc = 0, success;
-    double avgCellsize = 0, smCellsize = 0;
+    float avgCellsize = 0, smCellsize = 0;
     tile_t *tiles;
 
     // Initialize global variables before processing files
@@ -295,11 +295,11 @@ int loadLIDAR(char *filenames, int resample, struct output *out)
 
     /* Now we work out the size of the giant lidar tile. */
     if (G_debug) {
-        fprintf(stderr, "mw:%lf Mnw:%lf\n", out->max_west, out->min_west);
+        fprintf(stderr, "mw:%f Mnw:%f\n", out->max_west, out->min_west);
     }
-    double total_width =
+    float total_width =
         out->max_west - out->min_west >= 0 ? out->max_west - out->min_west : out->max_west + (360 - out->min_west);
-    double total_height = out->max_north - out->min_north;
+    float total_height = out->max_north - out->min_north;
     if (G_debug) {
         fprintf(stderr, "totalh: %.7f - %.7f = %.7f totalw: %.7f - %.7f = %.7f fc: %d\n", out->max_north, out->min_north,
                 total_height, out->max_west, out->min_west, total_width, fc);
@@ -355,8 +355,8 @@ int loadLIDAR(char *filenames, int resample, struct output *out)
     size_t new_height = 0;
     size_t new_width = 0;
     for (size_t i = 0; i < (unsigned)fc; i++) {
-        double north_offset = out->max_north - tiles[i].max_north;
-        double west_offset = out->max_west - tiles[i].max_west >= 0 ? out->max_west - tiles[i].max_west
+        float north_offset = out->max_north - tiles[i].max_north;
+        float west_offset = out->max_west - tiles[i].max_west >= 0 ? out->max_west - tiles[i].max_west
                                                                     : out->max_west + (360 - tiles[i].max_west);
         size_t north_pixel_offset = north_offset * tiles[i].ppdy;
         size_t west_pixel_offset = west_offset * tiles[i].ppdx;
@@ -386,7 +386,7 @@ int loadLIDAR(char *filenames, int resample, struct output *out)
         return ENOMEM;
     }
     if (G_debug) {
-        fprintf(stderr, "Lidar tile dimensions w:%lf(%zu) h:%lf(%zu)\n", total_width, new_width, total_height, new_height);
+        fprintf(stderr, "Lidar tile dimensions w:%f(%zu) h:%f(%zu)\n", total_width, new_width, total_height, new_height);
         fflush(stderr);
     }
 
@@ -395,16 +395,16 @@ int loadLIDAR(char *filenames, int resample, struct output *out)
 
     /* Fill out the array one tile at a time */
     for (size_t i = 0; i < (unsigned)fc; i++) {
-        double north_offset = out->max_north - tiles[i].max_north;
-        double west_offset = out->max_west - tiles[i].max_west >= 0 ? out->max_west - tiles[i].max_west
+        float north_offset = out->max_north - tiles[i].max_north;
+        float west_offset = out->max_west - tiles[i].max_west >= 0 ? out->max_west - tiles[i].max_west
                                                                     : out->max_west + (360 - tiles[i].max_west);
         size_t north_pixel_offset = north_offset * tiles[i].ppdy;
         size_t west_pixel_offset = west_offset * tiles[i].ppdx;
 
         if (G_debug) {
-            fprintf(stderr, "mn: %lf mw:%lf globals: %lf %lf\n", tiles[i].max_north, tiles[i].max_west, out->max_north,
+            fprintf(stderr, "mn: %f mw:%f globals: %f %f\n", tiles[i].max_north, tiles[i].max_west, out->max_north,
                     out->max_west);
-            fprintf(stderr, "Offset n:%zu(%lf) w:%zu(%lf)\n", north_pixel_offset, north_offset, west_pixel_offset, west_offset);
+            fprintf(stderr, "Offset n:%zu(%f) w:%zu(%f)\n", north_pixel_offset, north_offset, west_pixel_offset, west_offset);
             fprintf(stderr, "Height: %d\n", tiles[i].height);
             fflush(stderr);
         }
@@ -1872,10 +1872,10 @@ int LoadDBMColors(struct site xmtr) {
     return 0;
 }
 
-int LoadTopoData(double max_lon,
-                 double min_lon,
-                 double max_lat,
-                 double min_lat,
+int LoadTopoData(float max_lon,
+                 float min_lon,
+                 float max_lat,
+                 float min_lat,
                  struct output * out) {
     /* This function loads the SDF files required
        to cover the limits of the region specified. */
@@ -1890,7 +1890,7 @@ int LoadTopoData(double max_lon,
     if ((max_lon - min_lon) <= 180.0) {
         for (y = 0; y <= width; y++) {
             for (x = min_lat; x <= (int)max_lat; x++) {
-                ymin = (int)(min_lon + (double)y);
+                ymin = (int)(min_lon + (float)y);
 
                 while (ymin < 0) {
                     ymin += 360;
@@ -1925,7 +1925,7 @@ int LoadTopoData(double max_lon,
     } else {
         for (y = 0; y <= width; y++) {
             for (x = (int)min_lat; x <= (int)max_lat; x++) {
-                ymin = (int)(max_lon + (double)y);
+                ymin = (int)(max_lon + (float)y);
 
                 while (ymin < 0) {
                     ymin += 360;
@@ -1972,7 +1972,7 @@ int LoadUDT(char * filename) {
 
     int i, x, y, z, ypix, xpix, tempxpix, tempypix, fd = 0, n = 0;
     char input[80], str[3][80], tempname[15], *pointer = NULL, *s = NULL;
-    double latitude, longitude, height, tempheight, old_longitude = 0.0,
+    float latitude, longitude, height, tempheight, old_longitude = 0.0,
                                                     old_latitude = 0.0;
     FILE *fd1 = NULL, *fd2 = NULL;
 
@@ -2088,7 +2088,7 @@ int LoadUDT(char * filename) {
 
     y = 0;
 
-    n = fscanf(fd1, "%d, %d, %lf", &xpix, &ypix, &height);
+    n = fscanf(fd1, "%d, %d, %f", &xpix, &ypix, &height);
 
     if (n) {
     }
@@ -2097,7 +2097,7 @@ int LoadUDT(char * filename) {
         x = 0;
         z = 0;
 
-        n = fscanf(fd2, "%d, %d, %lf", &tempxpix, &tempypix, &tempheight);
+        n = fscanf(fd2, "%d, %d, %f", &tempxpix, &tempypix, &tempheight);
 
         do {
             if (x > y && xpix == tempxpix && ypix == tempypix) {
@@ -2109,7 +2109,7 @@ int LoadUDT(char * filename) {
             }
 
             else {
-                n = fscanf(fd2, "%d, %d, %lf", &tempxpix, &tempypix, &tempheight);
+                n = fscanf(fd2, "%d, %d, %f", &tempxpix, &tempypix, &tempheight);
                 x++;
             }
 
@@ -2119,18 +2119,18 @@ int LoadUDT(char * filename) {
             // No duplicate found
             if (G_debug) {
                 fprintf(stderr,
-                        "Adding UDT Point: %lf, %lf, %lf\n",
+                        "Adding UDT Point: %f, %f, %f\n",
                         old_latitude,
                         old_longitude,
                         height);
                 fflush(stderr);
             }
-            AddElevation((double)xpix * G_dpp, (double)ypix * G_dpp, height, 1);
+            AddElevation((float)xpix * G_dpp, (float)ypix * G_dpp, height, 1);
         }
 
         fflush(stderr);
 
-        n = fscanf(fd1, "%d, %d, %lf", &xpix, &ypix, &height);
+        n = fscanf(fd1, "%d, %d, %f", &xpix, &ypix, &height);
         y++;
 
         rewind(fd2);

@@ -57,8 +57,8 @@ struct dem_output {
 };
 
 struct site {
-    double lat;
-    double lon;
+    float lat;
+    float lon;
     float alt;
     /* TODO: remove the following fields. They use a huge amount of
        stack and conflate IO with baseness logic. */
@@ -67,10 +67,10 @@ struct site {
 };
 
 struct Path {
-    std::vector<double> lat;
-    std::vector<double> lon;
-    std::vector<double> elevation;
-    std::vector<double> distance;
+    std::vector<float> lat;
+    std::vector<float> lon;
+    std::vector<float> elevation;
+    std::vector<float> distance;
     ssize_t ssize() const;
     size_t size() const;
     Path() = default;
@@ -78,17 +78,17 @@ struct Path {
 };
 
 struct TerrainProfile {
-    std::vector<double> _curvature;
-    std::vector<double> _distance;
-    std::vector<double> _fresnel60;
-    std::vector<double> _fresnel;
-    std::vector<double> _los;
-    std::vector<double> _terrain;
+    std::vector<float> _curvature;
+    std::vector<float> _distance;
+    std::vector<float> _fresnel60;
+    std::vector<float> _fresnel;
+    std::vector<float> _los;
+    std::vector<float> _terrain;
     bool _tx_site_over_water;
     TerrainProfile(site const & src,
                    site const & dst,
                    Path const & path,
-                   double freq_hz,
+                   float freq_hz,
                    bool normalised,
                    bool metric) noexcept;
 };
@@ -111,24 +111,24 @@ class antenna_pattern {
 // essentially this struct holds the
 // read-only configuration options
 struct LR {
-    double max_range;
-    double clutter;
+    float max_range;
+    float clutter;
     int contour_threshold;
     char dbm;
     unsigned char metric;
-    double eps_dielect;
-    double sgm_conductivity;
-    double eno_ns_surfref;
-    double frq_mhz;
-    double conf;
-    double rel;
-    double erp;
+    float eps_dielect;
+    float sgm_conductivity;
+    float eno_ns_surfref;
+    float frq_mhz;
+    float conf;
+    float rel;
+    float erp;
     int radio_climate;
     int pol;
     antenna_pattern ant_pat;
-    double antenna_downtilt;
-    double antenna_dt_direction;
-    double antenna_rotation;
+    float antenna_downtilt;
+    float antenna_dt_direction;
+    float antenna_rotation;
 };
 
 struct output {
@@ -137,31 +137,31 @@ struct output {
     int height;
     int min_elevation;
     int max_elevation;
-    double min_north;
-    double max_north;
-    double min_west;
-    double max_west;
-    std::vector<double> elev;
-    double north;
-    double east;
-    double south;
-    double west;
-    double westoffset;
-    double eastoffset;
-    double cropLat;
-    double cropLon;
-    double dBm;
-    double loss;
-    double field_strength;
+    float min_north;
+    float max_north;
+    float min_west;
+    float max_west;
+    std::vector<float> elev;
+    float north;
+    float east;
+    float south;
+    float west;
+    float westoffset;
+    float eastoffset;
+    float cropLat;
+    float cropLon;
+    float dBm;
+    float loss;
+    float field_strength;
     int hottest;
     struct site tx_site[2];
-    std::vector<double> distancevec;
-    std::vector<double> cluttervec;
-    std::vector<double> line_of_sight;
-    std::vector<double> fresnelvec;
-    std::vector<double> fresnel60vec;
-    std::vector<double> curvaturevec;
-    std::vector<double> profilevec;
+    std::vector<float> distancevec;
+    std::vector<float> cluttervec;
+    std::vector<float> line_of_sight;
+    std::vector<float> fresnelvec;
+    std::vector<float> fresnel60vec;
+    std::vector<float> curvaturevec;
+    std::vector<float> profilevec;
     std::vector<char> imagedata;
 };
 
@@ -178,12 +178,12 @@ extern int IPPD;
 extern int G_ippd;
 extern int G_mpi;
 
-extern double G_earthradius_ft;
-extern double G_dpp;
-extern double G_ppd;
-extern double G_yppd;
-extern double G_fzone_clearance;
-extern double G_delta;
+extern float G_earthradius_ft;
+extern float G_dpp;
+extern float G_ppd;
+extern float G_yppd;
+extern float G_fzone_clearance;
+extern float G_delta;
 
 extern char G_string[];
 extern char G_sdf_path[];

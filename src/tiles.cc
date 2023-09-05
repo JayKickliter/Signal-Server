@@ -11,10 +11,10 @@
 #define MAX_LINE 50000
 
 /* Computes the distance between two long/lat points */
-double haversine_formula(double th1, double ph1, double th2, double ph2) {
+float haversine_formula(float th1, float ph1, float th2, float ph2) {
 #define TO_RAD (3.1415926536 / 180)
     int R = 6371;
-    double dx, dy, dz;
+    float dx, dy, dz;
     ph1 -= ph2;
     ph1 *= TO_RAD, th1 *= TO_RAD, th2 *= TO_RAD;
     dz = sin(th1) - sin(th2);
@@ -42,9 +42,9 @@ int tile_load_lidar(tile_t * tile, char * filename, struct output * out) {
     if (fscanf(fd,
                "%*s %d\n"
                "%*s %d\n"
-               "%*s %lf\n"
-               "%*s %lf\n"
-               "%*s %lf\n"
+               "%*s %f\n"
+               "%*s %f\n"
+               "%*s %f\n"
                "%*s %d\n",
                &tile->width,
                &tile->height,
@@ -60,7 +60,7 @@ int tile_load_lidar(tile_t * tile, char * filename, struct output * out) {
     tile->datastart = ftell(fd);
 
     if (G_debug) {
-        fprintf(stderr, "w:%d h:%d s:%lf\n", tile->width, tile->height, tile->cellsize);
+        fprintf(stderr, "w:%d h:%d s:%f\n", tile->width, tile->height, tile->cellsize);
         fflush(stderr);
     }
 
@@ -155,7 +155,7 @@ int tile_load_lidar(tile_t * tile, char * filename, struct output * out) {
         } // if
     }
 
-    double current_res_km = haversine_formula(tile->max_north,
+    float current_res_km = haversine_formula(tile->max_north,
                                               tile->max_west,
                                               tile->max_north,
                                               tile->min_west);
@@ -302,7 +302,7 @@ int tile_rescale(tile_t * tile, float scale) {
  * nearest (via averaging) resample value and calls resample_data
  */
 int tile_resize(tile_t * tile, int resolution) {
-    double current_res_km = haversine_formula(tile->max_north,
+    float current_res_km = haversine_formula(tile->max_north,
                                               tile->max_west,
                                               tile->max_north,
                                               tile->min_west);

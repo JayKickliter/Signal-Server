@@ -94,7 +94,7 @@ int main(int argc, char * argv[]) {
     G_fzone_clearance = 0.6;
     G_ippd = IPPD; // default resolution
     // leave these as globals
-    G_ppd = (double)G_ippd;
+    G_ppd = (float)G_ippd;
     G_yppd = G_ppd;
 
     G_dpp = 1 / G_ppd;

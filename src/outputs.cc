@@ -37,7 +37,7 @@ void DoPathLoss(struct output * out,
     unsigned char mask, cityorcounty;
     struct dem_output * found;
     int x, y, z, x0 = 0, y0 = 0, loss, match;
-    double lat, lon, conversion, one_over_gamma, minwest;
+    float lat, lon, conversion, one_over_gamma, minwest;
     image_ctx_t ctx;
     int success;
 
@@ -54,31 +54,31 @@ void DoPathLoss(struct output * out,
     one_over_gamma = 1.0 / GAMMA;
     conversion =
         255.0
-        / pow((double)(out->max_elevation - out->min_elevation), one_over_gamma);
+        / pow((float)(out->max_elevation - out->min_elevation), one_over_gamma);
 
     if ((success = LoadLossColors(xmtr[0])) != 0) {
         fprintf(stderr, "Error loading loss colors\n");
         exit(success); // Now a fatal error!
     }
 
-    minwest = ((double)out->min_west) + G_dpp;
+    minwest = ((float)out->min_west) + G_dpp;
 
     if (minwest > 360.0) {
         minwest -= 360.0;
     }
 
-    out->north = (double)out->max_north - G_dpp;
+    out->north = (float)out->max_north - G_dpp;
 
     if (kml || geo) {
-        out->south = (double)out->min_north; /* No bottom legend */
+        out->south = (float)out->min_north; /* No bottom legend */
     } else {
-        out->south = (double)out->min_north
+        out->south = (float)out->min_north
                      - (30.0 / G_ppd); /* 30 pixels for bottom legend */
     }
 
     out->east = (minwest < 180.0 ? -minwest : 360.0 - out->min_west);
     out->west =
-        (double)(out->max_west < 180 ? -out->max_west : 360 - out->max_west);
+        (float)(out->max_west < 180 ? -out->max_west : 360 - out->max_west);
 
     if (G_debug) {
         fprintf(stderr,
@@ -89,9 +89,9 @@ void DoPathLoss(struct output * out,
     }
 
     for (y = 0, lat = out->north; y < (int)out->height;
-         y++, lat = out->north - (G_dpp * (double)y)) {
+         y++, lat = out->north - (G_dpp * (float)y)) {
         for (x = 0, lon = out->max_west; x < (int)out->width;
-             x++, lon = out->max_west - (G_dpp * (double)x)) {
+             x++, lon = out->max_west - (G_dpp * (float)x)) {
             if (lon < 0.0) {
                 lon += 360.0;
             }
@@ -99,8 +99,8 @@ void DoPathLoss(struct output * out,
             found = NULL;
             // for (std::vector<dem_output>::iterator i = v.begin(); i != v.end() && found == 0; ++i) {
             for (auto & i : out->dem_out) {
-                x0 = (int)rint(G_ppd * (lat - (double)i.min_north));
-                y0 = G_mpi - (int)rint(G_ppd * (LonDiff((double)i.max_west, lon)));
+                x0 = (int)rint(G_ppd * (lat - (float)i.min_north));
+                y0 = G_mpi - (int)rint(G_ppd * (LonDiff((float)i.max_west, lon)));
 
                 if (x0 >= 0 && x0 <= G_mpi && y0 >= 0 && y0 <= G_mpi) {
                     found = &i;
@@ -171,7 +171,7 @@ void DoPathLoss(struct output * out,
                             } else {
                                 terrain =
                                     (unsigned)(0.5
-                                               + pow((double)(found->dem->data[DEM_INDEX(
+                                               + pow((float)(found->dem->data[DEM_INDEX(
                                                                   found->dem->ippd, x0, y0)]
                                                               - out->min_elevation),
                                                      one_over_gamma)
@@ -196,7 +196,7 @@ void DoPathLoss(struct output * out,
                                 /* Elevation: Greyscale */
                                 terrain =
                                     (unsigned)(0.5
-                                               + pow((double)(found->dem->data[DEM_INDEX(
+                                               + pow((float)(found->dem->data[DEM_INDEX(
                                                                   found->dem->ippd, x0, y0)]
                                                               - out->min_elevation),
                                                      one_over_gamma)
@@ -240,7 +240,7 @@ int DoSigStr(struct output * out,
     unsigned char mask, cityorcounty;
     struct dem_output * found;
     int x, y, z = 1, x0 = 0, y0 = 0, signal, match;
-    double conversion, one_over_gamma, lat, lon, minwest;
+    float conversion, one_over_gamma, lat, lon, minwest;
     image_ctx_t ctx;
     int success;
 
@@ -257,26 +257,26 @@ int DoSigStr(struct output * out,
     one_over_gamma = 1.0 / GAMMA;
     conversion =
         255.0
-        / pow((double)(out->max_elevation - out->min_elevation), one_over_gamma);
+        / pow((float)(out->max_elevation - out->min_elevation), one_over_gamma);
 
     if ((success = LoadSignalColors(xmtr[0])) != 0) {
         fprintf(stderr, "Error loading signal colors\n");
         // exit(success);
     }
 
-    minwest = ((double)out->min_west) + G_dpp;
+    minwest = ((float)out->min_west) + G_dpp;
 
     if (minwest > 360.0) {
         minwest -= 360.0;
     }
 
-    out->north = (double)out->max_north - G_dpp;
+    out->north = (float)out->max_north - G_dpp;
 
-    out->south = (double)out->min_north; /* No bottom legend */
+    out->south = (float)out->min_north; /* No bottom legend */
 
     out->east = (minwest < 180.0 ? -minwest : 360.0 - out->min_west);
     out->west =
-        (double)(out->max_west < 180 ? -out->max_west : 360 - out->max_west);
+        (float)(out->max_west < 180 ? -out->max_west : 360 - out->max_west);
 
     if (G_debug) {
         fprintf(stderr,
@@ -287,17 +287,17 @@ int DoSigStr(struct output * out,
     }
 
     for (y = 0, lat = out->north; y < (int)out->height;
-         y++, lat = out->north - (G_dpp * (double)y)) {
+         y++, lat = out->north - (G_dpp * (float)y)) {
         for (x = 0, lon = out->max_west; x < (int)out->width;
-             x++, lon = out->max_west - (G_dpp * (double)x)) {
+             x++, lon = out->max_west - (G_dpp * (float)x)) {
             if (lon < 0.0) {
                 lon += 360.0;
             }
 
             found = NULL;
             for (auto & i : out->dem_out) {
-                x0 = (int)rint(G_ppd * (lat - (double)i.min_north));
-                y0 = G_mpi - (int)rint(G_ppd * (LonDiff((double)i.max_west, lon)));
+                x0 = (int)rint(G_ppd * (lat - (float)i.min_north));
+                y0 = G_mpi - (int)rint(G_ppd * (LonDiff((float)i.max_west, lon)));
 
                 if (x0 >= 0 && x0 <= G_mpi && y0 >= 0 && y0 <= G_mpi) {
                     found = &i;
@@ -365,7 +365,7 @@ int DoSigStr(struct output * out,
                             } else {
                                 terrain =
                                     (unsigned)(0.5
-                                               + pow((double)(found->dem->data[DEM_INDEX(
+                                               + pow((float)(found->dem->data[DEM_INDEX(
                                                                   found->dem->ippd, x0, y0)]
                                                               - out->min_elevation),
                                                      one_over_gamma)
@@ -393,7 +393,7 @@ int DoSigStr(struct output * out,
                                     /* Elevation: Greyscale */
                                     terrain =
                                         (unsigned)(0.5
-                                                   + pow((double)(found->dem->data[DEM_INDEX(
+                                                   + pow((float)(found->dem->data[DEM_INDEX(
                                                                       found->dem->ippd, x0, y0)]
                                                                   - out->min_elevation),
                                                          one_over_gamma)
@@ -440,7 +440,7 @@ void DoRxdPwr(struct output * out,
     unsigned char mask, cityorcounty;
     struct dem_output * found;
     int x, y, z = 1, x0 = 0, y0 = 0, dBm, match;
-    double conversion, one_over_gamma, lat, lon, minwest;
+    float conversion, one_over_gamma, lat, lon, minwest;
     image_ctx_t ctx;
     int success;
 
@@ -457,26 +457,26 @@ void DoRxdPwr(struct output * out,
     one_over_gamma = 1.0 / GAMMA;
     conversion =
         255.0
-        / pow((double)(out->max_elevation - out->min_elevation), one_over_gamma);
+        / pow((float)(out->max_elevation - out->min_elevation), one_over_gamma);
 
     if ((success = LoadDBMColors(xmtr[0])) != 0) {
         fprintf(stderr, "Error loading DBM colors\n");
         exit(success); // Now a fatal error!
     }
 
-    minwest = ((double)out->min_west) + G_dpp;
+    minwest = ((float)out->min_west) + G_dpp;
 
     if (minwest > 360.0) {
         minwest -= 360.0;
     }
 
-    out->north = (double)out->max_north - G_dpp;
+    out->north = (float)out->max_north - G_dpp;
 
-    out->south = (double)out->min_north; /* No bottom legend */
+    out->south = (float)out->min_north; /* No bottom legend */
 
     out->east = (minwest < 180.0 ? -minwest : 360.0 - out->min_west);
     out->west =
-        (double)(out->max_west < 180 ? -out->max_west : 360 - out->max_west);
+        (float)(out->max_west < 180 ? -out->max_west : 360 - out->max_west);
 
     if (G_debug) {
         fprintf(stderr,
@@ -488,17 +488,17 @@ void DoRxdPwr(struct output * out,
 
     // Draw image of x by y pixels
     for (y = 0, lat = out->north; y < (int)out->height;
-         y++, lat = out->north - (G_dpp * (double)y)) {
+         y++, lat = out->north - (G_dpp * (float)y)) {
         for (x = 0, lon = out->max_west; x < (int)out->width;
-             x++, lon = out->max_west - (G_dpp * (double)x)) {
+             x++, lon = out->max_west - (G_dpp * (float)x)) {
             if (lon < 0.0) {
                 lon += 360.0;
             }
 
             found = NULL;
             for (auto & i : out->dem_out) {
-                x0 = (int)rint((G_ppd * (lat - (double)i.min_north)));
-                y0 = G_mpi - (int)rint(G_ppd * (LonDiff((double)i.max_west, lon)));
+                x0 = (int)rint((G_ppd * (lat - (float)i.min_north)));
+                y0 = G_mpi - (int)rint(G_ppd * (LonDiff((float)i.max_west, lon)));
 
                 if (x0 >= 0 && x0 <= G_mpi && y0 >= 0 && y0 <= G_mpi) {
                     found = &i;
@@ -564,7 +564,7 @@ void DoRxdPwr(struct output * out,
                             } else {
                                 terrain =
                                     (unsigned)(0.5
-                                               + pow((double)(found->dem->data[DEM_INDEX(
+                                               + pow((float)(found->dem->data[DEM_INDEX(
                                                                   found->dem->ippd, x0, y0)]
                                                               - out->min_elevation),
                                                      one_over_gamma)
@@ -594,7 +594,7 @@ void DoRxdPwr(struct output * out,
                                     /* Elevation: Greyscale */
                                     terrain =
                                         (unsigned)(0.5
-                                                   + pow((double)(found->dem->data[DEM_INDEX(
+                                                   + pow((float)(found->dem->data[DEM_INDEX(
                                                                       found->dem->ippd, x0, y0)]
                                                                   - out->min_elevation),
                                                          one_over_gamma)
@@ -635,7 +635,7 @@ void DoLOS(struct output * out, unsigned char kml, unsigned char ngs, struct sit
     unsigned char mask;
     struct dem_output * found;
     int x, y, x0 = 0, y0 = 0;
-    double conversion, one_over_gamma, lat, lon, minwest;
+    float conversion, one_over_gamma, lat, lon, minwest;
     image_ctx_t ctx;
     int success;
 
@@ -652,21 +652,21 @@ void DoLOS(struct output * out, unsigned char kml, unsigned char ngs, struct sit
     one_over_gamma = 1.0 / GAMMA;
     conversion =
         255.0
-        / pow((double)(out->max_elevation - out->min_elevation), one_over_gamma);
+        / pow((float)(out->max_elevation - out->min_elevation), one_over_gamma);
 
-    minwest = ((double)out->min_west) + G_dpp;
+    minwest = ((float)out->min_west) + G_dpp;
 
     if (minwest > 360.0) {
         minwest -= 360.0;
     }
 
-    out->north = (double)out->max_north - G_dpp;
+    out->north = (float)out->max_north - G_dpp;
 
-    out->south = (double)out->min_north; /* No bottom legend */
+    out->south = (float)out->min_north; /* No bottom legend */
 
     out->east = (minwest < 180.0 ? -minwest : 360.0 - out->min_west);
     out->west =
-        (double)(out->max_west < 180 ? -out->max_west : 360 - out->max_west);
+        (float)(out->max_west < 180 ? -out->max_west : 360 - out->max_west);
 
     if (G_debug) {
         fprintf(stderr,
@@ -677,17 +677,17 @@ void DoLOS(struct output * out, unsigned char kml, unsigned char ngs, struct sit
     }
 
     for (y = 0, lat = out->north; y < (int)out->height;
-         y++, lat = out->north - (G_dpp * (double)y)) {
+         y++, lat = out->north - (G_dpp * (float)y)) {
         for (x = 0, lon = out->max_west; x < (int)out->width;
-             x++, lon = out->max_west - (G_dpp * (double)x)) {
+             x++, lon = out->max_west - (G_dpp * (float)x)) {
             if (lon < 0.0) {
                 lon += 360.0;
             }
 
             found = NULL;
             for (auto & i : out->dem_out) {
-                x0 = (int)rint(G_ppd * (lat - (double)i.min_north));
-                y0 = G_mpi - (int)rint(G_ppd * (LonDiff((double)i.max_west, lon)));
+                x0 = (int)rint(G_ppd * (lat - (float)i.min_north));
+                y0 = G_mpi - (int)rint(G_ppd * (LonDiff((float)i.max_west, lon)));
 
                 if (x0 >= 0 && x0 <= G_mpi && y0 >= 0 && y0 <= G_mpi) {
                     found = &i;
@@ -794,7 +794,7 @@ void DoLOS(struct output * out, unsigned char kml, unsigned char ngs, struct sit
                                 /* Elevation: Greyscale */
                                 terrain =
                                     (unsigned)(0.5
-                                               + pow((double)(found->dem->data[DEM_INDEX(
+                                               + pow((float)(found->dem->data[DEM_INDEX(
                                                                   found->dem->ippd, x0, y0)]
                                                               - out->min_elevation),
                                                      one_over_gamma)
@@ -830,7 +830,7 @@ void PathReport(Path const & path,
                 char /* graph_it */,
                 int propmodel,
                 int pmenv,
-                double rxGain,
+                float rxGain,
                 struct output * out,
                 LR const & lr) {
     /* This function writes a PPA Path Report (name.txt) to
@@ -844,7 +844,7 @@ void PathReport(Path const & path,
 
     int x, y, errnum;
     char strmode[100], report_name[80], block = 0;
-    double maxloss = -100000.0, minloss = 100000.0, angle1, angle2, azimuth,
+    float maxloss = -100000.0, minloss = 100000.0, angle1, angle2, azimuth,
            pattern = 1.0, patterndB = 0.0, total_loss = 0.0, cos_xmtr_angle,
            cos_test_angle = 0.0, source_alt, test_alt, dest_alt, source_alt2,
            dest_alt2, distance, elevation, four_thirds_earth,
@@ -901,7 +901,7 @@ void PathReport(Path const & path,
         x = (int)rint(10.0 * (10.0 - angle2));
 
         if (x >= 0 && x <= 1000) {
-            pattern = (double)lr.ant_pat((int)rint(azimuth), x);
+            pattern = (float)lr.ant_pat((int)rint(azimuth), x);
         }
 
         patterndB = 20.0 * log10(pattern);
@@ -1378,7 +1378,7 @@ void PathReport(Path const & path,
             x = (int)rint(10.0 * (10.0 - elevation));
 
             if (x >= 0 && x <= 1000) {
-                pattern = (double)lr.ant_pat((int)azimuth, x);
+                pattern = (float)lr.ant_pat((int)azimuth, x);
 
                 if (pattern != 0.0) {
                     patterndB = 20.0 * log10(pattern);
@@ -1534,15 +1534,15 @@ void SeriesData(Path const & path,
                 bool normalised,
                 struct output * out,
                 LR const & lr) {
-    const double src_elev_ft = GetElevation(src);
-    const double dst_elev_ft = GetElevation(dst);
-    const double elevation_angle_deg = ElevationAngle(src, dst);
-    const double total_great_circle_ft =
+    const float src_elev_ft = GetElevation(src);
+    const float dst_elev_ft = GetElevation(dst);
+    const float elevation_angle_deg = ElevationAngle(src, dst);
+    const float total_great_circle_ft =
         FEET_PER_MILE * path.distance[path.ssize() - 1];
-    const double src_radius_ft = src_elev_ft + src.alt + EARTHRADIUS_FT;
+    const float src_radius_ft = src_elev_ft + src.alt + EARTHRADIUS_FT;
     const bool has_clutter = lr.clutter > 0.0;
 
-    double wavelength_ft = 0.0;
+    float wavelength_ft = 0.0;
     if (fresnel_plot) {
         if ((lr.frq_mhz >= 20.0) && (lr.frq_mhz <= 100000.0)) {
             wavelength_ft = 9.8425e8 / (lr.frq_mhz * 1e6);
@@ -1558,8 +1558,8 @@ void SeriesData(Path const & path,
         }
     }
 
-    double nb = 0.0;
-    double nm = 0.0;
+    float nb = 0.0;
+    float nm = 0.0;
 
     if (normalised) {
         nb = -src.alt - src_elev_ft;
@@ -1567,7 +1567,7 @@ void SeriesData(Path const & path,
     }
 
     for (int x = 0; x < path.ssize(); x++) {
-        double terrain_ft = path.elevation[x];
+        float terrain_ft = path.elevation[x];
         if (x == 0) {
             /* RX antenna spike */
             terrain_ft += src.alt;
@@ -1576,15 +1576,15 @@ void SeriesData(Path const & path,
             terrain_ft += dst.alt;
         }
 
-        double fresnel_ft = 0.0;
-        double fresnel60_ft = 0.0;
-        const double radius_ft = terrain_ft + EARTHRADIUS_FT;
-        const double chord_angle_deg =
+        float fresnel_ft = 0.0;
+        float fresnel60_ft = 0.0;
+        const float radius_ft = terrain_ft + EARTHRADIUS_FT;
+        const float chord_angle_deg =
             FEET_PER_MILE * path.distance[x] / EARTHRADIUS_FT;
-        const double c_unk_unit =
+        const float c_unk_unit =
             src_radius_ft * sin(elevation_angle_deg * DEG2RAD + HALFPI)
             / sin(HALFPI - elevation_angle_deg * DEG2RAD - chord_angle_deg);
-        double height_ft = radius_ft - c_unk_unit;
+        float height_ft = radius_ft - c_unk_unit;
 
         /* Per Fink and Christiansen, Electronics
          * Engineers' Handbook, 1989:
@@ -1595,7 +1595,7 @@ void SeriesData(Path const & path,
          * path to the first Fresnel zone boundary.
          */
         if (fresnel_plot) {
-            const double d1 = FEET_PER_MILE * path.distance[x];
+            const float d1 = FEET_PER_MILE * path.distance[x];
             fresnel_ft = -1.0
                          * sqrt(wavelength_ft * d1 * (total_great_circle_ft - d1)
                                 / total_great_circle_ft);
@@ -1605,7 +1605,7 @@ void SeriesData(Path const & path,
         /* This value serves as both the referee point for adjusting
          * all others, and the line-of-sight path between src and
          * dst */
-        double line_of_sight_ft = 0.0;
+        float line_of_sight_ft = 0.0;
         if (normalised) {
             line_of_sight_ft = -(nm * path.distance[x]) - nb;
             height_ft += line_of_sight_ft;
@@ -1656,7 +1656,7 @@ void SeriesData(Path const & path,
 TerrainProfile::TerrainProfile(site const & src,
                                site const & dst,
                                Path const & path,
-                               double freq_hz,
+                               float freq_hz,
                                bool normalised,
                                bool metric) noexcept {
     if (G_debug) {
@@ -1675,17 +1675,17 @@ TerrainProfile::TerrainProfile(site const & src,
         fflush(stderr);
     }
     assert((freq_hz >= 20e6) && (freq_hz <= 100e9));
-    const double src_elev_ft = GetElevation(src);
-    const double dst_elev_ft = GetElevation(dst);
-    const double elevation_angle_deg = ElevationAngle(src, dst);
-    const double total_great_circle_ft =
+    const float src_elev_ft = GetElevation(src);
+    const float dst_elev_ft = GetElevation(dst);
+    const float elevation_angle_deg = ElevationAngle(src, dst);
+    const float total_great_circle_ft =
         FEET_PER_MILE * path.distance[path.ssize() - 1];
-    const double src_radius_ft = src_elev_ft + src.alt + EARTHRADIUS_FT;
-    const double wavelength_ft = 9.8425e8 / freq_hz;
+    const float src_radius_ft = src_elev_ft + src.alt + EARTHRADIUS_FT;
+    const float wavelength_ft = 9.8425e8 / freq_hz;
     _tx_site_over_water = false;
 
-    double nb = 0.0;
-    double nm = 0.0;
+    float nb = 0.0;
+    float nm = 0.0;
 
     if (normalised) {
         nb = -src.alt - src_elev_ft;
@@ -1693,7 +1693,7 @@ TerrainProfile::TerrainProfile(site const & src,
     }
 
     for (int x = 0; x < path.ssize(); x++) {
-        double terrain_ft = path.elevation[x];
+        float terrain_ft = path.elevation[x];
         if (x == 0) {
             if (terrain_ft == 0) {
                 _tx_site_over_water = true;
@@ -1705,15 +1705,15 @@ TerrainProfile::TerrainProfile(site const & src,
             terrain_ft += dst.alt;
         }
 
-        double fresnel_ft = 0.0;
-        double fresnel60_ft = 0.0;
-        const double radius_ft = terrain_ft + EARTHRADIUS_FT;
-        const double chord_angle_deg =
+        float fresnel_ft = 0.0;
+        float fresnel60_ft = 0.0;
+        const float radius_ft = terrain_ft + EARTHRADIUS_FT;
+        const float chord_angle_deg =
             FEET_PER_MILE * path.distance[x] / EARTHRADIUS_FT;
-        const double c_unk_unit =
+        const float c_unk_unit =
             src_radius_ft * sin(elevation_angle_deg * DEG2RAD + HALFPI)
             / sin(HALFPI - elevation_angle_deg * DEG2RAD - chord_angle_deg);
-        double height_ft = radius_ft - c_unk_unit;
+        float height_ft = radius_ft - c_unk_unit;
 
         /* Per Fink and Christiansen, Electronics
          * Engineers' Handbook, 1989:
@@ -1723,7 +1723,7 @@ TerrainProfile::TerrainProfile(site const & src,
          * where H is the distance from the LOS
          * path to the first Fresnel zone boundary.
          */
-        const double d1 = FEET_PER_MILE * path.distance[x];
+        const float d1 = FEET_PER_MILE * path.distance[x];
         fresnel_ft = -1.0
                      * sqrt(wavelength_ft * d1 * (total_great_circle_ft - d1)
                             / total_great_circle_ft);
@@ -1732,7 +1732,7 @@ TerrainProfile::TerrainProfile(site const & src,
         /* This value serves as both the referee point for adjusting
          * all others, and the line-of-sight path between src and
          * dst */
-        double line_of_sight_ft = 0.0;
+        float line_of_sight_ft = 0.0;
         if (normalised) {
             line_of_sight_ft = -(nm * path.distance[x]) - nb;
             height_ft += line_of_sight_ft;

@@ -8,7 +8,7 @@ static __inline float _20log10f(float x) {
     return (8.685889f * logf(x));
 }
 
-double SUIpathLoss(double f, double TxH, double RxH, double d, int mode) {
+float SUIpathLoss(float f, float TxH, float RxH, float d, int mode) {
     /*
        f = Frequency (MHz) 1900 to 11000
        TxH =  Transmitter height (m)

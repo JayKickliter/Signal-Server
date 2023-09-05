@@ -44,6 +44,7 @@
 #include <math.h>
 #include <string.h>
 
+#include <algorithm>
 #include <complex>
 #include <vector>
 
@@ -54,38 +55,38 @@
 using namespace std;
 
 struct tcomplex {
-    double tcreal;
-    double tcimag;
+    float tcreal;
+    float tcimag;
 };
 
 struct prop_type {
-    double aref;
-    double dist;
-    double hg[2];
-    double rch[2];
-    double wn;
-    double dh;
-    double dhd;
-    double ens;
-    double encc;
-    double cch;
-    double cd;
-    double gme;
-    double zgndreal;
-    double zgndimag;
-    double he[2];
-    double dl[2];
-    double the[2];
-    double tiw;
-    double ght;
-    double ghr;
-    double rph;
-    double hht;
-    double hhr;
-    double tgh;
-    double tsgh;
-    double thera;
-    double thenr;
+    float aref;
+    float dist;
+    float hg[2];
+    float rch[2];
+    float wn;
+    float dh;
+    float dhd;
+    float ens;
+    float encc;
+    float cch;
+    float cd;
+    float gme;
+    float zgndreal;
+    float zgndimag;
+    float he[2];
+    float dl[2];
+    float the[2];
+    float tiw;
+    float ght;
+    float ghr;
+    float rph;
+    float hht;
+    float hhr;
+    float tgh;
+    float tsgh;
+    float thera;
+    float thenr;
     int rpl;
     int kwx;
     int mdp;
@@ -94,60 +95,28 @@ struct prop_type {
 };
 
 struct propv_type {
-    double sgc;
+    float sgc;
     int lvar;
     int mdvar;
     int klim;
 };
 
 struct propa_type {
-    double dlsa;
-    double dx;
-    double ael;
-    double ak1;
-    double ak2;
-    double aed;
-    double emd;
-    double aes;
-    double ems;
-    double dls[2];
-    double dla;
-    double tha;
+    float dlsa;
+    float dx;
+    float ael;
+    float ak1;
+    float ak2;
+    float aed;
+    float emd;
+    float aes;
+    float ems;
+    float dls[2];
+    float dla;
+    float tha;
 };
 
-int mymin(const int & i, const int & j) {
-    if (i < j) {
-        return i;
-    } else {
-        return j;
-    }
-}
-
-int mymax(const int & i, const int & j) {
-    if (i > j) {
-        return i;
-    } else {
-        return j;
-    }
-}
-
-double mymin(const double & a, const double & b) {
-    if (a < b) {
-        return a;
-    } else {
-        return b;
-    }
-}
-
-double mymax(const double & a, const double & b) {
-    if (a > b) {
-        return a;
-    } else {
-        return b;
-    }
-}
-
-double FORTRAN_DIM(const double & x, const double & y) {
+float FORTRAN_DIM(const float & x, const float & y) {
     /* This performs the FORTRAN DIM function.  Result is x-y
        if x is greater than y; otherwise result is 0.0 */
 
@@ -158,8 +127,8 @@ double FORTRAN_DIM(const double & x, const double & y) {
     }
 }
 
-double aknfe(const double & v2) {
-    double a;
+float aknfe(const float & v2) {
+    float a;
 
     if (v2 < 5.76) {
         a = 6.02 + 9.11 * sqrt(v2) - 1.27 * v2;
@@ -169,8 +138,8 @@ double aknfe(const double & v2) {
     return a;
 }
 
-double fht(const double & x, const double & pk) {
-    double w, fhtv;
+float fht(const float & x, const float & pk) {
+    float w, fhtv;
 
     if (x < 200.0) {
         w = -log(pk);
@@ -197,11 +166,11 @@ double fht(const double & x, const double & pk) {
     return fhtv;
 }
 
-double h0f(double r, double et) {
-    double a[5] = {25.0, 80.0, 177.0, 395.0, 705.0};
-    double b[5] = {24.0, 45.0, 68.0, 80.0, 105.0};
-    double q, x;
-    double h0fv, temp;
+float h0f(float r, float et) {
+    float a[5] = {25.0, 80.0, 177.0, 395.0, 705.0};
+    float b[5] = {24.0, 45.0, 68.0, 80.0, 105.0};
+    float q, x;
+    float h0fv, temp;
     int it;
 
     it = (int)et;
@@ -234,11 +203,11 @@ double h0f(double r, double et) {
     return h0fv;
 }
 
-double ahd(double td) {
+float ahd(float td) {
     int i;
-    double a[3] = {133.4, 104.6, 71.8};
-    double b[3] = {0.332e-3, 0.212e-3, 0.157e-3};
-    double c[3] = {-4.343, -1.086, 2.171};
+    float a[3] = {133.4, 104.6, 71.8};
+    float b[3] = {0.332e-3, 0.212e-3, 0.157e-3};
+    float c[3] = {-4.343, -1.086, 2.171};
 
     if (td <= 10e3) {
         i = 0;
@@ -253,14 +222,14 @@ double ahd(double td) {
     return a[i] + b[i] * td + c[i] * log(td);
 }
 
-double abq_alos(complex<double> r) {
+float abq_alos(complex<float> r) {
     return r.real() * r.real() + r.imag() * r.imag();
 }
 
-double saalos(double d, prop_type & prop) {
-    double ensa, encca, q, dp, dx, tde, hc, ucrpc, ctip, tip, tic, stic, ctic, sta;
-    double ttc, cttc, crpc, ssnps, d1a, rsp, tsp, arte, zi, pd, pdk, hone, tvsr;
-    double saalosv = 0.0;
+float saalos(float d, prop_type & prop) {
+    float ensa, encca, q, dp, dx, tde, hc, ucrpc, ctip, tip, tic, stic, ctic, sta;
+    float ttc, cttc, crpc, ssnps, d1a, rsp, tsp, arte, zi, pd, pdk, hone, tvsr;
+    float saalosv = 0.0;
 
     q = 0.0;
 
@@ -295,7 +264,7 @@ double saalos(double d, prop_type & prop) {
                 ctip = (hone - prop.cch + hc) / ucrpc;
                 tip = acos(ctip);
                 tic = tip + tde;
-                tic = mymax(0.0, tic);
+                tic = std::max<float>(0.0, tic);
                 stic = sin(tic);
                 sta = (ensa / encca) * stic;
                 ttc = asin(sta);
@@ -317,7 +286,7 @@ double saalos(double d, prop_type & prop) {
                transmitter, extending the crpc and d1a. Estimating the d1a: */
 
             if (ssnps <= 0.0) {
-                d1a = mymin(0.1 * pd, 600.0);
+                d1a = std::min<float>(0.1 * pd, 600.0);
                 crpc = d1a;
                 /* hone must be redefined as being barely above
                    the canopy height with respect to the receiver
@@ -350,7 +319,7 @@ double saalos(double d, prop_type & prop) {
                 }
             }
             /* tvsr is defined as tx ant height above receiver ant height */
-            tvsr = mymax(0.0, prop.tgh + prop.tsgh - prop.rch[1]);
+            tvsr = std::max<float>(0.0, prop.tgh + prop.tsgh - prop.rch[1]);
 
             if (d1a < 50.0) {
                 arte = 0.0195 * crpc - 20 * log10(tsp);
@@ -365,7 +334,7 @@ double saalos(double d, prop_type & prop) {
                     }
 
                     arte = q
-                           + (0.7 * pdk - mymax(0.01, log10(prop.wn * 47.7) - 2))
+                           + (0.7 * pdk - std::max<float>(0.01, log10(prop.wn * 47.7) - 2))
                                  * (prop.hg[1] / hone);
                 }
 
@@ -379,11 +348,11 @@ double saalos(double d, prop_type & prop) {
 
                     if (pdk > zi) {
                         q = (pdk - zi) * 10.2
-                            * ((sqrt(mymax(0.01, log10(prop.wn * 47.7) - 2.0)))
+                            * ((sqrt(std::max<float>(0.01, log10(prop.wn * 47.7) - 2.0)))
                                / (100 - zi));
                     } else {
                         q = ((zi - pdk) / zi)
-                            * (-20.0 * mymax(0.01, log10(prop.wn * 47.7) - 2.0))
+                            * (-20.0 * std::max<float>(0.01, log10(prop.wn * 47.7) - 2.0))
                             / sqrt(hone);
                     }
                     arte = arte + q;
@@ -396,7 +365,7 @@ double saalos(double d, prop_type & prop) {
             q = q + (17.98 - 0.84224 * (prop.cch - prop.tgh)) * exp(-0.00000061 * pd);
             arte = q + 1.34795 * 20 * log10(pd + 1.0);
             arte = arte
-                   - (mymax(0.01, log10(prop.wn * 47.7) - 2))
+                   - (std::max<float>(0.01, log10(prop.wn * 47.7) - 2))
                          * (prop.hg[1] / prop.tgh);
         }
         saalosv = arte;
@@ -404,10 +373,10 @@ double saalos(double d, prop_type & prop) {
     return saalosv;
 }
 
-double adiff(double d, prop_type & prop, propa_type & propa) {
-    complex<double> prop_zgnd(prop.zgndreal, prop.zgndimag);
-    static __thread double wd1, xd1, afo, qk, aht, xht;
-    double a, q, pk, ds, th, wa, ar, wd, adiffv;
+float adiff(float d, prop_type & prop, propa_type & propa) {
+    complex<float> prop_zgnd(prop.zgndreal, prop.zgndimag);
+    static __thread float wd1, xd1, afo, qk, aht, xht;
+    float a, q, pk, ds, th, wa, ar, wd, adiffv;
 
     if (d == 0) {
         q = prop.hg[0] * prop.hg[1];
@@ -422,7 +391,7 @@ double adiff(double d, prop_type & prop, propa_type & propa) {
         q = (1.0 - 0.8 * exp(-propa.dlsa / 50e3)) * prop.dh;
         q *= 0.78 * exp(-pow(q / 16.0, 0.25));
         afo =
-            mymin(15.0,
+            std::min<float>(15.0,
                   2.171 * log(1.0 + 4.77e-4 * prop.hg[0] * prop.hg[1] * prop.wn * q));
         qk = 1.0 / abs(prop_zgnd);
         aht = 20.0;
@@ -454,7 +423,7 @@ double adiff(double d, prop_type & prop, propa_type & propa) {
         q = (1.607 - pk) * 151.0 * wa * th + xht;
         ar = 0.05751 * q - 4.343 * log(q) - aht;
         q = (wd1 + xd1 / d)
-            * mymin(((1.0 - 0.8 * exp(-d / 50e3)) * prop.dh * prop.wn), 6283.2);
+            * std::min<float>(((1.0 - 0.8 * exp(-d / 50e3)) * prop.dh * prop.wn), 6283.2);
         wd = 25.1 / (25.1 + sqrt(q));
         adiffv = ar * wd + (1.0 - wd) * adiffv + afo;
     }
@@ -462,12 +431,12 @@ double adiff(double d, prop_type & prop, propa_type & propa) {
     return adiffv;
 }
 
-double adiff2(double d, prop_type & prop, propa_type & propa) {
-    complex<double> prop_zgnd(prop.zgndreal, prop.zgndimag);
-    static __thread double wd1, xd1, qk, aht, xht, toh, toho, roh, roho, dto,
+float adiff2(float d, prop_type & prop, propa_type & propa) {
+    complex<float> prop_zgnd(prop.zgndreal, prop.zgndimag);
+    static __thread float wd1, xd1, qk, aht, xht, toh, toho, roh, roho, dto,
         dto1, dtro, dro, dro2, drto, dtr, dhh1, dhh2,
         /* dhec, */ dtof, /*dto1f,*/ drof;            //, dro2f;
-    double a, q, pk, rd, ds, dsl, /* dfdh, */ th, wa, /* ar, wd, sf1, */
+    float a, q, pk, rd, ds, dsl, /* dfdh, */ th, wa, /* ar, wd, sf1, */
         sf2, /* ec, */ vv, kedr = 0.0, arp = 0.0, sdr = 0.0, pd = 0.0,
                            srp = 0.0, kem = 0.0, csd = 0.0, sdl = 0.0,
                            adiffv2 = 0.0, closs = 0.0;
@@ -522,7 +491,7 @@ double adiff2(double d, prop_type & prop, propa_type & propa) {
     else {
         th = propa.tha + d * prop.gme;
 
-        dsl = mymax(d - propa.dla, 0.0);
+        dsl = std::max<float>(d - propa.dla, 0.0);
         ds = d - propa.dla;
         a = ds / th;
         wa = pow(a * prop.wn, THIRD);
@@ -585,7 +554,7 @@ double adiff2(double d, prop_type & prop, propa_type & propa) {
 
                 /* knife edge vs round weighting */
                 q = (1.0 - 0.8 * exp(-d / 50e3)) * prop.dh;
-                q = (wd1 + xd1 / d) * mymin((q * prop.wn), 6283.2);
+                q = (wd1 + xd1 / d) * std::min<float>((q * prop.wn), 6283.2);
                 /* wd=25.1/(25.1+sqrt(q)); */
 
                 q = 0.6365 * prop.wn;
@@ -610,7 +579,7 @@ double adiff2(double d, prop_type & prop, propa_type & propa) {
                     }
                     /* finally, add clutter loss */
                     closs = saalos(rd, prop);
-                    adiffv2 += mymin(22.0, closs);
+                    adiffv2 += std::min<float>(22.0, closs);
                 } else { /* rcvr site too close to 2nd obs */
 
                     /* knife edge attenuation for 1st obs */
@@ -638,7 +607,7 @@ double adiff2(double d, prop_type & prop, propa_type & propa) {
                         }
                         adiffv2 += aknfe(vv);
                         closs = saalos(rd, prop);
-                        adiffv2 += mymin(closs, 22.0);
+                        adiffv2 += std::min<float>(closs, 22.0);
                     } else { /* rcvr very close to bare cliff or skyscraper */
 
                         adiffv2 = 5.8 + 25.0;
@@ -674,22 +643,22 @@ double adiff2(double d, prop_type & prop, propa_type & propa) {
                            keep pd between 0 and pi radians and adjust for 3&4 quadrant */
                         if (pd >= 3.141592654) {
                             pd = 6.283185307 - pd;
-                            csd = abq_alos(complex<double>(sdl, 0)
-                                           + complex<double>(kem * -cos(pd),
+                            csd = abq_alos(complex<float>(sdl, 0)
+                                           + complex<float>(kem * -cos(pd),
                                                              kem * -sin(pd)));
                         } else {
-                            csd = abq_alos(complex<double>(sdl, 0)
-                                           + complex<double>(kem * cos(pd),
+                            csd = abq_alos(complex<float>(sdl, 0)
+                                           + complex<float>(kem * cos(pd),
                                                              kem * sin(pd)));
                         }
-                        /*csd=mymax(csd,0.0009); limits maximum loss value to 30.45 db */
+                        /*csd=std::max<float>(csd,0.0009); limits maximum loss value to 30.45 db */
                         adiffv2 = -3.71 - 10 * log10(csd);
                     } else {
                         adiffv2 = aknfe(vv);
                     }
                     /* finally, add clutter loss */
                     closs = saalos(rd, prop);
-                    adiffv2 += mymin(closs, 22.0);
+                    adiffv2 += std::min<float>(closs, 22.0);
                 } else { /* receive grazing angle too high */
 
                     if (prop.the[1] < 1.22) {
@@ -703,7 +672,7 @@ double adiff2(double d, prop_type & prop, propa_type & propa) {
                             adiffv2 = aknfe(vv);
                         }
                         closs = saalos(rd, prop);
-                        adiffv2 += mymin(22.0, closs);
+                        adiffv2 += std::min<float>(22.0, closs);
                     } else { /* receiver very close to bare cliff or skyscraper */
 
                         adiffv2 = 5.8 + 25.0;
@@ -718,10 +687,10 @@ double adiff2(double d, prop_type & prop, propa_type & propa) {
     return adiffv2;
 }
 
-double ascat(double d, prop_type & prop, propa_type & propa) {
-    static __thread double ad, rr, etq, h0s;
-    double h0, r1, r2, z0, ss, et, ett, th, q;
-    double ascatv, temp;
+float ascat(float d, prop_type & prop, propa_type & propa) {
+    static __thread float ad, rr, etq, h0s;
+    float h0, r1, r2, z0, ss, et, ett, th, q;
+    float ascatv, temp;
 
     if (d == 0.0) {
         ad = prop.dl[0] - prop.dl[1];
@@ -752,18 +721,18 @@ double ascat(double d, prop_type & prop, propa_type & propa) {
 
             ss = (d - ad) / (d + ad);
             q = rr / ss;
-            ss = mymax(0.1, ss);
-            q = mymin(mymax(0.1, q), 10.0);
+            ss = std::max<float>(0.1, ss);
+            q = std::min<float>(std::max<float>(0.1, q), 10.0);
             z0 = (d - ad) * (d + ad) * th * 0.25 / d;
-            /* et=(etq*exp(-pow(mymin(1.7,z0/8.0e3),6.0))+1.0)*z0/1.7556e3; */
+            /* et=(etq*exp(-pow(std::min<float>(1.7,z0/8.0e3),6.0))+1.0)*z0/1.7556e3; */
 
-            temp = mymin(1.7, z0 / 8.0e3);
+            temp = std::min<float>(1.7, z0 / 8.0e3);
             temp = temp * temp * temp * temp * temp * temp;
             et = (etq * exp(-temp) + 1.0) * z0 / 1.7556e3;
 
-            ett = mymax(et, 1.0);
+            ett = std::max<float>(et, 1.0);
             h0 = (h0f(r1, ett) + h0f(r2, ett)) * 0.5;
-            h0 += mymin(h0, (1.38 - log(ett)) * log(ss) * log(q) * 0.49);
+            h0 += std::min<float>(h0, (1.38 - log(ett)) * log(ss) * log(q) * 0.49);
             h0 = FORTRAN_DIM(h0, 0.0);
 
             if (et < 1.0) {
@@ -791,17 +760,17 @@ double ascat(double d, prop_type & prop, propa_type & propa) {
     return ascatv;
 }
 
-double qerfi(double q) {
-    double x, t, v;
-    double c0 = 2.515516698;
-    double c1 = 0.802853;
-    double c2 = 0.010328;
-    double d1 = 1.432788;
-    double d2 = 0.189269;
-    double d3 = 0.001308;
+float qerfi(float q) {
+    float x, t, v;
+    float c0 = 2.515516698;
+    float c1 = 0.802853;
+    float c2 = 0.010328;
+    float d1 = 1.432788;
+    float d2 = 0.189269;
+    float d3 = 0.001308;
 
     x = 0.5 - q;
-    t = mymax(0.5 - fabs(x), 0.000001);
+    t = std::max<float>(0.5 - fabs(x), 0.000001);
     t = sqrt(-2.0 * log(t));
     v = t - ((c2 * t + c1) * t + c0) / (((d3 * t + d2) * t + d1) * t + 1.0);
 
@@ -812,14 +781,14 @@ double qerfi(double q) {
     return v;
 }
 
-void qlrps(double fmhz,
-           double zsys,
-           double en0,
+void qlrps(float fmhz,
+           float zsys,
+           float en0,
            int ipol,
-           double eps,
-           double sgm,
+           float eps,
+           float sgm,
            prop_type & prop) {
-    double gma = 157e-9;
+    float gma = 157e-9;
 
     prop.wn = fmhz / 47.7;
     prop.ens = en0;
@@ -829,9 +798,9 @@ void qlrps(double fmhz,
     }
 
     prop.gme = gma * (1.0 - 0.04665 * exp(prop.ens / 179.3));
-    complex<double> zq, prop_zgnd(prop.zgndreal, prop.zgndimag);
-    zq = complex<double>(eps, 376.62 * sgm / prop.wn);
-    prop_zgnd = sqrt(zq - 1.0);
+    complex<float> zq, prop_zgnd(prop.zgndreal, prop.zgndimag);
+    zq = complex<float>(eps, 376.62 * sgm / prop.wn);
+    prop_zgnd = sqrt(zq - 1.0f);
 
     if (ipol != 0.0)
         prop_zgnd = prop_zgnd / zq;
@@ -840,15 +809,15 @@ void qlrps(double fmhz,
     prop.zgndimag = prop_zgnd.imag();
 }
 
-double alos(double d, prop_type & prop, propa_type & propa) {
-    complex<double> prop_zgnd(prop.zgndreal, prop.zgndimag);
-    static __thread double wls;
-    complex<double> r;
-    double s, sps, q;
-    double alosv;
+float alos(float d, prop_type & prop, propa_type & propa) {
+    complex<float> prop_zgnd(prop.zgndreal, prop.zgndimag);
+    static __thread float wls;
+    complex<float> r;
+    float s, sps, q;
+    float alosv;
 
     if (d == 0.0) {
-        wls = 0.021 / (0.021 + prop.wn * prop.dh / mymax(10e3, propa.dlsa));
+        wls = 0.021 / (0.021 + prop.wn * prop.dh / std::max<float>(10e3, propa.dlsa));
         alosv = 0.0;
     }
 
@@ -858,7 +827,7 @@ double alos(double d, prop_type & prop, propa_type & propa) {
         q = prop.he[0] + prop.he[1];
         sps = q / sqrt(d * d + q * q);
         r = (sps - prop_zgnd) / (sps + prop_zgnd)
-            * exp(-mymin(10.0, prop.wn * s * sps));
+            * exp(-std::min<float>(10.0, prop.wn * s * sps));
         q = abq_alos(r);
 
         if (q < 0.25 || q < sps)
@@ -872,19 +841,19 @@ double alos(double d, prop_type & prop, propa_type & propa) {
         }
 
         alosv =
-            (-4.343 * log(abq_alos(complex<double>(cos(q), -sin(q)) + r)) - alosv)
+            (-4.343 * log(abq_alos(complex<float>(cos(q), -sin(q)) + r)) - alosv)
                 * wls
             + alosv;
     }
     return alosv;
 }
 
-double alos2(double d, prop_type & prop) {
-    complex<double> prop_zgnd(prop.zgndreal, prop.zgndimag);
-    complex<double> r;
-    double cd, cr, dr, hr, hrg, ht, htg, hrp, re, s, sps, q, pd, drh;
+float alos2(float d, prop_type & prop) {
+    complex<float> prop_zgnd(prop.zgndreal, prop.zgndimag);
+    complex<float> r;
+    float cd, cr, dr, hr, hrg, ht, htg, hrp, re, s, sps, q, pd, drh;
     /* int rp; */
-    double alosv;
+    float alosv;
 
     cd = 0.0;
     cr = 0.0;
@@ -919,18 +888,18 @@ double alos2(double d, prop_type & prop) {
             }
 
             if ((sps < 0.05) && (prop.cch > hrg) && (prop.dist < prop.dl[0])) { /* if far from transmitter and receiver below canopy */
-                cd = mymax(0.01, pd * (prop.cch - hrg) / (htg - hrg));
-                cr = mymax(0.01, pd - dr + dr * (prop.cch - drh) / htg);
+                cd = std::max<float>(0.01, pd * (prop.cch - hrg) / (htg - hrg));
+                cr = std::max<float>(0.01, pd - dr + dr * (prop.cch - drh) / htg);
                 q = ((1.0 - 0.8 * exp(-pd / 50e3)) * prop.dh
-                     * (mymin(-20 * log10(cd / cr), 1.0)));
+                     * (std::min<float>(-20 * log10(cd / cr), 1.0)));
             }
         }
 
         s = 0.78 * q * exp(-pow(q / 16.0, 0.25));
-        q = exp(-mymin(10.0, prop.wn * s * sps));
+        q = exp(-std::min<float>(10.0, prop.wn * s * sps));
         r = q * (sps - prop_zgnd) / (sps + prop_zgnd);
         q = abq_alos(r);
-        q = mymin(q, 1.0);
+        q = std::min<float>(q, 1.0);
 
         if (q < 0.25 || q < sps) {
             r = r * sqrt(sps / q);
@@ -951,7 +920,7 @@ double alos2(double d, prop_type & prop) {
         }
         /* no longer valid complex conjugate removed
            by removing minus sign from in front of sin function */
-        re = abq_alos(complex<double>(cos(q), sin(q)) + r);
+        re = abq_alos(complex<float>(cos(q), sin(q)) + r);
         alosv = -10 * log10(re);
         prop.tgh = prop.hg[0]; /*tx above gnd hgt set to antenna height AGL */
         prop.tsgh = prop.rch[0] - prop.hg[0]; /* tsgh set to tx site gl AMSL */
@@ -965,12 +934,12 @@ double alos2(double d, prop_type & prop) {
             }
         }
     }
-    alosv = mymin(22.0, alosv);
+    alosv = std::min<float>(22.0, alosv);
     return alosv;
 }
 
 void qlra(int kst[], int klimx, int mdvarx, prop_type & prop, propv_type & propv) {
-    double q;
+    float q;
 
     for (int j = 0; j < 2; ++j) {
         if (kst[j] <= 0) {
@@ -989,21 +958,21 @@ void qlra(int kst[], int klimx, int mdvarx, prop_type & prop, propv_type & propv
             prop.he[j] =
                 prop.hg[j]
                 + (1.0 + q)
-                      * exp(-mymin(20.0, 2.0 * prop.hg[j] / mymax(1e-3, prop.dh)));
+                      * exp(-std::min<float>(20.0, 2.0 * prop.hg[j] / std::max<float>(1e-3, prop.dh)));
         }
 
         q = sqrt(2.0 * prop.he[j] / prop.gme);
-        prop.dl[j] = q * exp(-0.07 * sqrt(prop.dh / mymax(prop.he[j], 5.0)));
+        prop.dl[j] = q * exp(-0.07 * sqrt(prop.dh / std::max<float>(prop.he[j], 5.0)));
         prop.the[j] =
             (0.65 * prop.dh * (q / prop.dl[j] - 1.0) - 2.0 * prop.he[j]) / q;
     }
 
     prop.mdp = 1;
-    propv.lvar = mymax(propv.lvar, 3);
+    propv.lvar = std::max<float>(propv.lvar, 3);
 
     if (mdvarx >= 0) {
         propv.mdvar = mdvarx;
-        propv.lvar = mymax(propv.lvar, 4);
+        propv.lvar = std::max<float>(propv.lvar, 4);
     }
 
     if (klimx > 0) {
@@ -1012,15 +981,15 @@ void qlra(int kst[], int klimx, int mdvarx, prop_type & prop, propv_type & propv
     }
 }
 
-void lrprop(double d, prop_type & prop, propa_type & propa) {
+void lrprop(float d, prop_type & prop, propa_type & propa) {
     /* PaulM_lrprop used for ITM */
     static __thread bool wlos, wscat;
-    static __thread double dmin, xae;
-    complex<double> prop_zgnd(prop.zgndreal, prop.zgndimag);
-    double a0, a1, a2, a3, a4, a5, a6;
-    double d0, d1, d2, d3, d4, d5, d6;
+    static __thread float dmin, xae;
+    complex<float> prop_zgnd(prop.zgndreal, prop.zgndimag);
+    float a0, a1, a2, a3, a4, a5, a6;
+    float d0, d1, d2, d3, d4, d5, d6;
     bool wq;
-    double q;
+    float q;
     int j;
 
     if (prop.mdp != 0) {
@@ -1030,24 +999,24 @@ void lrprop(double d, prop_type & prop, propa_type & propa) {
 
         propa.dlsa = propa.dls[0] + propa.dls[1];
         propa.dla = prop.dl[0] + prop.dl[1];
-        propa.tha = mymax(prop.the[0] + prop.the[1], -propa.dla * prop.gme);
+        propa.tha = std::max<float>(prop.the[0] + prop.the[1], -propa.dla * prop.gme);
         wlos = false;
         wscat = false;
 
         if (prop.wn < 0.838 || prop.wn > 210.0) {
-            prop.kwx = mymax(prop.kwx, 1);
+            prop.kwx = std::max<float>(prop.kwx, 1);
         }
 
         for (j = 0; j < 2; j++) {
             if (prop.hg[j] < 1.0 || prop.hg[j] > 1000.0) {
-                prop.kwx = mymax(prop.kwx, 1);
+                prop.kwx = std::max<float>(prop.kwx, 1);
             }
         }
 
         for (j = 0; j < 2; j++) {
             if (abs(prop.the[j]) > 200e-3 || prop.dl[j] < 0.1 * propa.dls[j]
                 || prop.dl[j] > 3.0 * propa.dls[j]) {
-                prop.kwx = mymax(prop.kwx, 3);
+                prop.kwx = std::max<float>(prop.kwx, 3);
             }
         }
 
@@ -1064,9 +1033,9 @@ void lrprop(double d, prop_type & prop, propa_type & propa) {
 
         dmin = abs(prop.he[0] - prop.he[1]) / 200e-3;
         q = adiff(0.0, prop, propa);
-        /* xae=pow(prop.wn*pow(prop.gme,2.),-THIRD); -- JDM made argument 2 a double */
+        /* xae=pow(prop.wn*pow(prop.gme,2.),-THIRD); -- JDM made argument 2 a float */
         xae = pow(prop.wn * (prop.gme * prop.gme), -THIRD); /* No 2nd pow() */
-        d3 = mymax(propa.dlsa, 1.3787 * xae + propa.dla);
+        d3 = std::max<float>(propa.dlsa, 1.3787 * xae + propa.dla);
         d4 = d3 + 2.7574 * xae;
         a3 = adiff(d3, prop, propa);
         a4 = adiff(d4, prop, propa);
@@ -1081,11 +1050,11 @@ void lrprop(double d, prop_type & prop, propa_type & propa) {
 
     if (prop.dist > 0.0) {
         if (prop.dist > 1000e3) {
-            prop.kwx = mymax(prop.kwx, 1);
+            prop.kwx = std::max<float>(prop.kwx, 1);
         }
 
         if (prop.dist < dmin) {
-            prop.kwx = mymax(prop.kwx, 3);
+            prop.kwx = std::max<float>(prop.kwx, 3);
         }
 
         if (prop.dist < 1e3 || prop.dist > 2000e3) {
@@ -1101,12 +1070,12 @@ void lrprop(double d, prop_type & prop, propa_type & propa) {
             d0 = 1.908 * prop.wn * prop.he[0] * prop.he[1];
 
             if (propa.aed >= 0.0) {
-                d0 = mymin(d0, 0.5 * propa.dla);
+                d0 = std::min<float>(d0, 0.5 * propa.dla);
                 d1 = d0 + 0.25 * (propa.dla - d0);
             }
 
             else {
-                d1 = mymax(-propa.aed / propa.emd, 0.25 * propa.dla);
+                d1 = std::max<float>(-propa.aed / propa.emd, 0.25 * propa.dla);
             }
 
             a1 = alos(d1, prop, propa);
@@ -1116,7 +1085,7 @@ void lrprop(double d, prop_type & prop, propa_type & propa) {
                 a0 = alos(d0, prop, propa);
                 q = log(d2 / d0);
                 propa.ak2 =
-                    mymax(0.0,
+                    std::max<float>(0.0,
                           ((d2 - d0) * (a1 - a0) - (d1 - d0) * (a2 - a0))
                               / ((d2 - d0) * log(d1 / d0) - (d1 - d0) * q));
                 wq = propa.aed >= 0.0 || propa.ak2 > 0.0;
@@ -1173,8 +1142,8 @@ void lrprop(double d, prop_type & prop, propa_type & propa) {
 
             if (a5 < 1000.0) {
                 propa.ems = (a6 - a5) / 200e3;
-                propa.dx = mymax(propa.dlsa,
-                                 mymax(propa.dla + 0.3 * xae * log(47.7 * prop.wn),
+                propa.dx = std::max<float>(propa.dlsa,
+                                 std::max<float>(propa.dla + 0.3 * xae * log(47.7 * prop.wn),
                                        (a5 - propa.aed - propa.ems * d5)
                                            / (propa.emd - propa.ems)));
                 propa.aes = (propa.emd - propa.ems) * propa.dx + propa.aed;
@@ -1196,19 +1165,19 @@ void lrprop(double d, prop_type & prop, propa_type & propa) {
         }
     }
 
-    prop.aref = mymax(prop.aref, 0.0);
+    prop.aref = std::max<float>(prop.aref, 0.0);
 }
 
-void lrprop2(double d, prop_type & prop, propa_type & propa) {
+void lrprop2(float d, prop_type & prop, propa_type & propa) {
     /* ITWOM_lrprop2 */
     static __thread bool wlos, wscat;
-    static __thread double dmin, xae;
-    complex<double> prop_zgnd(prop.zgndreal, prop.zgndimag);
-    double pd1;
-    double a0, a1, a2, a3, a4, a5, a6, iw;
-    double d0, d1, d2, d3, d4, d5, d6;
+    static __thread float dmin, xae;
+    complex<float> prop_zgnd(prop.zgndreal, prop.zgndimag);
+    float pd1;
+    float a0, a1, a2, a3, a4, a5, a6, iw;
+    float d0, d1, d2, d3, d4, d5, d6;
     bool wq;
-    double q;
+    float q;
     int j;
 
     iw = prop.tiw;
@@ -1221,35 +1190,35 @@ void lrprop2(double d, prop_type & prop, propa_type & propa) {
         }
 
         propa.dlsa = propa.dls[0] + propa.dls[1];
-        propa.dlsa = mymin(propa.dlsa, 1000000.0);
+        propa.dlsa = std::min<float>(propa.dlsa, 1000000.0);
         propa.dla = prop.dl[0] + prop.dl[1];
-        propa.tha = mymax(prop.the[0] + prop.the[1], -propa.dla * prop.gme);
+        propa.tha = std::max<float>(prop.the[0] + prop.the[1], -propa.dla * prop.gme);
         wlos = false;
         wscat = false;
 
         /*checking for parameters-in-range, error codes set if not */
 
         if (prop.wn < 0.838 || prop.wn > 210.0) {
-            prop.kwx = mymax(prop.kwx, 1);
+            prop.kwx = std::max<float>(prop.kwx, 1);
         }
 
         for (j = 0; j < 2; j++) {
             if (prop.hg[j] < 1.0 || prop.hg[j] > 1000.0) {
-                prop.kwx = mymax(prop.kwx, 1);
+                prop.kwx = std::max<float>(prop.kwx, 1);
             }
         }
 
         if (abs(prop.the[0]) > 200e-3) {
-            prop.kwx = mymax(prop.kwx, 3);
+            prop.kwx = std::max<float>(prop.kwx, 3);
         }
 
         if (abs(prop.the[1]) > 1.220) {
-            prop.kwx = mymax(prop.kwx, 3);
+            prop.kwx = std::max<float>(prop.kwx, 3);
         }
 
         /*for (j=0; j<2; j++)
            if (prop.dl[j]<0.1*propa.dls[j] || prop.dl[j]>3.0*propa.dls[j])
-           prop.kwx=mymax(prop.kwx,3);  */
+           prop.kwx=std::max<float>(prop.kwx,3);  */
 
         if (prop.ens < 250.0 || prop.ens > 400.0 || prop.gme < 75e-9
             || prop.gme > 250e-9 || prop_zgnd.real() <= abs(prop_zgnd.imag())
@@ -1265,7 +1234,7 @@ void lrprop2(double d, prop_type & prop, propa_type & propa) {
         dmin = abs(prop.he[0] - prop.he[1]) / 200e-3;
         q = adiff2(0.0, prop, propa);
         xae = pow(prop.wn * (prop.gme * prop.gme), -THIRD);
-        d3 = mymax(propa.dlsa, 1.3787 * xae + propa.dla);
+        d3 = std::max<float>(propa.dlsa, 1.3787 * xae + propa.dla);
         d4 = d3 + 2.7574 * xae;
         a3 = adiff2(d3, prop, propa);
         a4 = adiff2(d4, prop, propa);
@@ -1281,11 +1250,11 @@ void lrprop2(double d, prop_type & prop, propa_type & propa) {
     if (prop.dist > 0.0) {
         if (prop.dist
             > 1000e3) { /* prop.dist being in meters, if greater than 1000 km, kwx=1 */
-            prop.kwx = mymax(prop.kwx, 1);
+            prop.kwx = std::max<float>(prop.kwx, 1);
         }
 
         if (prop.dist < dmin) {
-            prop.kwx = mymax(prop.kwx, 3);
+            prop.kwx = std::max<float>(prop.kwx, 3);
         }
 
         if (prop.dist < 1e3 || prop.dist > 2000e3) {
@@ -1306,21 +1275,21 @@ void lrprop2(double d, prop_type & prop, propa_type & propa) {
                     prop.aref = propa.aed + propa.emd * prop.dist;
                 } else {
                     if (propa.aed == 0.0) {
-                        d0 = mymin(d0, 0.5 * propa.dla);
+                        d0 = std::min<float>(d0, 0.5 * propa.dla);
                         d1 = d0 + 0.25 * (propa.dla - d0);
                     } else { /* aed less than zero */
 
-                        d1 = mymax(-propa.aed / propa.emd, 0.25 * propa.dla);
+                        d1 = std::max<float>(-propa.aed / propa.emd, 0.25 * propa.dla);
                     }
                     a1 = alos2(d1, prop);
                     wq = false;
 
                     if (d0 < d1) {
                         a0 = alos2(d0, prop);
-                        a2 = mymin(a2, alos2(d2, prop));
+                        a2 = std::min<float>(a2, alos2(d2, prop));
                         q = log(d2 / d0);
                         propa.ak2 =
-                            mymax(0.0,
+                            std::max<float>(0.0,
                                   ((d2 - d0) * (a1 - a0) - (d1 - d0) * (a2 - a0))
                                       / ((d2 - d0) * log(d1 / d0) - (d1 - d0) * q));
                         wq = propa.aed >= 0.0 || propa.ak2 > 0.0;
@@ -1387,8 +1356,8 @@ void lrprop2(double d, prop_type & prop, propa_type & propa) {
                 if (a5 < 1000.0) {
                     propa.ems = (a6 - a5) / 200e3;
                     propa.dx =
-                        mymax(propa.dlsa,
-                              mymax(propa.dla + 0.3 * xae * log(47.7 * prop.wn),
+                        std::max<float>(propa.dlsa,
+                              std::max<float>(propa.dla + 0.3 * xae * log(47.7 * prop.wn),
                                     (a5 - propa.aed - propa.ems * d5)
                                         / (propa.emd - propa.ems)));
 
@@ -1429,17 +1398,17 @@ void lrprop2(double d, prop_type & prop, propa_type & propa) {
             }
         }
     }
-    prop.aref = mymax(prop.aref, 0.0);
+    prop.aref = std::max<float>(prop.aref, 0.0);
 }
 
-double curve(double const & c1,
-             double const & c2,
-             double const & x1,
-             double const & x2,
-             double const & x3,
-             double const & de) {
+float curve(float const & c1,
+             float const & c2,
+             float const & x1,
+             float const & x2,
+             float const & x3,
+             float const & de) {
     /* return (c1+c2/(1.0+pow((de-x2)/x3,2.0)))*pow(de/x1,2.0)/(1.0+pow(de/x1,2.0)); */
-    double temp1, temp2;
+    float temp1, temp2;
 
     temp1 = (de - x2) / x3;
     temp2 = de / x1;
@@ -1450,38 +1419,38 @@ double curve(double const & c1,
     return (c1 + c2 / (1.0 + temp1)) * temp2 / (1.0 + temp2);
 }
 
-double avar(double zzt, double zzl, double zzc, prop_type & prop, propv_type & propv) {
+float avar(float zzt, float zzl, float zzc, prop_type & prop, propv_type & propv) {
     static __thread int kdv;
-    static __thread double dexa, de, vmd, vs0, sgl, sgtm, sgtp, sgtd, tgtd, gm,
+    static __thread float dexa, de, vmd, vs0, sgl, sgtm, sgtp, sgtd, tgtd, gm,
         gp, cv1, cv2, yv1, yv2, yv3, csm1, csm2, ysm1, ysm2, ysm3, csp1, csp2,
         ysp1, ysp2, ysp3, csd1, zd, cfm1, cfm2, cfm3, cfp1, cfp2, cfp3;
 
-    double bv1[7] = {-9.67, -0.62, 1.26, -9.21, -0.62, -0.39, 3.15};
-    double bv2[7] = {12.7, 9.19, 15.5, 9.05, 9.19, 2.86, 857.9};
-    double xv1[7] = {144.9e3, 228.9e3, 262.6e3, 84.1e3, 228.9e3, 141.7e3, 2222.e3};
-    double xv2[7] = {190.3e3, 205.2e3, 185.2e3, 101.1e3, 205.2e3, 315.9e3, 164.8e3};
-    double xv3[7] = {133.8e3, 143.6e3, 99.8e3, 98.6e3, 143.6e3, 167.4e3, 116.3e3};
-    double bsm1[7] = {2.13, 2.66, 6.11, 1.98, 2.68, 6.86, 8.51};
-    double bsm2[7] = {159.5, 7.67, 6.65, 13.11, 7.16, 10.38, 169.8};
-    double xsm1[7] = {762.2e3, 100.4e3, 138.2e3, 139.1e3, 93.7e3, 187.8e3, 609.8e3};
-    double xsm2[7] = {123.6e3, 172.5e3, 242.2e3, 132.7e3, 186.8e3, 169.6e3, 119.9e3};
-    double xsm3[7] = {94.5e3, 136.4e3, 178.6e3, 193.5e3, 133.5e3, 108.9e3, 106.6e3};
-    double bsp1[7] = {2.11, 6.87, 10.08, 3.68, 4.75, 8.58, 8.43};
-    double bsp2[7] = {102.3, 15.53, 9.60, 159.3, 8.12, 13.97, 8.19};
-    double xsp1[7] = {636.9e3, 138.7e3, 165.3e3, 464.4e3, 93.2e3, 216.0e3, 136.2e3};
-    double xsp2[7] = {134.8e3, 143.7e3, 225.7e3, 93.1e3, 135.9e3, 152.0e3, 188.5e3};
-    double xsp3[7] = {95.6e3, 98.6e3, 129.7e3, 94.2e3, 113.4e3, 122.7e3, 122.9e3};
-    double bsd1[7] = {1.224, 0.801, 1.380, 1.000, 1.224, 1.518, 1.518};
-    double bzd1[7] = {1.282, 2.161, 1.282, 20., 1.282, 1.282, 1.282};
-    double bfm1[7] = {1.0, 1.0, 1.0, 1.0, 0.92, 1.0, 1.0};
-    double bfm2[7] = {0.0, 0.0, 0.0, 0.0, 0.25, 0.0, 0.0};
-    double bfm3[7] = {0.0, 0.0, 0.0, 0.0, 1.77, 0.0, 0.0};
-    double bfp1[7] = {1.0, 0.93, 1.0, 0.93, 0.93, 1.0, 1.0};
-    double bfp2[7] = {0.0, 0.31, 0.0, 0.19, 0.31, 0.0, 0.0};
-    double bfp3[7] = {0.0, 2.00, 0.0, 1.79, 2.00, 0.0, 0.0};
+    float bv1[7] = {-9.67, -0.62, 1.26, -9.21, -0.62, -0.39, 3.15};
+    float bv2[7] = {12.7, 9.19, 15.5, 9.05, 9.19, 2.86, 857.9};
+    float xv1[7] = {144.9e3, 228.9e3, 262.6e3, 84.1e3, 228.9e3, 141.7e3, 2222.e3};
+    float xv2[7] = {190.3e3, 205.2e3, 185.2e3, 101.1e3, 205.2e3, 315.9e3, 164.8e3};
+    float xv3[7] = {133.8e3, 143.6e3, 99.8e3, 98.6e3, 143.6e3, 167.4e3, 116.3e3};
+    float bsm1[7] = {2.13, 2.66, 6.11, 1.98, 2.68, 6.86, 8.51};
+    float bsm2[7] = {159.5, 7.67, 6.65, 13.11, 7.16, 10.38, 169.8};
+    float xsm1[7] = {762.2e3, 100.4e3, 138.2e3, 139.1e3, 93.7e3, 187.8e3, 609.8e3};
+    float xsm2[7] = {123.6e3, 172.5e3, 242.2e3, 132.7e3, 186.8e3, 169.6e3, 119.9e3};
+    float xsm3[7] = {94.5e3, 136.4e3, 178.6e3, 193.5e3, 133.5e3, 108.9e3, 106.6e3};
+    float bsp1[7] = {2.11, 6.87, 10.08, 3.68, 4.75, 8.58, 8.43};
+    float bsp2[7] = {102.3, 15.53, 9.60, 159.3, 8.12, 13.97, 8.19};
+    float xsp1[7] = {636.9e3, 138.7e3, 165.3e3, 464.4e3, 93.2e3, 216.0e3, 136.2e3};
+    float xsp2[7] = {134.8e3, 143.7e3, 225.7e3, 93.1e3, 135.9e3, 152.0e3, 188.5e3};
+    float xsp3[7] = {95.6e3, 98.6e3, 129.7e3, 94.2e3, 113.4e3, 122.7e3, 122.9e3};
+    float bsd1[7] = {1.224, 0.801, 1.380, 1.000, 1.224, 1.518, 1.518};
+    float bzd1[7] = {1.282, 2.161, 1.282, 20., 1.282, 1.282, 1.282};
+    float bfm1[7] = {1.0, 1.0, 1.0, 1.0, 0.92, 1.0, 1.0};
+    float bfm2[7] = {0.0, 0.0, 0.0, 0.0, 0.25, 0.0, 0.0};
+    float bfm3[7] = {0.0, 0.0, 0.0, 0.0, 1.77, 0.0, 0.0};
+    float bfp1[7] = {1.0, 0.93, 1.0, 0.93, 0.93, 1.0, 1.0};
+    float bfp2[7] = {0.0, 0.31, 0.0, 0.19, 0.31, 0.0, 0.0};
+    float bfp3[7] = {0.0, 2.00, 0.0, 1.79, 2.00, 0.0, 0.0};
     static __thread bool ws, w1;
-    double rt = 7.8, rl = 24.0, avarv, q, vs, zt, zl, zc;
-    double sgt, yr, temp1, temp2;
+    float rt = 7.8, rl = 24.0, avarv, q, vs, zt, zl, zc;
+    float sgt, yr, temp1, temp2;
     int temp_klim = propv.klim - 1;
 
     if (propv.lvar > 0) {
@@ -1490,7 +1459,7 @@ double avar(double zzt, double zzl, double zzc, prop_type & prop, propv_type & p
             if (propv.klim <= 0 || propv.klim > 7) {
                 propv.klim = 5;
                 temp_klim = 4;
-                prop.kwx = mymax(prop.kwx, 2);
+                prop.kwx = std::max<float>(prop.kwx, 2);
             }
 
             cv1 = bv1[temp_klim];
@@ -1535,7 +1504,7 @@ double avar(double zzt, double zzl, double zzc, prop_type & prop, propv_type & p
 
             if (kdv < 0 || kdv > 3) {
                 kdv = 0;
-                prop.kwx = mymax(prop.kwx, 2);
+                prop.kwx = std::max<float>(prop.kwx, 2);
             }
 
             /* NOTE: we are not sure if this code is supposed to fall through. */
@@ -1608,7 +1577,7 @@ double avar(double zzt, double zzl, double zzc, prop_type & prop, propv_type & p
     }
 
     if (fabs(zt) > 3.1 || fabs(zl) > 3.1 || fabs(zc) > 3.1) {
-        prop.kwx = mymax(prop.kwx, 1);
+        prop.kwx = std::max<float>(prop.kwx, 1);
     }
 
     if (zt < 0.0) {
@@ -1657,11 +1626,11 @@ double avar(double zzt, double zzl, double zzc, prop_type & prop, propv_type & p
     return avarv;
 }
 
-void hzns(double pfl[], prop_type & prop) {
+void hzns(float pfl[], prop_type & prop) {
     /* Used only with ITM 1.2.2 */
     bool wq;
     int np;
-    double xi, za, zb, qc, q, sb, sa;
+    float xi, za, zb, qc, q, sb, sa;
 
     np = (int)pfl[0];
     xi = pfl[1];
@@ -1703,10 +1672,10 @@ void hzns(double pfl[], prop_type & prop) {
     }
 }
 
-void hzns2(double pfl[], prop_type & prop) {
+void hzns2(float pfl[], prop_type & prop) {
     bool wq;
     int np, rp, i, j;
-    double xi, za, zb, qc, q, sb, sa, dr, dshh;
+    float xi, za, zb, qc, q, sb, sa, dr, dshh;
 
     np = (int)pfl[0];
     xi = pfl[1];
@@ -1739,7 +1708,7 @@ void hzns2(double pfl[], prop_type & prop) {
                 prop.los = 0;
                 prop.the[0] += q / sa;
                 prop.dl[0] = sa;
-                prop.the[0] = mymin(prop.the[0], 1.569);
+                prop.the[0] = std::min<float>(prop.the[0], 1.569);
                 prop.hht = pfl[j + 2];
                 wq = false;
             }
@@ -1753,10 +1722,10 @@ void hzns2(double pfl[], prop_type & prop) {
                     - zb;
                 if (q > 0.0) {
                     prop.the[1] += q / (prop.dist - sb);
-                    prop.the[1] = mymin(prop.the[1], 1.57);
-                    prop.the[1] = mymax(prop.the[1], -1.568);
+                    prop.the[1] = std::min<float>(prop.the[1], 1.57);
+                    prop.the[1] = std::max<float>(prop.the[1], -1.568);
                     prop.hhr = pfl[np + 2 - i];
-                    prop.dl[1] = mymax(0.0, prop.dist - sb);
+                    prop.dl[1] = std::max<float>(0.0, prop.dist - sb);
                 }
             }
             prop.the[0] =
@@ -1784,9 +1753,9 @@ void hzns2(double pfl[], prop_type & prop) {
     prop.rph = pfl[rp];
 }
 
-void z1sq1(double z[], const double & x1, const double & x2, double & z0, double & zn) {
+void z1sq1(float z[], const float & x1, const float & x2, float & z0, float & zn) {
     /* Used only with ITM 1.2.2 */
-    double xn, xa, xb, x, a, b;
+    float xn, xa, xb, x, a, b;
     int n, ja, jb;
 
     xn = z[0];
@@ -1821,9 +1790,9 @@ void z1sq1(double z[], const double & x1, const double & x2, double & z0, double
     zn = a + b * (xn - xb);
 }
 
-void z1sq2(double z[], const double & x1, const double & x2, double & z0, double & zn) {
+void z1sq2(float z[], const float & x1, const float & x2, float & z0, float & zn) {
     /* corrected for use with ITWOM */
-    double xn, xa, xb, x, a, b, bn;
+    float xn, xa, xb, x, a, b, bn;
     int n, ja, jb;
 
     xn = z[0];
@@ -1860,15 +1829,15 @@ void z1sq2(double z[], const double & x1, const double & x2, double & z0, double
     zn = a + (b * (xn - xb));
 }
 
-double qtile(const int & nn, double a[], const int & ir) {
-    double q = 0.0, r;                 /* q initialization -- KD2BD */
+float qtile(const int & nn, float a[], const int & ir) {
+    float q = 0.0, r;                 /* q initialization -- KD2BD */
     int m, n, i, j, j1 = 0, i0 = 0, k; /* more initializations -- KD2BD */
     bool done = false;
     bool goto10 = true;
 
     m = 0;
     n = nn;
-    k = mymin(mymax(0, ir), n);
+    k = std::min<float>(std::max<float>(0, ir), n);
 
     while (!done) {
         if (goto10) {
@@ -1928,11 +1897,11 @@ double qtile(const int & nn, double a[], const int & ir) {
     return q;
 }
 
-double qerf(const double & z) {
-    double b1 = 0.319381530, b2 = -0.356563782, b3 = 1.781477937;
-    double b4 = -1.821255987, b5 = 1.330274429;
-    double rp = 4.317008, rrt2pi = 0.398942280;
-    double t, x, qerfv;
+float qerf(const float & z) {
+    float b1 = 0.319381530, b2 = -0.356563782, b3 = 1.781477937;
+    float b4 = -1.821255987, b5 = 1.330274429;
+    float rp = 4.317008, rrt2pi = 0.398942280;
+    float t, x, qerfv;
 
     x = z;
     t = fabs(x);
@@ -1952,10 +1921,10 @@ double qerf(const double & z) {
     return qerfv;
 }
 
-double d1thx(double pfl[], const double & x1, const double & x2) {
+float d1thx(float pfl[], const float & x1, const float & x2) {
     int np, ka, kb, n, k, j;
-    double d1thxv, sn, xa, xb;
-    double * s;
+    float d1thxv, sn, xa, xb;
+    float * s;
 
     np = (int)pfl[0];
     xa = x1 / pfl[1];
@@ -1967,16 +1936,16 @@ double d1thx(double pfl[], const double & x1, const double & x2) {
     }
 
     ka = (int)(0.1 * (xb - xa + 8.0));
-    ka = mymin(mymax(4, ka), 25);
+    ka = std::min<float>(std::max<float>(4, ka), 25);
     n = 10 * ka - 5;
     kb = n - ka + 1;
     sn = n - 1;
-    s = new double[n + 2];
+    s = new float[n + 2];
     s[0] = sn;
     s[1] = 1.0;
     xb = (xb - xa) / sn;
     k = (int)(xa + 1.0);
-    xa -= (double)k;
+    xa -= (float)k;
 
     for (j = 0; j < n; j++) {
         while (xa > 0.0 && k < np) {
@@ -2003,9 +1972,9 @@ double d1thx(double pfl[], const double & x1, const double & x2) {
     return d1thxv;
 }
 
-double d1thx2(double pfl[], const double & x1, const double & x2) {
+float d1thx2(float pfl[], const float & x1, const float & x2) {
     int np, ka, kb, n, k, kmx, j;
-    double d1thx2v, sn, xa, xb, xc;
+    float d1thx2v, sn, xa, xb, xc;
 
     np = (int)pfl[0];
     xa = x1 / pfl[1];
@@ -2017,17 +1986,17 @@ double d1thx2(double pfl[], const double & x1, const double & x2) {
     }
 
     ka = (int)(0.1 * (xb - xa + 8.0));
-    kmx = mymax(25, (int)(83350 / (pfl[1])));
-    ka = mymin(mymax(4, ka), kmx);
+    kmx = std::max<float>(25, (int)(83350 / (pfl[1])));
+    ka = std::min<float>(std::max<float>(4, ka), kmx);
     n = 10 * ka - 5;
     kb = n - ka + 1;
     sn = n - 1;
-    std::vector<double> s(n + 2, 0.0);
+    std::vector<float> s(n + 2, 0.0);
     s[0] = sn;
     s[1] = 1.0;
     xb = (xb - xa) / sn;
     k = (int(xa + 1.0));
-    xc = xa - (double(k));
+    xc = xa - (float(k));
 
     for (j = 0; j < n; j++) {
         while (xc > 0.0 && k < np) {
@@ -2053,21 +2022,21 @@ double d1thx2(double pfl[], const double & x1, const double & x2) {
     return d1thx2v;
 }
 
-void qlrpfl(double pfl[],
+void qlrpfl(float pfl[],
             int klimx,
             int mdvarx,
             prop_type & prop,
             propa_type & propa,
             propv_type & propv) {
     int np, j;
-    double xl[2], q, za, zb, temp;
+    float xl[2], q, za, zb, temp;
 
     prop.dist = pfl[0] * pfl[1];
     np = (int)pfl[0];
     hzns(pfl, prop);
 
     for (j = 0; j < 2; j++) {
-        xl[j] = mymin(15.0 * prop.hg[j], 0.1 * prop.dl[j]);
+        xl[j] = std::min<float>(15.0 * prop.hg[j], 0.1 * prop.dl[j]);
     }
 
     xl[1] = prop.dist - xl[1];
@@ -2080,7 +2049,7 @@ void qlrpfl(double pfl[],
 
         for (j = 0; j < 2; j++) {
             prop.dl[j] = sqrt(2.0 * prop.he[j] / prop.gme)
-                         * exp(-0.07 * sqrt(prop.dh / mymax(prop.he[j], 5.0)));
+                         * exp(-0.07 * sqrt(prop.dh / std::max<float>(prop.he[j], 5.0)));
         }
 
         q = prop.dl[0] + prop.dl[1];
@@ -2094,7 +2063,7 @@ void qlrpfl(double pfl[],
                 prop.he[j] *= q; /* tx effective height set to be path
                                     dist/distance between obstacles */
                 prop.dl[j] = sqrt(2.0 * prop.he[j] / prop.gme)
-                             * exp(-0.07 * sqrt(prop.dh / mymax(prop.he[j], 5.0)));
+                             * exp(-0.07 * sqrt(prop.dh / std::max<float>(prop.he[j], 5.0)));
             }
         }
 
@@ -2114,11 +2083,11 @@ void qlrpfl(double pfl[],
     }
 
     prop.mdp = -1;
-    propv.lvar = mymax(propv.lvar, 3);
+    propv.lvar = std::max<float>(propv.lvar, 3);
 
     if (mdvarx >= 0) {
         propv.mdvar = mdvarx;
-        propv.lvar = mymax(propv.lvar, 4);
+        propv.lvar = std::max<float>(propv.lvar, 4);
     }
 
     if (klimx > 0) {
@@ -2129,14 +2098,14 @@ void qlrpfl(double pfl[],
     lrprop(0.0, prop, propa);
 }
 
-void qlrpfl2(double pfl[],
+void qlrpfl2(float pfl[],
              int klimx,
              int mdvarx,
              prop_type & prop,
              propa_type & propa,
              propv_type & propv) {
     int np, j;
-    double xl[2], dlb, q, za, zb, temp, rad, rae1, rae2;
+    float xl[2], dlb, q, za, zb, temp, rad, rae1, rae2;
 
     prop.dist = pfl[0] * pfl[1];
     np = (int)pfl[0];
@@ -2146,7 +2115,7 @@ void qlrpfl2(double pfl[],
     prop.rch[1] = prop.hg[1] + pfl[np + 2];
 
     for (j = 0; j < 2; j++) {
-        xl[j] = mymin(15.0 * prop.hg[j], 0.1 * prop.dl[j]);
+        xl[j] = std::min<float>(15.0 * prop.hg[j], 0.1 * prop.dl[j]);
     }
 
     xl[1] = prop.dist - xl[1];
@@ -2169,7 +2138,7 @@ void qlrpfl2(double pfl[],
 
             for (j = 0; j < 2; j++) {
                 prop.dl[j] = sqrt(2.0 * prop.he[j] / prop.gme)
-                             * exp(-0.07 * sqrt(prop.dh / mymax(prop.he[j], 5.0)));
+                             * exp(-0.07 * sqrt(prop.dh / std::max<float>(prop.he[j], 5.0)));
             }
 
             /* for one or more obstructions only NOTE buried as in ITM FORTRAN and DLL, not functional  */
@@ -2182,7 +2151,7 @@ void qlrpfl2(double pfl[],
             for (j = 0; j < 2; j++) {
                 prop.he[j] *= q;
                 prop.dl[j] = sqrt(2.0 * prop.he[j] / prop.gme)
-                             * exp(-0.07 * sqrt(prop.dh / mymax(prop.he[j], 5.0)));
+                             * exp(-0.07 * sqrt(prop.dh / std::max<float>(prop.he[j], 5.0)));
             }
 
             /* this sets (or resets) prop.the, and is not in The Guide FORTRAN QLRPFL */
@@ -2215,15 +2184,15 @@ void qlrpfl2(double pfl[],
             prop.thera = -prop.thera;
         }
 
-        prop.thenr = atan(mymax(0.0, (pfl[np + 2] - pfl[np + 1])) / pfl[1]);
+        prop.thenr = atan(std::max<float>(0.0, (pfl[np + 2] - pfl[np + 1])) / pfl[1]);
     }
 
     prop.mdp = -1;
-    propv.lvar = mymax(propv.lvar, 3);
+    propv.lvar = std::max<float>(propv.lvar, 3);
 
     if (mdvarx >= 0) {
         propv.mdvar = mdvarx;
-        propv.lvar = mymax(propv.lvar, 4);
+        propv.lvar = std::max<float>(propv.lvar, 4);
     }
 
     if (klimx > 0) {
@@ -2234,7 +2203,7 @@ void qlrpfl2(double pfl[],
     lrprop2(0.0, prop, propa);
 }
 
-double deg2rad(double d) {
+float deg2rad(float d) {
     return d * 3.1415926535897 / 180.0;
 }
 
@@ -2242,19 +2211,19 @@ double deg2rad(double d) {
 //* Point-To-Point Mode Calculations
 //***************************************************************************************
 
-void point_to_point_ITM(double tht_m,
-                        double rht_m,
-                        double eps_dielect,
-                        double sgm_conductivity,
-                        double eno_ns_surfref,
-                        double frq_mhz,
+void point_to_point_ITM(float tht_m,
+                        float rht_m,
+                        float eps_dielect,
+                        float sgm_conductivity,
+                        float eno_ns_surfref,
+                        float frq_mhz,
                         int radio_climate,
                         int pol,
-                        double conf,
-                        double rel,
-                        double & dbloss,
+                        float conf,
+                        float rel,
+                        float & dbloss,
                         char * strmode,
-                        double * elev,
+                        float * elev,
                         int & errnum)
 
 /******************************************************************************
@@ -2290,12 +2259,12 @@ Note that point_to_point has become point_to_point_ITM for use as the old ITM
     prop_type prop;
     propv_type propv;
     propa_type propa;
-    double zsys = 0;
-    double zc, zr;
-    double eno, enso, q;
+    float zsys = 0;
+    float zc, zr;
+    float eno, enso, q;
     long ja, jb, i, np;
-    /* double dkm, xkm; */
-    double fs;
+    /* float dkm, xkm; */
+    float fs;
 
     prop.hg[0] = tht_m;
     prop.hg[1] = rht_m;
@@ -2337,7 +2306,7 @@ Note that point_to_point has become point_to_point_ITM for use as the old ITM
             strcpy(strmode, "Single Horizon");
 
         } else if (int(q) > 0.0) {
-            strcpy(strmode, "Double Horizon");
+            strcpy(strmode, "Float Horizon");
         }
 
         if (prop.dist <= propa.dlsa || prop.dist <= propa.dx) {
@@ -2352,19 +2321,19 @@ Note that point_to_point has become point_to_point_ITM for use as the old ITM
     errnum = prop.kwx;
 }
 
-void point_to_point(double tht_m,
-                    double rht_m,
-                    double eps_dielect,
-                    double sgm_conductivity,
-                    double eno_ns_surfref,
-                    double frq_mhz,
+void point_to_point(float tht_m,
+                    float rht_m,
+                    float eps_dielect,
+                    float sgm_conductivity,
+                    float eno_ns_surfref,
+                    float frq_mhz,
                     int radio_climate,
                     int pol,
-                    double conf,
-                    double rel,
-                    double & dbloss,
+                    float conf,
+                    float rel,
+                    float & dbloss,
                     char * strmode,
-                    double * elev,
+                    float * elev,
                     int & errnum)
 
 /******************************************************************************
@@ -2372,10 +2341,10 @@ void point_to_point(double tht_m,
         Note that point_to_point_two has become point_to_point
         for drop-in interface to splat.cpp.
         The new variable inputs,
-        double enc_ncc_clcref,
-        double clutter_height,
-        double clutter_density,
-        double delta_h_diff, and
+        float enc_ncc_clcref,
+        float clutter_height,
+        float clutter_density,
+        float delta_h_diff, and
         int mode_var)
         have been given fixed values below.
 
@@ -2425,12 +2394,12 @@ void point_to_point(double tht_m,
     propv_type propv;
     propa_type propa;
 
-    double zsys = 0;
-    double zc, zr;
-    double eno, enso, q;
+    float zsys = 0;
+    float zc, zr;
+    float eno, enso, q;
     long ja, jb, i, np;
-    /* double dkm, xkm; */
-    double tpd, fs;
+    /* float dkm, xkm; */
+    float tpd, fs;
 
     prop.hg[0] = tht_m;
     prop.hg[1] = rht_m;
@@ -2452,10 +2421,10 @@ void point_to_point(double tht_m,
 
     /* PRESET VALUES for Basic Version w/o additional inputs active */
 
-    prop.encc = 1000.00; /*  double enc_ncc_clcref preset  */
-    prop.cch = 22.5;     /* double clutter_height preset to ILLR calibration.;
+    prop.encc = 1000.00; /*  float enc_ncc_clcref preset  */
+    prop.cch = 22.5;     /* float clutter_height preset to ILLR calibration.;
                             use 25.3 for ITU-P1546-2 calibration */
-    prop.cd = 1.00;      /* double clutter_density preset */
+    prop.cd = 1.00;      /* float clutter_density preset */
     int mode_var = 1;    /* int mode_var set to 1 for FCC compatibility;
                             normally, SPLAT presets this to 12 */
     prop.dhd = 0.0;      /* delta_h_diff preset */
@@ -2507,26 +2476,26 @@ void point_to_point(double tht_m,
     errnum = prop.kwx;
 }
 
-void point_to_pointMDH_two(double tht_m,
-                           double rht_m,
-                           double eps_dielect,
-                           double sgm_conductivity,
-                           double eno_ns_surfref,
-                           double enc_ncc_clcref,
-                           double clutter_height,
-                           double clutter_density,
-                           double delta_h_diff,
-                           double frq_mhz,
+void point_to_pointMDH_two(float tht_m,
+                           float rht_m,
+                           float eps_dielect,
+                           float sgm_conductivity,
+                           float eno_ns_surfref,
+                           float enc_ncc_clcref,
+                           float clutter_height,
+                           float clutter_density,
+                           float delta_h_diff,
+                           float frq_mhz,
                            int radio_climate,
                            int pol,
                            int /* mode_var */,
-                           double timepct,
-                           double locpct,
-                           double confpct,
-                           double & dbloss,
+                           float timepct,
+                           float locpct,
+                           float confpct,
+                           float & dbloss,
                            int & propmode,
-                           double & deltaH,
-                           double * elev,
+                           float & deltaH,
+                           float * elev,
                            int & errnum)
 
 /*************************************************************************************************
@@ -2536,8 +2505,8 @@ Tropical, 4-Desert, 5-Continental Temperate, 6-Maritime Temperate, Over Land, 7-
 Temperate, Over Sea timepct, locpct, confpct: .01 to .99 elev[]: [num points -
 1], [delta dist(meters)], [height(meters) point 1], ..., [height(meters) point
 n] propmode:  Value   Mode -1     mode is undefined 0     Line of Sight 5 Single
-Horizon, Diffraction 6     Single Horizon, Troposcatter 9     Double Horizon,
-Diffraction 10     Double Horizon, Troposcatter errnum: 0- No Error. 1- Warning:
+Horizon, Diffraction 6     Single Horizon, Troposcatter 9     Float Horizon,
+Diffraction 10     Float Horizon, Troposcatter errnum: 0- No Error. 1- Warning:
 Some parameters are nearly out of range. Results should be used with caution. 2-
 Note: Default parameters have been substituted for impossible ones. 3- Warning:
 A combination of parameters is out of range. Results are probably invalid. Other-
@@ -2547,12 +2516,12 @@ Warning: Some parameters are out of range. Results are probably invalid.
     prop_type prop;
     propv_type propv;
     propa_type propa;
-    double zsys = 0;
-    double ztime, zloc, zconf;
-    double eno, enso, q;
+    float zsys = 0;
+    float ztime, zloc, zconf;
+    float eno, enso, q;
     long ja, jb, i, np;
-    /* double dkm, xkm; */
-    double fs;
+    /* float dkm, xkm; */
+    float fs;
 
     propmode = -1; // mode is undefined
     prop.hg[0] = tht_m;
@@ -2580,9 +2549,9 @@ Warning: Some parameters are out of range. Results are probably invalid.
 
     /* PRESET VALUES for Basic Version w/o additional inputs active */
 
-    prop.encc = 1000.00; /*  double enc_ncc_clcref  */
-    prop.cch = 22.5;     /* double clutter_height */
-    prop.cd = 1.00;      /* double clutter_density */
+    prop.encc = 1000.00; /*  float enc_ncc_clcref  */
+    prop.cch = 22.5;     /* float clutter_height */
+    prop.cd = 1.00;      /* float clutter_density */
     /* mode_var = 1;        /\* int mode_var set for FCC ILLR &\/ */
 
     if (q <= 0.0) {
@@ -2620,23 +2589,23 @@ Warning: Some parameters are out of range. Results are probably invalid.
     errnum = prop.kwx;
 }
 
-void point_to_pointDH(double tht_m,
-                      double rht_m,
-                      double eps_dielect,
-                      double sgm_conductivity,
-                      double eno_ns_surfref,
-                      double enc_ncc_clcref,
-                      double clutter_height,
-                      double clutter_density,
-                      double delta_h_diff,
-                      double frq_mhz,
+void point_to_pointDH(float tht_m,
+                      float rht_m,
+                      float eps_dielect,
+                      float sgm_conductivity,
+                      float eno_ns_surfref,
+                      float enc_ncc_clcref,
+                      float clutter_height,
+                      float clutter_density,
+                      float delta_h_diff,
+                      float frq_mhz,
                       int radio_climate,
                       int pol,
-                      double conf,
-                      double rel,
-                      double & dbloss,
-                      double & deltaH,
-                      double * elev,
+                      float conf,
+                      float rel,
+                      float & dbloss,
+                      float & deltaH,
+                      float * elev,
                       int & errnum)
 /*************************************************************************************************
          pol: 0-Horizontal, 1-Vertical
@@ -2655,12 +2624,12 @@ of range. Results are probably invalid.
     prop_type prop;
     propv_type propv;
     propa_type propa;
-    double zsys = 0;
-    double zc, zr;
-    double eno, enso, q;
+    float zsys = 0;
+    float zc, zr;
+    float eno, enso, q;
     long ja, jb, i, np;
-    /* double dkm, xkm; */
-    double fs;
+    /* float dkm, xkm; */
+    float fs;
 
     prop.hg[0] = tht_m;
     prop.hg[1] = rht_m;
@@ -2686,9 +2655,9 @@ of range. Results are probably invalid.
 
     /* PRESET VALUES for Basic Version w/o additional inputs active */
 
-    prop.encc = 1000.00; /*  double enc_ncc_clcref  */
-    prop.cch = 22.5;     /* double clutter_height */
-    prop.cd = 1.00;      /* double clutter_density */
+    prop.encc = 1000.00; /*  float enc_ncc_clcref  */
+    prop.cch = 22.5;     /* float clutter_height */
+    prop.cd = 1.00;      /* float clutter_density */
 
     if (q <= 0.0) {
         ja = (long)(3.0 + 0.1 * elev[0]); /* to match KD2BD addition of (long) */
@@ -2711,7 +2680,7 @@ of range. Results are probably invalid.
         if (int(q) == 0.0) {
             strcpy(strmode, "Single Horizon");
         } else if (int(q) > 0.0) {
-            strcpy(strmode, "Double Horizon");
+            strcpy(strmode, "Float Horizon");
         }
         if (prop.dist <= propa.dlsa || prop.dist <= propa.dx) {
             strcat(strmode, ", Diffraction Dominant");
@@ -2728,26 +2697,26 @@ of range. Results are probably invalid.
 //********************************************************
 
 void area(long ModVar,
-          double deltaH,
-          double tht_m,
-          double rht_m,
-          double dist_km,
+          float deltaH,
+          float tht_m,
+          float rht_m,
+          float dist_km,
           int TSiteCriteria,
           int RSiteCriteria,
-          double eps_dielect,
-          double sgm_conductivity,
-          double eno_ns_surfref,
-          double enc_ncc_clcref,
-          double clutter_height,
-          double clutter_density,
-          double delta_h_diff,
-          double frq_mhz,
+          float eps_dielect,
+          float sgm_conductivity,
+          float eno_ns_surfref,
+          float enc_ncc_clcref,
+          float clutter_height,
+          float clutter_density,
+          float delta_h_diff,
+          float frq_mhz,
           int radio_climate,
           int pol,
-          double pctTime,
-          double pctLoc,
-          double pctConf,
-          double & dbloss,
+          float pctTime,
+          float pctLoc,
+          float pctConf,
+          float & dbloss,
           int & errnum) {
     // pol: 0-Horizontal, 1-Vertical
     // TSiteCriteria, RSiteCriteria:
@@ -2778,10 +2747,10 @@ void area(long ModVar,
     prop_type prop;
     propv_type propv;
     propa_type propa;
-    double zt, zl, zc, xlb;
-    double fs;
+    float zt, zl, zc, xlb;
+    float fs;
     long ivar;
-    double eps, eno, sgm;
+    float eps, eno, sgm;
     long ipol;
     int kst[2];
 
@@ -2823,28 +2792,28 @@ void area(long ModVar,
     }
 }
 
-double ITMAreadBLoss(long ModVar,
-                     double deltaH,
-                     double tht_m,
-                     double rht_m,
-                     double dist_km,
+float ITMAreadBLoss(long ModVar,
+                     float deltaH,
+                     float tht_m,
+                     float rht_m,
+                     float dist_km,
                      int TSiteCriteria,
                      int RSiteCriteria,
-                     double eps_dielect,
-                     double sgm_conductivity,
-                     double eno_ns_surfref,
-                     double enc_ncc_clcref,
-                     double clutter_height,
-                     double clutter_density,
-                     double delta_h_diff,
-                     double frq_mhz,
+                     float eps_dielect,
+                     float sgm_conductivity,
+                     float eno_ns_surfref,
+                     float enc_ncc_clcref,
+                     float clutter_height,
+                     float clutter_density,
+                     float delta_h_diff,
+                     float frq_mhz,
                      int radio_climate,
                      int pol,
-                     double pctTime,
-                     double pctLoc,
-                     double pctConf) {
+                     float pctTime,
+                     float pctLoc,
+                     float pctConf) {
     int errnum;
-    double dbloss;
+    float dbloss;
     area(ModVar,
          deltaH,
          tht_m,
@@ -2870,6 +2839,6 @@ double ITMAreadBLoss(long ModVar,
     return dbloss;
 }
 
-double ITWOMVersion() {
+float ITWOMVersion() {
     return 3.0;
 }
