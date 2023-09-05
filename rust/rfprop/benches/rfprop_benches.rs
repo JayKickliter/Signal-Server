@@ -1,6 +1,16 @@
 use criterion::{criterion_group, criterion_main, Criterion};
+use std::{env, path::PathBuf};
+
+fn init_rfprop() {
+    let bsdf_path_str =
+        env::var("BSDF_PATH").expect("export BSDF_PATH before running rfprop benchmarks");
+    let bsdf_path = PathBuf::from(bsdf_path_str);
+    rfprop::init(&bsdf_path, false).unwrap();
+}
 
 fn terrain_profile(c: &mut Criterion) {
+    init_rfprop();
+
     let mut group = c.benchmark_group("Terrain Profile");
 
     group.bench_function("2.63km", |b| {

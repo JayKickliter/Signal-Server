@@ -3,19 +3,32 @@ use log::debug;
 use std::{
     ffi::{c_char, CString},
     path::Path,
+    sync::Once,
 };
 
+static INITIALIZED: Once = Once::new();
+
 pub fn init(sdf_path: &Path, debug: bool) -> Result<(), Error> {
+    let mut ret = 0;
     let sdf_path = CString::new(sdf_path.as_os_str().to_str().unwrap()).unwrap();
+
     // SAFETY: we're calling into a >20 y/o C+ codebase. Safety can
     //         not be guaranteed.
-    match unsafe { ffi::init(sdf_path.as_ptr(), debug) } {
+    INITIALIZED.call_once(|| unsafe {
+        ret = ffi::init(sdf_path.as_ptr(), debug);
+    });
+
+    match ret {
         0 => Ok(()),
         other => Err(Error::Retcode(other)),
     }
 }
 
 pub fn call_sigserve(args: &str) -> Result<ffi::Report, Error> {
+    assert!(
+        INITIALIZED.is_completed(),
+        "must init rfprop with tile path"
+    );
     let cstrings = args
         .split_whitespace()
         .map(CString::new)
@@ -46,6 +59,11 @@ pub fn terrain_profile(
     freq_hz: f64,
     normalize: bool,
 ) -> ffi::TerrainProfile {
+    assert!(
+        INITIALIZED.is_completed(),
+        "must init rfprop with tile path"
+    );
+
     let start = std::time::Instant::now();
     // SAFETY: this returns no error code nor exception
     let ret = unsafe {
