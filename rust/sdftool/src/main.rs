@@ -65,6 +65,7 @@ fn go() -> anyhow::Result<()> {
 #[repr(u8)]
 enum BsdfVersion {
     V0,
+    V1,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -92,6 +93,48 @@ impl TryFrom<u16> for Resolution {
     }
 }
 
+/// See https://en.wikipedia.org/wiki/Z-order_curve
+fn z_order_index(x: usize, y: usize) -> usize {
+    assert!(x < 2_usize.pow(usize::BITS / 2));
+    assert!(y < 2_usize.pow(usize::BITS / 2));
+    let mut idx = 0;
+    for i in (0..16).rev() {
+        let x_bit = (x >> i) & 1;
+        let y_bit = (y >> i) & 1;
+        idx = (idx << 2) | y_bit << 1 | x_bit;
+    }
+    idx
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn z_order_test_cases() {
+        // (x, y, expected)
+        let test_cases: [(usize, usize, usize); 4] = [
+            (0b000, 0b000, 0b000000),
+            (0b111, 0b000, 0b010101),
+            (0b000, 0b111, 0b101010),
+            (0b111, 0b111, 0b111111),
+        ];
+        for (x, y, expected) in test_cases {
+            let actual = z_order_index(x, y);
+            assert_eq!(
+                actual, expected,
+                "z_order {x:b},{y:b} -> {actual:b}, expected {expected:b}"
+            );
+        }
+    }
+
+    #[test]
+    #[should_panic]
+    fn z_order_panics() {
+        z_order_index(0, usize::MAX);
+    }
+}
+
 /// Converts the contents of a source SDF file to binary and write to
 /// DST.
 fn sdf_to_bsdf<S, D>(res: Resolution, src: S, mut dst: D) -> Result<()>
@@ -102,7 +145,7 @@ where
     let samples = res.ippd().pow(2);
     let mut min = i16::MAX;
     let mut max = i16::MIN;
-    let mut vec = vec![0; samples];
+    let mut output = vec![0; samples];
     let mut x = 0;
     let mut y = 0;
     let mut line_num = 0;
@@ -110,7 +153,7 @@ where
         let elev = i16::from_str(&line?)?;
         min = std::cmp::min(min, elev);
         max = std::cmp::max(max, elev);
-        vec[(y * res.ippd()) + x] = elev;
+        output[(y * res.ippd()) + x] = elev;
         y += 1;
         if y == res.ippd() {
             y = 0;
@@ -118,9 +161,9 @@ where
         }
         line_num += 1;
     }
-    assert_eq!(line_num, vec.len());
+    assert_eq!(line_num, output.len());
 
-    for elev in vec {
+    for elev in output {
         dst.write_i16::<LE>(elev)?;
     }
 
