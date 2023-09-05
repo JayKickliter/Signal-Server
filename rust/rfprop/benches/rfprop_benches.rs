@@ -1,0 +1,53 @@
+use criterion::{criterion_group, criterion_main, Criterion};
+
+fn terrain_profile(c: &mut Criterion) {
+    let mut group = c.benchmark_group("Terrain Profile");
+
+    group.bench_function("2.63km", |b| {
+        b.iter(|| {
+            rfprop::terrain_profile(
+                52.30693919915002,
+                -117.3519964316712,
+                0.0,
+                52.30866462880422,
+                -117.3165476765753,
+                0.0,
+                900e6,
+                true,
+            )
+        })
+    });
+
+    group.bench_function("67km", |b| {
+        b.iter(|| {
+            rfprop::terrain_profile(
+                17.32531643138395,
+                22.02060050752248,
+                0.0,
+                17.31391991428638,
+                22.6498898241764,
+                0.0,
+                900e6,
+                true,
+            )
+        })
+    });
+
+    group.bench_function("106km", |b| {
+        b.iter(|| {
+            rfprop::terrain_profile(
+                38.89938117857166,
+                95.15915866746103,
+                0.0,
+                39.72746075951511,
+                94.615374082193,
+                0.0,
+                900e6,
+                true,
+            )
+        })
+    });
+}
+
+criterion_group!(benches, terrain_profile);
+criterion_main!(benches);
