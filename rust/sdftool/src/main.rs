@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Error, Result};
 use byteorder::{WriteBytesExt, LE};
 use clap::Parser;
 use rayon::prelude::*;
@@ -17,9 +17,15 @@ struct Opts {
     /// SDF files to convert to binary (BSDF)
     #[clap(required = true)]
     input: Vec<PathBuf>,
-    /// Resolution in arc-seconds per sample [possible values: 1, 3]
+
+    /// Resolution in arc-seconds per sample
     #[arg(short, long)]
     resolution: u16,
+
+    /// BSDF version
+    #[arg(short, long, default_value("v1"))]
+    bsdf: BsdfVersion,
+
     /// Output directory
     #[arg(short, long)]
     out: Option<PathBuf>,
@@ -58,14 +64,36 @@ fn go() -> anyhow::Result<()> {
     }
     work_items
         .into_par_iter()
-        .try_for_each(|(src, dst)| sdf_to_bsdf(resolution, src, dst))?;
+        .try_for_each(|(src, dst)| sdf_to_bsdf(resolution, opts.bsdf, src, dst))?;
     Ok(())
 }
 
+#[derive(Clone, Copy, Debug, clap::ValueEnum)]
 #[repr(u8)]
 enum BsdfVersion {
     V0,
     V1,
+}
+
+impl TryFrom<u8> for BsdfVersion {
+    type Error = Error;
+
+    fn try_from(val: u8) -> Result<Self, Error> {
+        match val {
+            0 => Ok(Self::V0),
+            1 => Ok(Self::V1),
+            invalid => Err(anyhow!("{invalid} is not a valid BSDF version")),
+        }
+    }
+}
+
+impl BsdfVersion {
+    fn index(self, ippd: usize, x: usize, y: usize) -> usize {
+        match self {
+            Self::V0 => (y * ippd) + x,
+            Self::V1 => z_order_index(x, y),
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -106,6 +134,47 @@ fn z_order_index(x: usize, y: usize) -> usize {
     idx
 }
 
+/// Converts the contents of a source SDF file to binary and write to
+/// DST.
+fn sdf_to_bsdf<S, D>(res: Resolution, bsdf_version: BsdfVersion, src: S, mut dst: D) -> Result<()>
+where
+    S: BufRead,
+    D: Write,
+{
+    let ippd = res.ippd();
+    let samples = ippd.pow(2);
+    let mut min = i16::MAX;
+    let mut max = i16::MIN;
+    let mut output = vec![0; samples];
+    let mut x = 0;
+    let mut y = 0;
+    let mut line_num = 0;
+    for line in src.lines().skip(4) {
+        let elev = i16::from_str(&line?)?;
+        min = std::cmp::min(min, elev);
+        max = std::cmp::max(max, elev);
+        output[bsdf_version.index(ippd, x, y)] = elev;
+        y += 1;
+        if y == ippd {
+            y = 0;
+            x += 1;
+        }
+        line_num += 1;
+    }
+    assert_eq!(line_num, output.len());
+
+    for elev in output {
+        dst.write_i16::<LE>(elev)?;
+    }
+
+    dst.write_u16::<LE>(ippd as u16)?;
+    dst.write_i16::<LE>(min)?;
+    dst.write_i16::<LE>(max)?;
+    dst.write_u16::<LE>(bsdf_version as u16)?;
+    dst.flush()?;
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -129,48 +198,25 @@ mod tests {
     }
 
     #[test]
+    fn z_order_3_arc_seconds() {
+        let res = Resolution::from_raw(3).unwrap();
+        let ippd = res.ippd();
+        let expected = ippd.pow(2) - 1;
+        let x = ippd - 1;
+        let y = ippd - 1;
+        let actual = z_order_index(x, y);
+        assert_eq!(
+            actual, expected,
+            "x: {x:b}, y:{y:b}, expected: {expected:b}, actual: {actual:b}"
+        );
+
+        //  101011111100011111111
+        // 1100001100110011111111
+    }
+
+    #[test]
     #[should_panic]
     fn z_order_panics() {
         z_order_index(0, usize::MAX);
     }
-}
-
-/// Converts the contents of a source SDF file to binary and write to
-/// DST.
-fn sdf_to_bsdf<S, D>(res: Resolution, src: S, mut dst: D) -> Result<()>
-where
-    S: BufRead,
-    D: Write,
-{
-    let samples = res.ippd().pow(2);
-    let mut min = i16::MAX;
-    let mut max = i16::MIN;
-    let mut output = vec![0; samples];
-    let mut x = 0;
-    let mut y = 0;
-    let mut line_num = 0;
-    for line in src.lines().skip(4) {
-        let elev = i16::from_str(&line?)?;
-        min = std::cmp::min(min, elev);
-        max = std::cmp::max(max, elev);
-        output[(y * res.ippd()) + x] = elev;
-        y += 1;
-        if y == res.ippd() {
-            y = 0;
-            x += 1;
-        }
-        line_num += 1;
-    }
-    assert_eq!(line_num, output.len());
-
-    for elev in output {
-        dst.write_i16::<LE>(elev)?;
-    }
-
-    dst.write_u16::<LE>(res.ippd() as u16)?;
-    dst.write_i16::<LE>(min)?;
-    dst.write_i16::<LE>(max)?;
-    dst.write_u16::<LE>(BsdfVersion::V0 as u16)?;
-    dst.flush()?;
-    Ok(())
 }
