@@ -14,6 +14,7 @@ extern int LoadTopoData(double max_lon,
                         double min_lat,
                         struct output * out);
 extern double LonDiff(double lon1, double lon2);
+extern double GetElevation(site const & location);
 
 namespace sigserve_wrapper {
 
@@ -177,6 +178,21 @@ TerrainProfile terrain_profile(double tx_lat,
     report.tx_site_over_water = p2p._tx_site_over_water;
 
     return report;
+}
+
+double get_elevation(double lat, double lon) {
+    double _min_lat = std::floor(lat);
+    double _max_lat = std::floor(lat);
+    double _lon = std::floor(-lon);
+    double _min_lon = _lon;
+    double _max_lon = _lon;
+
+    LoadTopoData(_max_lon, _min_lon, _max_lat, _min_lat, nullptr);
+
+    site loc;
+    loc.lat = lat;
+    loc.lon = lon;
+    return GetElevation(loc) * METERS_PER_FOOT;
 }
 
 } // namespace sigserve_wrapper

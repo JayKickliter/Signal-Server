@@ -36,6 +36,15 @@ pub fn init(bsdf_dir: &Path, debug: bool) -> Result<(), Error> {
     }
 }
 
+pub fn get_elevation(lat: f64, lon: f64) -> f64 {
+    assert!(
+        INITIALIZED.is_completed(),
+        "must init rfprop with tile path"
+    );
+    // SAFETY: See previous safety comment.
+    unsafe { ffi::get_elevation(lat, lon) }
+}
+
 pub fn call_sigserve(args: &str) -> Result<ffi::Report, Error> {
     assert!(
         INITIALIZED.is_completed(),
@@ -135,6 +144,8 @@ pub(crate) mod ffi {
         include!("rfprop/src/sigserve.h");
 
         unsafe fn init(bsdf_dir: *const c_char, debug: bool) -> i32;
+
+        unsafe fn get_elevation(lat: f64, lon: f64) -> f64;
 
         unsafe fn handle_args(argc: i32, argv: *mut *mut c_char) -> Report;
 

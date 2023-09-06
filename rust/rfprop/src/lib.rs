@@ -5,7 +5,7 @@ pub use error::Error;
 pub use sigserve::{
     call_sigserve,
     ffi::{Report, TerrainProfile},
-    init, terrain_profile,
+    get_elevation, init, terrain_profile,
 };
 
 #[cfg(test)]
@@ -31,5 +31,17 @@ mod tests {
         println!("Calling signal-server with: {P2P_ARGS}");
         let p2p_report = crate::call_sigserve(P2P_ARGS);
         println!("{p2p_report:?}");
+    }
+
+    #[test]
+    fn test_get_elevation() {
+        let bsdf_dir = ["/Volumes/s3/3-arcsecond/bsdf/"]
+            .iter()
+            .collect::<PathBuf>();
+        println!("{bsdf_dir:?}");
+        crate::init(&fs::canonicalize(bsdf_dir).unwrap(), true).unwrap();
+
+        let cleaveland_elev = crate::get_elevation(38.840532, -105.044205);
+        assert_eq!(cleaveland_elev, 1.0);
     }
 }
