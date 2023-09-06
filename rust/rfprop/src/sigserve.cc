@@ -182,16 +182,13 @@ TerrainProfile terrain_profile(double tx_lat,
 
 double get_elevation(double lat, double lon) {
     double _min_lat = std::floor(lat);
-    double _max_lat = std::floor(lat);
-    double _lon = std::floor(-lon);
-    double _min_lon = _lon;
-    double _max_lon = _lon;
+    double _min_lon = std::floor(-lon);
 
-    LoadTopoData(_max_lon, _min_lon, _max_lat, _min_lat, nullptr);
+    LoadTopoData(_min_lon, _min_lon, _min_lat, _min_lat, nullptr);
 
     site loc;
     loc.lat = lat;
-    loc.lon = lon;
+    loc.lon = -lon;
     return GetElevation(loc) * METERS_PER_FOOT;
 }
 
