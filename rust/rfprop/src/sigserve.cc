@@ -8,13 +8,13 @@
 
 extern int init(const char * sdf_path, bool debug);
 extern int handle_args(int argc, char * argv[], output & ret_out);
-extern int LoadTopoData(double max_lon,
-                        double min_lon,
-                        double max_lat,
-                        double min_lat,
+extern int LoadTopoData(float max_lon,
+                        float min_lon,
+                        float max_lat,
+                        float min_lat,
                         struct output * out);
-extern double LonDiff(double lon1, double lon2);
-extern double GetElevation(site const & location);
+extern float LonDiff(float lon1, float lon2);
+extern float GetElevation(site const & location);
 
 namespace sigserve_wrapper {
 
@@ -78,13 +78,13 @@ Report handle_args(int argc, char * argv[]) {
     return report;
 }
 
-TerrainProfile terrain_profile(double tx_lat,
-                               double tx_lon,
-                               double tx_antenna_alt,
-                               double rx_lat,
-                               double rx_lon,
-                               double rx_antenna_alt,
-                               double freq_hz,
+TerrainProfile terrain_profile(float tx_lat,
+                               float tx_lon,
+                               float tx_antenna_alt,
+                               float rx_lat,
+                               float rx_lon,
+                               float rx_antenna_alt,
+                               float freq_hz,
                                bool normalize,
                                bool metric) {
     // The following conversions are confusing, and I'm still not
@@ -121,12 +121,12 @@ TerrainProfile terrain_profile(double tx_lat,
     // tx_site { lat: 68.49, lon: -179.9 }
     // rx_site { lat: 68.49, lon: 179.9 }
 
-    double _min_lat = std::floor(std::min(tx_lat, rx_lat));
-    double _max_lat = std::floor(std::max(tx_lat, rx_lat));
-    double _tx_lon = std::floor(-tx_lon);
-    double _rx_lon = std::floor(-rx_lon);
-    double _min_lon = LonDiff(_tx_lon, _rx_lon) < 0.0 ? _tx_lon : _rx_lon;
-    double _max_lon = LonDiff(_tx_lon, _rx_lon) < 0.0 ? _rx_lon : _tx_lon;
+    float _min_lat = std::floor(std::min(tx_lat, rx_lat));
+    float _max_lat = std::floor(std::max(tx_lat, rx_lat));
+    float _tx_lon = std::floor(-tx_lon);
+    float _rx_lon = std::floor(-rx_lon);
+    float _min_lon = LonDiff(_tx_lon, _rx_lon) < 0.0 ? _tx_lon : _rx_lon;
+    float _max_lon = LonDiff(_tx_lon, _rx_lon) < 0.0 ? _rx_lon : _tx_lon;
 
     LoadTopoData(_max_lon, _min_lon, _max_lat, _min_lat, nullptr);
 
@@ -180,9 +180,9 @@ TerrainProfile terrain_profile(double tx_lat,
     return report;
 }
 
-double get_elevation(double lat, double lon) {
-    double _min_lat = std::floor(lat);
-    double _min_lon = std::floor(-lon);
+float get_elevation(float lat, float lon) {
+    float _min_lat = std::floor(lat);
+    float _min_lon = std::floor(-lon);
 
     LoadTopoData(_min_lon, _min_lon, _min_lat, _min_lat, nullptr);
 

@@ -8,15 +8,15 @@ struct Report;
 struct TerrainProfile;
 
 int init(const char * sdf_path, bool debug);
-double get_elevation(double lat, double lon);
+float get_elevation(float lat, float lon);
 Report handle_args(int argc, char * argv[]);
-TerrainProfile terrain_profile(double tx_lat,
-                               double tx_lon,
-                               double tx_antenna_alt_m,
-                               double rx_lat,
-                               double rx_lon,
-                               double rx_antenna_alt_m,
-                               double freq_hz,
+TerrainProfile terrain_profile(float tx_lat,
+                               float tx_lon,
+                               float tx_antenna_alt_m,
+                               float rx_lat,
+                               float rx_lon,
+                               float rx_antenna_alt_m,
+                               float freq_hz,
                                bool normalize,
                                bool metric);
 
