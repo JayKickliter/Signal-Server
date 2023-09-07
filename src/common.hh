@@ -8,6 +8,11 @@
 #include <tuple>
 #include <vector>
 
+/// Base type used on the library.
+///
+/// Any `SsFloat` you see used to be a `double`. We defined this type
+/// so we can surgically switch back to double if there are any
+/// regressions, while not touching previously-`float`s.
 typedef float SsFloat;
 
 #define GAMMA 2.5
@@ -21,7 +26,7 @@ typedef float SsFloat;
 #endif
 
 #ifndef HALFPI
-#define HALFPI SsFloat(1.570796326794896)
+#define HALFPI 1.570796326794896
 #endif
 
 #define DEG2RAD 1.74532925199e-02

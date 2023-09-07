@@ -626,7 +626,7 @@ Path::Path(site const & src, site const & dst) {
         if (azimuth == 0.0 && (beta > HALFPI - lat1)) {
             lon2 = lon1 + PI;
 
-        } else if (azimuth == HALFPI && (beta > HALFPI + lat1)) {
+        } else if (azimuth == SsFloat(HALFPI) && (beta > HALFPI + lat1)) {
             lon2 = lon1 + PI;
 
         } else if (fabs(num / den) > 1.0) {
@@ -827,9 +827,8 @@ void ObstructionAnalysis(Path const & path,
 
     int x;
     struct site site_x;
-    SsFloat h_r, h_t, h_x, h_r_orig, cos_tx_angle, cos_test_angle,
-        cos_tx_angle_f1, cos_tx_angle_fpt6, d_tx, d_x, h_r_f1, h_r_fpt6, h_f,
-        h_los, lambda = 0.0;
+    double h_r, h_t, h_x, h_r_orig, cos_tx_angle, cos_test_angle, cos_tx_angle_f1,
+        cos_tx_angle_fpt6, d_tx, d_x, h_r_f1, h_r_fpt6, h_f, h_los, lambda = 0.0;
     char string[255], string_fpt6[255], string_f1[255];
 
     h_r = GetElevation(rcvr) + rcvr.alt + EARTHRADIUS_FT;
