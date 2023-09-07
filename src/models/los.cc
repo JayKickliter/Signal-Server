@@ -637,12 +637,13 @@ void PlotPropPath(struct output * out,
             azimuth = (Azimuth(source, temp));
 
             if (fd != NULL) {
-                buffer_offset += sprintf(fd_buffer + buffer_offset,
-                                         "%.7f, %.7f, %.3f, %.3f, ",
-                                         path.lat[y],
-                                         path.lon[y],
-                                         azimuth,
-                                         elevation);
+                buffer_offset += snprintf(fd_buffer + buffer_offset,
+                                          sizeof(fd_buffer) - buffer_offset,
+                                          "%.7f, %.7f, %.3f, %.3f, ",
+                                          path.lat[y],
+                                          path.lon[y],
+                                          azimuth,
+                                          elevation);
             }
 
             /* If ERP==0, write path loss to alphanumeric
@@ -650,7 +651,10 @@ void PlotPropPath(struct output * out,
                or received power level (below), as appropriate. */
 
             if (fd != NULL && lr->erp == 0.0) {
-                buffer_offset += sprintf(fd_buffer + buffer_offset, "%.2f", loss);
+                buffer_offset += snprintf(fd_buffer + buffer_offset,
+                                          sizeof(fd_buffer) - buffer_offset,
+                                          "%.2f",
+                                          loss);
             }
 
             /* Integrate the antenna's radiation
@@ -678,8 +682,10 @@ void PlotPropPath(struct output * out,
                     dBm = 10.0 * (log10(rxp * 1000.0));
 
                     if (fd != NULL) {
-                        buffer_offset +=
-                            sprintf(fd_buffer + buffer_offset, "%.3f", dBm);
+                        buffer_offset += snprintf(fd_buffer + buffer_offset,
+                                                  sizeof(fd_buffer) - buffer_offset,
+                                                  "%.3f",
+                                                  dBm);
                     }
 
                     /* Scale roughly between 0 and 255 */
@@ -726,9 +732,10 @@ void PlotPropPath(struct output * out,
                     PutSignal(out, path.lat[y], path.lon[y], (unsigned char)ifs);
 
                     if (fd != NULL) {
-                        buffer_offset += sprintf(fd_buffer + buffer_offset,
-                                                 "%.3f",
-                                                 field_strength);
+                        buffer_offset += snprintf(fd_buffer + buffer_offset,
+                                                  sizeof(fd_buffer) - buffer_offset,
+                                                  "%.3f",
+                                                  field_strength);
                     }
                 }
             }
@@ -751,7 +758,9 @@ void PlotPropPath(struct output * out,
 
             if (fd != NULL) {
                 if (block) {
-                    buffer_offset += sprintf(fd_buffer + buffer_offset, " *");
+                    buffer_offset += snprintf(fd_buffer + buffer_offset,
+                                              sizeof(fd_buffer) - buffer_offset,
+                                              " *");
                 }
                 fprintf(fd, "%s\n", fd_buffer);
             }
