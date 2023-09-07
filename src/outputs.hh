@@ -30,7 +30,7 @@ void PathReport(Path const & path,
                 char graph_it,
                 int propmodel,
                 int pmenv,
-                double rxGain,
+                SsFloat rxGain,
                 struct output * out,
                 LR const & lr);
 void SeriesData(Path const & path,

@@ -61,10 +61,10 @@ mod tests {
             .unwrap();
         let end_elevation = mt_washington_profile.terrain.last().unwrap();
         let terrain_sum: f64 = mt_washington_profile.terrain.iter().sum();
-        assert_approx_eq!(start_elevation, 1752.000056066271);
-        assert_approx_eq!(max_elevation, 1909.8731686559656);
-        assert_approx_eq!(end_elevation, 1367.0812897776286);
-        assert_approx_eq!(terrain_sum, 46329.554355259155);
+        assert_approx_eq!(start_elevation, 1752.000056066271, 0.0025);
+        assert_approx_eq!(max_elevation, 1909.8720374823429, 0.0025);
+        assert_approx_eq!(end_elevation, 1367.0792691240322, 0.0025);
+        assert_approx_eq!(terrain_sum, 46329.511602819286, 0.05);
     }
 
     #[test]

@@ -5,29 +5,29 @@
 
 #include "common.hh"
 
-int ReduceAngle(double angle);
-double LonDiff(double lon1, double lon2);
-void * dec2dms(double decimal, char * string);
-int PutMask(struct output * out, double lat, double lon, int value);
-int OrMask(struct output * out, double lat, double lon, int value);
-int GetMask(struct output * out, double lat, double lon);
-void PutSignal(struct output * out, double lat, double lon, unsigned char signal);
-unsigned char GetSignal(struct output * out, double lat, double lon);
-double GetElevation(site const & location);
-int AddElevation(double lat, double lon, double height, int size);
-double Distance(site const & site1, site const & site2);
-double Azimuth(site const & source, site const & destination);
-double ElevationAngle(site const & source, site const & destination);
-double ElevationAngle2(Path const & path,
-                       site const & source,
-                       site const & destination,
-                       double er,
-                       LR const & lr);
-double ReadBearing(char * input);
+int ReduceAngle(SsFloat angle);
+SsFloat LonDiff(SsFloat lon1, SsFloat lon2);
+void * dec2dms(SsFloat decimal, char * string);
+int PutMask(struct output * out, SsFloat lat, SsFloat lon, int value);
+int OrMask(struct output * out, SsFloat lat, SsFloat lon, int value);
+int GetMask(struct output * out, SsFloat lat, SsFloat lon);
+void PutSignal(struct output * out, SsFloat lat, SsFloat lon, unsigned char signal);
+unsigned char GetSignal(struct output * out, SsFloat lat, SsFloat lon);
+SsFloat GetElevation(site const & location);
+int AddElevation(SsFloat lat, SsFloat lon, SsFloat height, int size);
+SsFloat Distance(site const & site1, site const & site2);
+SsFloat Azimuth(site const & source, site const & destination);
+SsFloat ElevationAngle(site const & source, site const & destination);
+SsFloat ElevationAngle2(Path const & path,
+                        site const & source,
+                        site const & destination,
+                        SsFloat er,
+                        LR const & lr);
+SsFloat ReadBearing(char * input);
 void ObstructionAnalysis(Path const & path,
                          site const & xmtr,
                          site const & rcvr,
-                         double f,
+                         SsFloat f,
                          FILE * outfile,
                          LR const & lr);
 void resize_elev(struct output & out);

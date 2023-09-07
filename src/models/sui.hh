@@ -1,6 +1,6 @@
 #ifndef _SUI_HH_
 #define _SUI_HH_
 
-double SUIpathLoss(double f, double TxH, double RxH, double d, int mode);
+SsFloat SUIpathLoss(SsFloat f, SsFloat TxH, SsFloat RxH, SsFloat d, int mode);
 
 #endif /* _SUI_HH_ */

@@ -1,8 +1,9 @@
+#include "../common.hh"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-double ECC33pathLoss(float f, float TxH, float RxH, float d, int mode) {
+SsFloat ECC33pathLoss(float f, float TxH, float RxH, float d, int mode) {
     // Sanity check as this model operates within limited Txh/Rxh bounds
     if (TxH - RxH < 0) {
         RxH = RxH / (d * 2);
@@ -16,12 +17,12 @@ double ECC33pathLoss(float f, float TxH, float RxH, float d, int mode) {
     // MHz to GHz
     f = f / 1000;
 
-    double Gr = 0.759 * RxH - 1.862; // Big city with tall buildings (1)
+    SsFloat Gr = 0.759 * RxH - 1.862; // Big city with tall buildings (1)
     // PL = Afs + Abm - Gb - Gr
-    double Afs = 92.4 + 20 * log10(d) + 20 * log10(f);
-    double Abm = 20.41 + 9.83 * log10(d) + 7.894 * log10(f)
-                 + 9.56 * (log10(f) * log10(f));
-    double Gb = log10(TxH / 200) * (13.958 + 5.8 * (log10(d) * log10(d)));
+    SsFloat Afs = 92.4 + 20 * log10(d) + 20 * log10(f);
+    SsFloat Abm = 20.41 + 9.83 * log10(d) + 7.894 * log10(f)
+                  + 9.56 * (log10(f) * log10(f));
+    SsFloat Gb = log10(TxH / 200) * (13.958 + 5.8 * (log10(d) * log10(d)));
     if (mode > 1) { // Medium city (Europe)
         Gr = (42.57 + 13.7 * log10(f)) * (log10(RxH) - 0.585);
     }
