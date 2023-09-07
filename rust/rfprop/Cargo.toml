@@ -10,7 +10,6 @@ log = "0.4"
 thiserror = "1"
 
 [dev-dependencies]
-assert_approx_eq = "1"
 criterion = { version = "0.4", features = ["html_reports"] }
 
 [target.'cfg(not(target_env = "msvc"))'.dev-dependencies]

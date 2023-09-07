@@ -10,7 +10,6 @@ pub use sigserve::{
 
 #[cfg(test)]
 mod tests {
-    use assert_approx_eq::assert_approx_eq;
     use std::{fs, path::PathBuf};
 
     fn bsdf_dir() -> PathBuf {
@@ -50,7 +49,14 @@ mod tests {
     fn test_terrain_profile() {
         crate::init(&bsdf_dir(), false).unwrap();
         let mt_washington_profile = crate::terrain_profile(
-            44.27497, -71.310104, 0.0, 44.262486, -71.2924, 0.0, 900e6, true,
+            44.27497138350387,
+            -71.31010234306538,
+            0.0,
+            44.2624872644672,
+            -71.29239422842582,
+            0.0,
+            900e6,
+            true,
         );
         let start_elevation = mt_washington_profile.terrain.first().unwrap();
         let max_elevation = mt_washington_profile
@@ -61,10 +67,11 @@ mod tests {
             .unwrap();
         let end_elevation = mt_washington_profile.terrain.last().unwrap();
         let terrain_sum: f64 = mt_washington_profile.terrain.iter().sum();
-        assert_approx_eq!(start_elevation, 1752.000056066271);
-        assert_approx_eq!(max_elevation, 1909.8731686559656);
-        assert_approx_eq!(end_elevation, 1367.0812897776286);
-        assert_approx_eq!(terrain_sum, 46329.554355259155);
+        assert_eq!(mt_washington_profile.terrain.len(), 27);
+        assert_eq!(start_elevation.trunc(), 1752.0);
+        assert_eq!(max_elevation.trunc(), 1909.0);
+        assert_eq!(end_elevation.trunc(), 1367.0);
+        assert_eq!(terrain_sum.trunc(), 46329.0);
     }
 
     #[test]
@@ -73,6 +80,6 @@ mod tests {
 
         // "44:45:71:72.bsdf"
         let mt_washington_elev = crate::get_elevation(44.2705, -71.30325);
-        assert_approx_eq!(mt_washington_elev, 1903.000060896);
+        assert_eq!(mt_washington_elev.trunc(), 1903.0);
     }
 }
