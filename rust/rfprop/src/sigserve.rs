@@ -8,14 +8,26 @@ use std::{
 
 static INITIALIZED: Once = Once::new();
 
-pub fn init(sdf_path: &Path, debug: bool) -> Result<(), Error> {
+pub fn init(bsdf_dir: &Path, debug: bool) -> Result<(), Error> {
     let mut ret = 0;
-    let sdf_path = CString::new(sdf_path.as_os_str().to_str().unwrap()).unwrap();
+
+    let bsdf_dir = {
+        let mut bsdf_dir = bsdf_dir.to_string_lossy().into_owned().into_bytes();
+
+        // The C++ requires a trailing slash, but it's easier to do
+        // that check and conversion here.
+        if bsdf_dir.last() != Some(&b'/') {
+            bsdf_dir.push(b'/');
+        }
+        // We need to manually add the null terminator.
+        bsdf_dir.push(0);
+        CString::from_vec_with_nul(bsdf_dir).unwrap()
+    };
 
     // SAFETY: we're calling into a >20 y/o C+ codebase. Safety can
     //         not be guaranteed.
     INITIALIZED.call_once(|| unsafe {
-        ret = ffi::init(sdf_path.as_ptr(), debug);
+        ret = ffi::init(bsdf_dir.as_ptr(), debug);
     });
 
     match ret {
@@ -122,7 +134,7 @@ pub(crate) mod ffi {
     unsafe extern "C++" {
         include!("rfprop/src/sigserve.h");
 
-        unsafe fn init(sdf_path: *const c_char, debug: bool) -> i32;
+        unsafe fn init(bsdf_dir: *const c_char, debug: bool) -> i32;
 
         unsafe fn handle_args(argc: i32, argv: *mut *mut c_char) -> Report;
 
