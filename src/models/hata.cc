@@ -12,9 +12,10 @@
  *  for more details.							     *
  *									     */
 
+#include "../common.hh"
 #include <math.h>
 
-double HATApathLoss(float f, float h_B, float h_M, float d, int mode) {
+SsFloat HATApathLoss(float f, float h_B, float h_M, float d, int mode) {
     /*
     HATA URBAN model for cellular planning
     Frequency (MHz) 150 to 1500MHz

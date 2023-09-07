@@ -18,6 +18,7 @@
  * Distance: Any
  */
 
+#include "../common.hh"
 #include <math.h>
 
 // use call with log/ln as this may be faster
@@ -26,8 +27,8 @@ static __inline float _20log10f(float x) {
     return (8.685889f * logf(x));
 }
 
-double FSPLpathLoss(float f, float d, bool bBlock) {
-    double dLoss = 0.0;
+SsFloat FSPLpathLoss(float f, float d, bool bBlock) {
+    SsFloat dLoss = 0.0;
 
     if (bBlock) {
         // No line of sight

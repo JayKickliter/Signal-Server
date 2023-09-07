@@ -8,6 +8,8 @@
 #include <tuple>
 #include <vector>
 
+typedef float SsFloat;
+
 #define GAMMA 2.5
 
 #ifndef PI
@@ -19,7 +21,7 @@
 #endif
 
 #ifndef HALFPI
-#define HALFPI 1.570796326794896
+#define HALFPI SsFloat(1.570796326794896)
 #endif
 
 #define DEG2RAD 1.74532925199e-02
@@ -57,8 +59,8 @@ struct dem_output {
 };
 
 struct site {
-    double lat;
-    double lon;
+    SsFloat lat;
+    SsFloat lon;
     float alt;
     /* TODO: remove the following fields. They use a huge amount of
        stack and conflate IO with baseness logic. */
@@ -67,10 +69,10 @@ struct site {
 };
 
 struct Path {
-    std::vector<double> lat;
-    std::vector<double> lon;
-    std::vector<double> elevation;
-    std::vector<double> distance;
+    std::vector<SsFloat> lat;
+    std::vector<SsFloat> lon;
+    std::vector<SsFloat> elevation;
+    std::vector<SsFloat> distance;
     ssize_t ssize() const;
     size_t size() const;
     Path() = default;
@@ -78,17 +80,17 @@ struct Path {
 };
 
 struct TerrainProfile {
-    std::vector<double> _curvature;
-    std::vector<double> _distance;
-    std::vector<double> _fresnel60;
-    std::vector<double> _fresnel;
-    std::vector<double> _los;
-    std::vector<double> _terrain;
+    std::vector<SsFloat> _curvature;
+    std::vector<SsFloat> _distance;
+    std::vector<SsFloat> _fresnel60;
+    std::vector<SsFloat> _fresnel;
+    std::vector<SsFloat> _los;
+    std::vector<SsFloat> _terrain;
     bool _tx_site_over_water;
     TerrainProfile(site const & src,
                    site const & dst,
                    Path const & path,
-                   double freq_hz,
+                   SsFloat freq_hz,
                    bool normalised,
                    bool metric) noexcept;
 };
@@ -111,24 +113,24 @@ class antenna_pattern {
 // essentially this struct holds the
 // read-only configuration options
 struct LR {
-    double max_range;
-    double clutter;
+    SsFloat max_range;
+    SsFloat clutter;
     int contour_threshold;
     char dbm;
     unsigned char metric;
-    double eps_dielect;
-    double sgm_conductivity;
-    double eno_ns_surfref;
-    double frq_mhz;
-    double conf;
-    double rel;
-    double erp;
+    SsFloat eps_dielect;
+    SsFloat sgm_conductivity;
+    SsFloat eno_ns_surfref;
+    SsFloat frq_mhz;
+    SsFloat conf;
+    SsFloat rel;
+    SsFloat erp;
     int radio_climate;
     int pol;
     antenna_pattern ant_pat;
-    double antenna_downtilt;
-    double antenna_dt_direction;
-    double antenna_rotation;
+    SsFloat antenna_downtilt;
+    SsFloat antenna_dt_direction;
+    SsFloat antenna_rotation;
 };
 
 struct output {
@@ -137,31 +139,31 @@ struct output {
     int height;
     int min_elevation;
     int max_elevation;
-    double min_north;
-    double max_north;
-    double min_west;
-    double max_west;
-    std::vector<double> elev;
-    double north;
-    double east;
-    double south;
-    double west;
-    double westoffset;
-    double eastoffset;
-    double cropLat;
-    double cropLon;
-    double dBm;
-    double loss;
-    double field_strength;
+    SsFloat min_north;
+    SsFloat max_north;
+    SsFloat min_west;
+    SsFloat max_west;
+    std::vector<SsFloat> elev;
+    SsFloat north;
+    SsFloat east;
+    SsFloat south;
+    SsFloat west;
+    SsFloat westoffset;
+    SsFloat eastoffset;
+    SsFloat cropLat;
+    SsFloat cropLon;
+    SsFloat dBm;
+    SsFloat loss;
+    SsFloat field_strength;
     int hottest;
     struct site tx_site[2];
-    std::vector<double> distancevec;
-    std::vector<double> cluttervec;
-    std::vector<double> line_of_sight;
-    std::vector<double> fresnelvec;
-    std::vector<double> fresnel60vec;
-    std::vector<double> curvaturevec;
-    std::vector<double> profilevec;
+    std::vector<SsFloat> distancevec;
+    std::vector<SsFloat> cluttervec;
+    std::vector<SsFloat> line_of_sight;
+    std::vector<SsFloat> fresnelvec;
+    std::vector<SsFloat> fresnel60vec;
+    std::vector<SsFloat> curvaturevec;
+    std::vector<SsFloat> profilevec;
     std::vector<char> imagedata;
 };
 
@@ -178,12 +180,12 @@ extern int IPPD;
 extern int G_ippd;
 extern int G_mpi;
 
-extern double G_earthradius_ft;
-extern double G_dpp;
-extern double G_ppd;
-extern double G_yppd;
-extern double G_fzone_clearance;
-extern double G_delta;
+extern SsFloat G_earthradius_ft;
+extern SsFloat G_dpp;
+extern SsFloat G_ppd;
+extern SsFloat G_yppd;
+extern SsFloat G_fzone_clearance;
+extern SsFloat G_delta;
 
 extern char G_string[];
 extern char G_sdf_path[];

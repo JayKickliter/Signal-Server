@@ -17,6 +17,7 @@
  * Terrain permittivity: 1 - 15 (Bad to Good)
  */
 
+#include "../common.hh"
 #include <math.h>
 
 // use call with log/ln as this may be faster
@@ -25,7 +26,7 @@ static __inline float _20log10f(float x) {
     return (8.685889f * logf(x));
 }
 
-double SoilPathLoss(float f, float d, float terdic) {
+SsFloat SoilPathLoss(float f, float d, float terdic) {
     float soil = (120 / terdic);
     return (6.4 + _20log10f(d) + _20log10f(f) + (8.69 * soil));
 }

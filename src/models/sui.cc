@@ -1,3 +1,4 @@
+#include "../common.hh"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,7 +9,7 @@ static __inline float _20log10f(float x) {
     return (8.685889f * logf(x));
 }
 
-double SUIpathLoss(double f, double TxH, double RxH, double d, int mode) {
+SsFloat SUIpathLoss(SsFloat f, SsFloat TxH, SsFloat RxH, SsFloat d, int mode) {
     /*
        f = Frequency (MHz) 1900 to 11000
        TxH =  Transmitter height (m)
