@@ -1527,7 +1527,7 @@ void PathReport(Path const & path,
         }
     }
 
-    ObstructionAnalysis(path, source, destination, lr.frq_mhz, fd2, lr);
+    // ObstructionAnalysis(path, source, destination, lr.frq_mhz, fd2, lr);
     fclose(fd2);
 
     /*fprintf(stderr,
