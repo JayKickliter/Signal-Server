@@ -47,6 +47,27 @@ mod tests {
     }
 
     #[test]
+    fn test_terrain_profile() {
+        crate::init(&bsdf_dir(), false).unwrap();
+        let mt_washington_profile = crate::terrain_profile(
+            44.27497, -71.310104, 0.0, 44.262486, -71.2924, 0.0, 900e6, true,
+        );
+        let start_elevation = mt_washington_profile.terrain.first().unwrap();
+        let max_elevation = mt_washington_profile
+            .terrain
+            .iter()
+            .copied()
+            .reduce(|acc, elev| f64::max(acc, elev))
+            .unwrap();
+        let end_elevation = mt_washington_profile.terrain.last().unwrap();
+        let terrain_sum: f64 = mt_washington_profile.terrain.iter().sum();
+        assert_approx_eq!(start_elevation, 1752.000056066271);
+        assert_approx_eq!(max_elevation, 1909.8731686559656);
+        assert_approx_eq!(end_elevation, 1367.0812897776286);
+        assert_approx_eq!(terrain_sum, 46329.554355259155);
+    }
+
+    #[test]
     fn test_get_elevation() {
         crate::init(&bsdf_dir(), false).unwrap();
 
