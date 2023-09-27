@@ -1708,11 +1708,11 @@ TerrainProfile::TerrainProfile(site const & src,
         double fresnel_ft = 0.0;
         double fresnel60_ft = 0.0;
         const double radius_ft = terrain_ft + EARTHRADIUS_FT;
-        const double chord_angle_deg =
+        const double chord_angle_rad =
             FEET_PER_MILE * path.distance[x] / EARTHRADIUS_FT;
         const double c_unk_unit =
             src_radius_ft * sin(elevation_angle_deg * DEG2RAD + HALFPI)
-            / sin(HALFPI - elevation_angle_deg * DEG2RAD - chord_angle_deg);
+            / sin(HALFPI - elevation_angle_deg * DEG2RAD - chord_angle_rad);
         double height_ft = radius_ft - c_unk_unit;
 
         /* Per Fink and Christiansen, Electronics
